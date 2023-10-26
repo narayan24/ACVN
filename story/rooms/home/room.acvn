@@ -1,0 +1,16 @@
+#begin start
+	You're standing inside your room.
+	[[Desk, home_room, desk]]
+	[[Bed, home_room, bed]]
+	[[Hallway, home_hallway]]
+#end
+
+#begin desk
+	You sit at your desk.
+	[[Stand up, home_room]]
+#end
+
+#begin bed
+	You're lying on your bed.
+	[[Stand up, home_room]]
+#end

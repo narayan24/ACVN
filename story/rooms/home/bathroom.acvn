@@ -1,0 +1,4 @@
+#begin start
+	You're standing inside the bathroom.
+	[[Hallway, home_hallway]]
+#end

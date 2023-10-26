@@ -5,11 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ACVN"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="MainWindow" Height="900" Width="1200">
+    <Grid Background="#333333" x:Name="mainGrid">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="1*" MinWidth="100"/>
-            <ColumnDefinition Width="5*"/>
+            <ColumnDefinition Width="100" MinWidth="100"/>
+            <ColumnDefinition Width="500*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition/>
@@ -19,18 +19,35 @@
               Grid.RowSpan="2" 
               HorizontalAlignment="Left" 
               VerticalAlignment="Stretch"
-              Background="Green" 
+              Background="#aaa" 
               ShowsPreview="true"
               Width="5"/>
-        <Border Background="#333333" Grid.Column="0" Grid.RowSpan="2"/>
-        <Button Name="btn1"
+        <Border Background="#333" Grid.Column="0" Grid.RowSpan="2"/>
+        <StackPanel Name="leftStackPanel" Orientation="Vertical">
+            <Button Name="btn1"
                 Grid.Column="0"
-                Click="BtnAction1"
                 Content="Action"
-                Width="90"
-                Height="20"
+                Width="Auto"
+                Height="25"
                 Background="White"
-                VerticalAlignment="Top"/>
-        <Canvas Grid.Column="1" Grid.RowSpan="2" Background="#222222" Margin="5, 0, 0, 0" />
+                VerticalAlignment="Top"
+                Margin="2"/>
+        </StackPanel>
+        
+        <Canvas Name="mainCanvas" Grid.Column="1" Grid.RowSpan="2" Background="#ccc" Margin="5, 0, 0, 0" >
+            <MediaElement x:Name="mainMedia" Width="500" HorizontalAlignment="Right" Canvas.Right="20" Canvas.Top="20" VerticalAlignment="Top" />
+            <TextBlock x:Name="mainText" Canvas.Left="20" Canvas.Top="20" TextWrapping="Wrap" FontSize="20" Width="{Binding ActualWidth, ElementName=mainMedia}">
+                Lorem ipsum dolor sit amet...
+                Lorem ipsum dolor sit amet... 
+                Lorem ipsum dolor sit amet... 
+                Lorem ipsum dolor sit amet... 
+                Lorem ipsum dolor sit amet... 
+                Lorem ipsum dolor sit amet... 
+                Lorem ipsum dolor sit amet... 
+                Lorem ipsum dolor sit amet... 
+                Lorem ipsum dolor sit amet... 
+                Lorem ipsum dolor sit amet...
+             </TextBlock>
+        </Canvas>
     </Grid>
 </Window>
