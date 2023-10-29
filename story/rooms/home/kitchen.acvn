@@ -1,4 +1,0 @@
-#begin start
-	You're standing inside the kitchen.
-	[[Hallway, home_hallway]]
-#end

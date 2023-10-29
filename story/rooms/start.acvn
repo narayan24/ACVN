@@ -1,6 +1,0 @@
-#begin start
-	You enter your room.
-
-	[[Look around, home_room]]
-#end
-

@@ -1,8 +1,0 @@
-#begin start
-	You're standing inside the hallway of your apartment.
-	[[Bedroom, home_room]]
-	[[Bathroom, home_bathroom]]
-	[[Kitchen, home_kitchen]]
-	[[Livingroom, home_livingroom]]
-	[[Your brothers room, home_brother]]
-#end
