@@ -1,0 +1,63 @@
+{
+	"chars": [
+		{
+			"id": "mc",
+			"firstname": "Trixie",
+			"lastname": "Smith",
+			"nickname": "Trix",
+			"relation": "mc",
+			"age": 18,
+			"gender": "female",
+			"attributes": [
+				{
+					"min": 0,
+					"max": 100,
+					"value": 100,
+					"name": "Energy"
+				},
+                {
+                    "min": 0,
+                    "max": 100,
+                    "value": 100,
+                    "name": "Hunger"
+				},
+                {
+                    "min": 0,
+                    "max": 100,
+                    "value": 100,
+                    "name": "Hygiene"
+				}
+			]
+		},
+		{
+			"id": "brother",
+			"firstname": "Robert",
+			"lastname": "Smith",
+			"nickname": "Rob",
+			"relation": "brother",
+			"age": 18,
+			"gender": "female",
+			"relationship": "20",
+			"attributes": [
+				{
+					"min": 0,
+					"max": 100,
+					"value": 100,
+					"name": "Energy"
+				},
+				{
+					"min": 0,
+					"max": 100,
+					"value": 100,
+					"name": "Hunger"
+				},
+				{
+					"min": 0,
+					"max": 100,
+					"value": 100,
+					"name": "Hygiene"
+				}
+			]
+		}
+	]
+}

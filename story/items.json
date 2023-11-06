@@ -1,0 +1,49 @@
+{
+    "items": [
+        {
+            "type": "clothing",
+            "subtype": "shirt",
+            "name": "T-Shirt",
+            "price": 10,
+            "condition": 100,
+            "quantity": 1
+        },
+        {
+            "type": "clothing",
+            "subtype": "bra",
+            "name": "Simple white bra",
+            "price": 10,
+            "condition": 100,
+            "quantity": 1
+        },
+        {
+            "type": "clothing",
+            "subtype": "panties",
+            "name": "Simple white panties",
+            "price": 10,
+            "condition": 100,
+            "quantity": 1
+        },
+        {
+            "type": "inventory",
+            "name": "Condoms",
+            "price": 5,
+            "condition": 100,
+            "quantity": 10
+        },
+        {
+            "type": "food",
+            "name": "Pizza",
+            "price": 10,
+            "condition": 100,
+            "quantity": 1
+        },
+        {
+            "type": "inventory",
+            "name": "Razor",
+            "price": 5,
+            "condition": 100,
+            "quantity": 1
+        }
+    ]
+}

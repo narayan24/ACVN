@@ -8,46 +8,40 @@
         Title="MainWindow" Height="900" Width="1200">
     <Grid Background="#333333" x:Name="mainGrid">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="100" MinWidth="100"/>
             <ColumnDefinition Width="500*"/>
+            <ColumnDefinition Width="300*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition/>
-            <RowDefinition/>
+            <RowDefinition Height="900*"/>
+            <RowDefinition Height="50*"/>
         </Grid.RowDefinitions>
-        <GridSplitter Grid.Column="1" 
-              Grid.RowSpan="2" 
-              HorizontalAlignment="Left" 
-              VerticalAlignment="Stretch"
-              Background="#aaa" 
-              ShowsPreview="true"
-              Width="5"/>
-        <Border Background="#333" Grid.Column="0" Grid.RowSpan="2"/>
-        <StackPanel Name="leftStackPanel" Orientation="Vertical">
-            <Button Name="btn1"
-                Grid.Column="0"
-                Content="Action"
-                Width="Auto"
-                Height="25"
-                Background="White"
-                VerticalAlignment="Top"
-                Margin="2"/>
+
+        <StackPanel Name="roomStack" Grid.Column="0" Grid.Row="1" Orientation="Horizontal" Background="#555"/>
+        <StackPanel Name="controlStack" Grid.Column="1" Grid.Row="1" Orientation="Horizontal" Background="#555">
+            <Button x:Name="loadButton" Content="Load" Width="100" Height="50" Click="loadButton_Click" />
+            <Button x:Name="saveButton" Content="Save" Width="100" Height="50" Click="saveButton_Click" />
+            <Button x:Name="quickLoadButton" Content="Quick Load" Width="100" Height="50" Click="quickLoadButton_Click" />
+            <Button x:Name="quickSaveButton" Content="Quick Save" Width="100" Height="50" Click="quickSaveButton_Click" />
         </StackPanel>
-        
-        <Canvas Name="mainCanvas" Grid.Column="1" Grid.RowSpan="2" Background="#ccc" Margin="5, 0, 0, 0" >
-            <MediaElement x:Name="mainMedia" Width="500" HorizontalAlignment="Right" Canvas.Right="20" Canvas.Top="20" VerticalAlignment="Top" />
-            <TextBlock x:Name="mainText" Canvas.Left="20" Canvas.Top="20" TextWrapping="Wrap" FontSize="20" Width="{Binding ActualWidth, ElementName=mainMedia}">
-                Lorem ipsum dolor sit amet...
-                Lorem ipsum dolor sit amet... 
-                Lorem ipsum dolor sit amet... 
-                Lorem ipsum dolor sit amet... 
-                Lorem ipsum dolor sit amet... 
-                Lorem ipsum dolor sit amet... 
-                Lorem ipsum dolor sit amet... 
-                Lorem ipsum dolor sit amet... 
-                Lorem ipsum dolor sit amet... 
-                Lorem ipsum dolor sit amet...
-             </TextBlock>
-        </Canvas>
+
+        <Grid Grid.Column="1" Grid.Row="0">
+            <MediaElement x:Name="mainMedia" Width="500" MaxHeight="306" HorizontalAlignment="Center" VerticalAlignment="Top" Volume="0" />
+            <TextBlock x:Name="playerNameText" Text="Name:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10" Foreground="White" FontSize="15">
+                <TextBlock.Effect>
+                    <DropShadowEffect Color="Black" Direction="320" ShadowDepth="5" BlurRadius="5" Opacity="0.5" />
+                </TextBlock.Effect>
+            </TextBlock>
+
+            <TextBlock x:Name="gameTimeText" Text="12:00 AM" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="10" Foreground="White" FontSize="15">
+                <TextBlock.Effect>
+                    <DropShadowEffect Color="Black" Direction="320" ShadowDepth="5" BlurRadius="5" Opacity="0.5" />
+                </TextBlock.Effect>
+            </TextBlock>
+        </Grid>
+
+        <StackPanel Name="statusStack" Grid.Column="1" Grid.Row="0" Margin="0, 333, 0, 0"/>
+
+        <StackPanel Name="actionStack" Grid.Column="0" Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Bottom" Panel.ZIndex="1000"/>
+        <WebBrowser x:Name="mainContent" Grid.Row="0" Grid.Column="0" Panel.ZIndex="200" Margin="0, 0, 0, 50"/>
     </Grid>
 </Window>
