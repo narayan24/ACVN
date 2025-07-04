@@ -1,0 +1,29 @@
+#begin start
+{{
+if !numberOfShowers
+  numberOfShowers = 0
+end
+}}
+	You're standing inside the bathroom.
+  <br>
+	[[Hallway, home_hallway]]
+    {{ if numberOfShowers < 5 }}
+    [[Shower, home_bathroom, shower]]
+    {{ else }}
+    You took {{ numberOfShowers }} showers today. That's enough.
+    {{ end }}
+  
+#end
+
+#begin shower
+  You're taking a shower.
+  {{ numberOfShowers += 1 }}
+  {{ mc.properties.attributes.energy.value.value += 5 }}
+  {{ mc.properties.attributes.hygiene.value.value += 15 }}
+  [[Dry off, home_bathroom, dryoff]]
+#end
+
+#begin dryoff
+  You're drying off.
+  [[Bathroom, home_bathroom]]
+#end

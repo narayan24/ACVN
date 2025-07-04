@@ -1,0 +1,43 @@
+#begin start
+	You're standing inside your room.
+  
+  <p>
+  Your name is {{ mc.properties.firstname }} {{ mc.properties.lastname }}. You are a {{ mc.properties.age }} year old {{ mc.properties.gender }}.
+  </p>
+
+  [[Desk, home_room, desk]]
+	[[Undress and lay on bed, home_room, bed_naked]]
+	[[Lay on bed in underwear, home_room, bed_underwear]]
+	[[Lay on bed, home_room, bed_dressed]]
+	[[Hallway, home_hallway]]
+#end
+
+#begin desk
+	You sit at your desk.
+	<p>
+		TEST: {{ test2 }}
+	</p>
+	<p>
+		Gametime: {{ date.to_string gameTime '%d.%m.%Y %H:%M:%S'; }}
+	</p>
+		{{ gameTime = date.add_minutes gameTime 60 }}
+	<p>
+		Gametime: {{ date.to_string gameTime '%d.%m.%Y %H:%M:%S'; }}
+	</p>
+	[[Stand up, home_room]]
+#end
+
+#begin bed_naked
+	You're lying on your bed naked.
+	[[Stand up, home_room]]
+#end
+
+#begin bed_dressed
+	You're lying on your bed.
+	[[Stand up, home_room]]
+#end
+
+#begin bed_underwear
+	You're lying on your bed in your underwear.
+	[[Stand up, home_room]]
+#end

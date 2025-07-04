@@ -1,0 +1,11 @@
+#begin start
+	<h1>Welcome to Project "LiveSim"</h1>
+	
+	<p>
+	At the bottom you find a row of buttons. Right now there is only one. But these buttons represent the rooms or places you can walk into.
+	So let's say you are inside a hallway, you'll find at least two or more buttons that lead in other rooms like a bathroom, a livingroom or something else.
+	I think you get the idea. ;)
+	</p>
+	[[Look around, home_room]]
+#end
+
