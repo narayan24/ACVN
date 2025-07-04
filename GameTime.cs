@@ -8,9 +8,4 @@ public class GameTime
     {
         CurrentTime = DateTime.Now;
     }
-
-    public void Update(TimeSpan elapsedGameTime)
-    {
-        CurrentTime = CurrentTime.Add(elapsedGameTime);
-    }
 }

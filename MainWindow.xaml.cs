@@ -29,7 +29,7 @@ namespace ACVN
 
         private List<Character> characters;
 
-        private GameTime gameTime = new GameTime();
+        private DateTime gameTime = DateTime.Now;
 
         public MainWindow()
         {
@@ -61,7 +61,7 @@ namespace ACVN
             currentRoom = "start";
             currentAction = "start";
 
-            GetChars();
+            GetCharacters();
             InitContent();
         }
 
@@ -78,6 +78,11 @@ namespace ACVN
             return Regex.Replace(path, @"_", "/");
         }
 
+        public static string Test2()
+        {
+            return "test123";
+        }
+
         /* CONTENT HANDLING */
         private void InitContent()
         {
@@ -90,7 +95,10 @@ namespace ACVN
 
                     var context = new TemplateContext();
                     scriptObject["mc"] = GetCharacter("mc");
-                    scriptObject["datetime"] = gameTime;
+                    scriptObject["characters"] = characters;
+                    scriptObject["gameTime"] = gameTime;
+                    scriptObject["test2"] = new Func<string>(Test2);
+                    scriptObject["getCharacter"] = new Func<string, Character>(GetCharacter);
                     context.PushGlobal(scriptObject);
 
                     string pattern = @"#begin\s+(.*?)\s+(.*?)#end";
@@ -219,52 +227,54 @@ namespace ACVN
             if (mc != null)
             {
                 statusStack.Children.Clear();
-                Grid grid = new Grid();
 
-                if (mc.Properties.TryGetValue("attributes", out var attributes) && attributes is JArray attributeArray)
+                if (mc.Properties.TryGetValue("attributes", out var attributes) && attributes is JObject attributesObject)
                 {
-                    foreach (var attribute in attributeArray)
+                    foreach (var attribute in attributesObject)
                     {
-                        if (attribute is JObject attributeObject)
+                        var attributeValues = attribute.Value as JObject;
+
+                        int min = attributeValues.Value<int>("min");
+                        int max = attributeValues.Value<int>("max");
+                        int value = attributeValues.Value<int>("value");
+                        string name = attributeValues.Value<string>("name");
+
+                        Grid grid = new Grid();
+
+                        ProgressBar progressBar = new ProgressBar
                         {
-                            string attributeName = attributeObject.Value<string>("name");
-                            int min = attributeObject.Value<int>("min");
-                            int max = attributeObject.Value<int>("max");
-                            int value = attributeObject.Value<int>("value");
+                            Minimum = min,
+                            Maximum = max,
+                            Value = value,
+                            Width = 250,
+                            Height = 20,
+                            Margin = new Thickness(5)
+                        };
 
-                            // Erstelle und füge die ProgressBar in deinem WPF-Layout hinzu
-                            ProgressBar progressBar = new ProgressBar
-                            {
-                                Minimum = min,
-                                Maximum = max,
-                                Value = value,
-                                Width = 100,
-                                Height = 20,
-                                Margin = new Thickness(5)
-                            };
+                        TextBlock textBlock = new TextBlock
+                        {
+                            Text = name + ":",
+                            VerticalAlignment = VerticalAlignment.Center,
+                            HorizontalAlignment = HorizontalAlignment.Left,
+                            Margin = new Thickness(10, 0, 0, 0),
+                            Foreground = System.Windows.Media.Brushes.White
+                        };
 
-                            TextBlock textBlock = new TextBlock
-                            {
-                                Text = attributeName + ":",
-                                VerticalAlignment = VerticalAlignment.Center,
-                                HorizontalAlignment = HorizontalAlignment.Left,
-                                Margin = new Thickness(10, 0, 0, 0),
-                            };
+                        grid.Children.Add(textBlock);
+                        grid.Children.Add(progressBar);
 
-                            grid.Children.Add(textBlock);
-                            grid.Children.Add(progressBar);
-                        }
+                        statusStack.Children.Add(grid);
                     }
                 }
-
-                statusStack.Children.Add(grid);
             }
 
             playerNameText.Text = mc.Properties["firstname"].ToString()
                 + (mc.Properties.ContainsKey("nickname") ? " (" + mc.Properties["nickname"].ToString() + ") " : "")
                 + (mc.Properties.ContainsKey("lastname") ? mc.Properties["lastname"].ToString() : "");
-            gameTimeText.Text = gameTime.CurrentTime.ToString("dddd, dd. MMMM yyyy HH:mm tt");
+            gameTimeText.Text = gameTime.ToString("dddd, dd. MMMM yyyy HH:mm tt");
         }
+
+
 
         private void ExecuteCommand(string[] command)
         {
@@ -306,7 +316,7 @@ namespace ACVN
             mainMedia.Source = new Uri(file);
         }
 
-        private void GetChars()
+        private void GetCharacters()
         {
             characters = new List<Character>();
 
@@ -335,10 +345,10 @@ namespace ACVN
             // Jetzt hast du eine Liste von Character-Objekten
             foreach (var character in characters)
             {
-                // Debug.WriteLine($"Id: {character.Id}");
+                Debug.WriteLine($"Id: {character.Id}");
                 foreach (var property in character.Properties)
                 {
-                    // Debug.WriteLine($"{property.Key}: {property.Value}");
+                    Debug.WriteLine($"{property.Key}: {property.Value}");
                 }
             }
         }
@@ -354,15 +364,6 @@ namespace ACVN
             }
 
             return null;
-        }
-
-        public void UpdateGameTime(TimeSpan elapsedGameTime)
-        {
-            // Aktualisiere die Spielzeit
-            gameTime.Update(elapsedGameTime);
-
-            // Aktualisiere das XAML-Element mit der aktuellen Uhrzeit
-            gameTimeText.Text = gameTime.CurrentTime.ToString("h:mm tt"); // Beispiel: 12:00 PM
         }
 
         public void saveButton_Click(object sender, RoutedEventArgs e)

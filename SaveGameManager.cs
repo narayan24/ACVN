@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 
 public class GameState
 {
-    public GameTime GameTime { get; set; }
+    public DateTime GameTime { get; set; }
     public List<Character> Characters { get; set; }
 
     public string CurrentRoom { get; set; }
@@ -14,7 +14,7 @@ public class GameState
 
     public GameState()
     {
-        GameTime = new GameTime();
+        GameTime = new DateTime();
         Characters = new List<Character>();
         CurrentAction = "start";
         CurrentRoom = "start";

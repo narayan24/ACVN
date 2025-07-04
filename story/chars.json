@@ -8,26 +8,27 @@
 			"relation": "mc",
 			"age": 18,
 			"gender": "female",
-			"attributes": [
-				{
+			"attributes": 
+			{
+				"energy": {
+					"min": 0,
+					"max": 100,
+					"value": 67,
+					"name": "Energy"
+				},
+				"hunger": {
 					"min": 0,
 					"max": 100,
 					"value": 100,
-					"name": "Energy"
+					"name": "Hunger"
 				},
-                {
-                    "min": 0,
-                    "max": 100,
-                    "value": 100,
-                    "name": "Hunger"
-				},
-                {
-                    "min": 0,
-                    "max": 100,
-                    "value": 100,
-                    "name": "Hygiene"
+				"hygiene": {
+					"min": 0,
+					"max": 100,
+					"value": 30,
+					"name": "Hygiene"
 				}
-			]
+			}
 		},
 		{
 			"id": "brother",
@@ -38,26 +39,15 @@
 			"age": 18,
 			"gender": "female",
 			"relationship": "20",
-			"attributes": [
-				{
+			"attributes": 
+			{
+				"energy": {
 					"min": 0,
 					"max": 100,
 					"value": 100,
 					"name": "Energy"
-				},
-				{
-					"min": 0,
-					"max": 100,
-					"value": 100,
-					"name": "Hunger"
-				},
-				{
-					"min": 0,
-					"max": 100,
-					"value": 100,
-					"name": "Hygiene"
 				}
-			]
+			}
 		}
 	]
 }
