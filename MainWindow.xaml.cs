@@ -6,9 +6,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows;
-using Scriban;
 using System.Windows.Controls;
-using Scriban.Runtime;
+using Jint;
 
 namespace ACVN
 {
@@ -25,7 +24,7 @@ namespace ACVN
         private string currentRoom;
         private string currentAction;
 
-        private ScriptObject scriptObject = new ScriptObject();
+        private Engine jsEngine = new Engine();
 
         private List<Character> characters;
 
@@ -62,6 +61,13 @@ namespace ACVN
             currentAction = "start";
 
             GetCharacters();
+
+            jsEngine.SetValue("mc", GetCharacter("mc"));
+            jsEngine.SetValue("characters", characters);
+            jsEngine.SetValue("gameTime", gameTime);
+            jsEngine.SetValue("test2", new Func<string>(Test2));
+            jsEngine.SetValue("getCharacter", new Func<string, Character>(GetCharacter));
+
             InitContent();
         }
 
@@ -93,13 +99,7 @@ namespace ACVN
                 {
                     string fileContent = File.ReadAllText(filePath);
 
-                    var context = new TemplateContext();
-                    scriptObject["mc"] = GetCharacter("mc");
-                    scriptObject["characters"] = characters;
-                    scriptObject["gameTime"] = gameTime;
-                    scriptObject["test2"] = new Func<string>(Test2);
-                    scriptObject["getCharacter"] = new Func<string, Character>(GetCharacter);
-                    context.PushGlobal(scriptObject);
+
 
                     string pattern = @"#begin\s+(.*?)\s+(.*?)#end";
                     MatchCollection matches = Regex.Matches(fileContent, pattern, RegexOptions.Singleline);
@@ -115,8 +115,8 @@ namespace ACVN
 
                                 if (blockName == currentAction)
                                 {
-                                    var template = Scriban.Template.Parse(blockContent);
-                                    blockContent = template.Render(context);
+                                    blockContent = RenderTemplate(blockContent);
+                                    gameTime = jsEngine.GetValue("gameTime").ToObject<DateTime>();
                                     ShowRandomMedia(clearPath(currentRoom) + "/" + (currentAction == "start" ? "" : clearPath(currentAction)));
                                     ParseRooms(blockContent);
                                     ParseContent(blockContent);
@@ -141,6 +141,23 @@ namespace ACVN
             {
                 MessageBox.Show($"Error loading file '{filePath}'");
             }
+        }
+
+        private string RenderTemplate(string content)
+        {
+            string pattern = @"{{(.*?)}}";
+            return Regex.Replace(content, pattern, match =>
+            {
+                try
+                {
+                    var result = jsEngine.Evaluate(match.Groups[1].Value).ToObject();
+                    return result != null ? result.ToString() : string.Empty;
+                }
+                catch
+                {
+                    return string.Empty;
+                }
+            }, RegexOptions.Singleline);
         }
 
 

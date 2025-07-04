@@ -1,9 +1,9 @@
 #begin start
 	You're standing inside your room.
   
-  <p>
-  Your name is {{ mc.properties.firstname }} {{ mc.properties.lastname }}. You are a {{ mc.properties.age }} year old {{ mc.properties.gender }}.
-  </p>
+    <p>
+    Your name is {{ mc.properties.firstname }} {{ mc.properties.lastname }}. You are a {{ mc.properties.age }} year old {{ mc.properties.gender }}.
+    </p>
 
   [[Desk, home_room, desk]]
 	[[Undress and lay on bed, home_room, bed_naked]]
@@ -14,16 +14,16 @@
 
 #begin desk
 	You sit at your desk.
-	<p>
-		TEST: {{ test2 }}
-	</p>
-	<p>
-		Gametime: {{ date.to_string gameTime '%d.%m.%Y %H:%M:%S'; }}
-	</p>
-		{{ gameTime = date.add_minutes gameTime 60 }}
-	<p>
-		Gametime: {{ date.to_string gameTime '%d.%m.%Y %H:%M:%S'; }}
-	</p>
+        <p>
+                TEST: {{ test2() }}
+        </p>
+        <p>
+                Gametime: {{ gameTime.ToString("dd.MM.yyyy HH:mm:ss") }}
+        </p>
+                {{ gameTime = gameTime.AddMinutes(60) }}
+        <p>
+                Gametime: {{ gameTime.ToString("dd.MM.yyyy HH:mm:ss") }}
+        </p>
 	[[Stand up, home_room]]
 #end
 
