@@ -15,16 +15,27 @@ It should be easy to handle (i.e. when there is text written - it should simply 
 * Actions are defined in BB-Code style bei two surrounding square brackets (i.e. `[[Action name, room, action, params]]`)
 
 ## Template syntax
-Room files may contain `{{ ... }}` blocks with JavaScript expressions. They are
-executed by the embedded [Jint](https://github.com/sebastienros/jint) engine.
-Variables like `mc` (main character), `characters` and `gameTime` are available.
-Assignments and conditions can be written in plain JavaScript:
+Room files are rendered with [Scriban](https://github.com/scriban/scriban).
+You can use `{{ ... }}` blocks for variable assignments, value output and
+conditions. The following variables are available inside each template block:
 
-```html
-{{ if(typeof numberOfShowers === 'undefined'){ numberOfShowers = 0; } }}
-{{ if(numberOfShowers < 5){ return "[[Shower, home_bathroom, shower]]"; } }}
+* `mc`: the main character object (same structure as in `chars.json`)
+* `characters`: the full character list
+* `gameTime`: a `DateTime` instance representing the current in-game time
+* `get_character(id)`: helper function to fetch a character by its id
+
+Example usage:
+
+```scriban
+{{ number_of_showers = number_of_showers | default 0 }}
+{{ if number_of_showers < 5 }}
+  {{ number_of_showers = number_of_showers + 1 }}
+  [[Shower, home_bathroom, shower]]
+{{ end }}
+
+<p>The current time is {{ gameTime | date.to_string "dddd, dd. MMMM yyyy HH:mm" }}.</p>
 ```
 
-After rendering a block, changes to variables (e.g. `gameTime`) persist for the
-next actions.
+Assignments and logic run during rendering, so updated variables (for example
+`gameTime`) are persisted for subsequent actions.
 

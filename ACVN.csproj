@@ -15,7 +15,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft-WindowsAPICodePack-Shell" Version="1.1.5" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="Jint" Version="3.0.0" />
+    <PackageReference Include="Scriban" Version="5.11.0" />
   </ItemGroup>
 
 </Project>

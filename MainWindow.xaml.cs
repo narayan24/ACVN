@@ -7,7 +7,8 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
-using Jint;
+using Scriban;
+using Scriban.Runtime;
 
 namespace ACVN
 {
@@ -24,7 +25,7 @@ namespace ACVN
         private string currentRoom;
         private string currentAction;
 
-        private Engine jsEngine = new Engine();
+        private ScriptObject templateVariables = new ScriptObject();
 
         private List<Character> characters;
 
@@ -62,11 +63,11 @@ namespace ACVN
 
             GetCharacters();
 
-            jsEngine.SetValue("mc", GetCharacter("mc"));
-            jsEngine.SetValue("characters", characters);
-            jsEngine.SetValue("gameTime", gameTime);
-            jsEngine.SetValue("test2", new Func<string>(Test2));
-            jsEngine.SetValue("getCharacter", new Func<string, Character>(GetCharacter));
+            templateVariables.Import(new
+            {
+                get_character = new Func<string, Character>(GetCharacter)
+            });
+            UpdateTemplateVariables();
 
             InitContent();
         }
@@ -82,11 +83,6 @@ namespace ACVN
         private string clearPath(string path)
         {
             return Regex.Replace(path, @"_", "/");
-        }
-
-        public static string Test2()
-        {
-            return "test123";
         }
 
         /* CONTENT HANDLING */
@@ -116,7 +112,6 @@ namespace ACVN
                                 if (blockName == currentAction)
                                 {
                                     blockContent = RenderTemplate(blockContent);
-                                    gameTime = jsEngine.GetValue("gameTime").ToObject<DateTime>();
                                     ShowRandomMedia(clearPath(currentRoom) + "/" + (currentAction == "start" ? "" : clearPath(currentAction)));
                                     ParseRooms(blockContent);
                                     ParseContent(blockContent);
@@ -145,19 +140,32 @@ namespace ACVN
 
         private string RenderTemplate(string content)
         {
-            string pattern = @"{{(.*?)}}";
-            return Regex.Replace(content, pattern, match =>
+            UpdateTemplateVariables();
+
+            var template = Template.Parse(content);
+            if (template.HasErrors)
             {
-                try
-                {
-                    var result = jsEngine.Evaluate(match.Groups[1].Value).ToObject();
-                    return result != null ? result.ToString() : string.Empty;
-                }
-                catch
-                {
-                    return string.Empty;
-                }
-            }, RegexOptions.Singleline);
+                Debug.WriteLine(string.Join(Environment.NewLine, template.Messages));
+            }
+
+            var context = new TemplateContext();
+            context.PushGlobal(templateVariables);
+
+            string renderedContent = template.Render(context);
+
+            if (templateVariables.TryGetValue("gameTime", out var updatedTime) && updatedTime is DateTime dateTime)
+            {
+                gameTime = dateTime;
+            }
+
+            return renderedContent;
+        }
+
+        private void UpdateTemplateVariables()
+        {
+            templateVariables["mc"] = GetCharacter("mc");
+            templateVariables["characters"] = characters;
+            templateVariables["gameTime"] = gameTime;
         }
 
 
