@@ -1,4 +1,124 @@
 #begin start
-	You're standing inside the livingroom.
-	[[Hallway, home_hallway]]
+{{ if vars.tv_hours == null }}{{ vars.tv_hours = 0 }}{{ end }}
+{{ brother = get_character "brother" }}
+{{ bro_here = char_at "brother" "home_livingroom" }}
+Du stehst im Wohnzimmer. Es ist {{ time_str "HH:mm" }}.
+{{ if bro_here }}
+<p>{{ brother.properties.firstname }} sitzt auf der Couch und daddelt lautstark an der Konsole.</p>
+[[{{ brother.properties.firstname }} um Mitspielen bitten, home_livingroom, ask_play]]
+{{ else }}
+{{ if (char_activity "brother") != "" }}
+<p style="color:#666; font-size:11px; font-style:italic">{{ brother.properties.firstname }} ist gerade woanders – {{ char_activity "brother" }}.</p>
+{{ end }}
+{{ if vars.tv_hours < 4 }}
+[[Fernsehen, home_livingroom, watch_tv]]
+{{ else }}
+<p>Du hast heute schon {{ vars.tv_hours }} Stunden ferngesehen. Genug für heute.</p>
+{{ end }}
+{{ end }}
+[[Flur, home_hallway]]
+#end
+
+#begin watch_tv
+Du setzt dich auf die Couch und schaust eine Weile fern.
+{{ vars.tv_hours = vars.tv_hours + 1 }}
+{{ attr_change "mc" "mood" 10 }}
+{{ attr_change "mc" "energy" -5 }}
+{{ advance_time 60 }}
+<p>Eine Stunde später ist es {{ time_str "HH:mm" }}.</p>
+[[Wohnzimmer, home_livingroom]]
+#end
+
+#begin ask_play
+{{ brother = get_character "brother" }}
+{{ mood = get_attr "brother" "mood" }}
+Du tippst {{ brother.properties.firstname }} auf die Schulter. Er pausiert kurz das Spiel und schaut dich an.
+<p>"Hey, darf ich mitspielen?"</p>
+{{ if mood > 60 }}
+<p>{{ brother.properties.firstname }} zuckt mit den Schultern. "Na gut. Hol dir einen Controller."</p>
+{{ attr_change "brother" "mood" -2 }}
+[[Super!, home_livingroom, choose_mode]]
+{{ else }}
+<p>{{ brother.properties.firstname }} seufzt genervt und dreht sich wieder zum Bildschirm. "Nee. Ich will grade meine Ruhe."</p>
+{{ attr_change "mc" "mood" -3 }}
+[[Okay..., home_livingroom]]
+{{ end }}
+#end
+
+#begin choose_mode
+{{ brother = get_character "brother" }}
+Du setzt dich neben {{ brother.properties.firstname }} und schnappst dir einen Controller.
+<p>Wie gehst du das an?</p>
+[[Ich gebe alles! <small style="color:#888">(60 % Siegeschance)</small>, home_livingroom, play_serious]]
+[[Nur zum Spaß <small style="color:#888">(25 % Siegeschance)</small>, home_livingroom, play_fun]]
+#end
+
+#begin play_serious
+{{ vars.play_roll = random_int 1 100 }}
+{{ if vars.play_roll > 40 }}
+[[Spielen!, home_livingroom, outcome_win_serious]]
+{{ else }}
+[[Spielen!, home_livingroom, outcome_lose_serious]]
+{{ end }}
+#end
+
+#begin play_fun
+{{ vars.play_roll = random_int 1 100 }}
+{{ if vars.play_roll > 75 }}
+[[Spielen!, home_livingroom, outcome_win_fun]]
+{{ else }}
+[[Spielen!, home_livingroom, outcome_lose_fun]]
+{{ end }}
+#end
+
+#begin outcome_win_serious
+{{ brother = get_character "brother" }}
+{{ advance_time 30 }}
+{{ attr_change "mc" "mood" 20 }}
+{{ attr_change "brother" "mood" -8 }}
+<p>Ihr spielt gut eine halbe Stunde. Du gibst wirklich alles – und es zahlt sich aus.</p>
+<p style="color:#4CAF50; font-weight:bold">🏆 Du gewinnst!</p>
+<p>{{ brother.properties.firstname }} legt schnaubend den Controller hin. "Anfängerglück. Beim nächsten Mal nicht mehr."</p>
+<p>Du lehnst dich grinsend zurück. Es fühlt sich wirklich gut an.</p>
+[[Nochmal!, home_livingroom, choose_mode]]
+[[Reicht für heute, home_livingroom]]
+#end
+
+#begin outcome_lose_serious
+{{ brother = get_character "brother" }}
+{{ advance_time 30 }}
+{{ attr_change "mc" "mood" -8 }}
+{{ attr_change "brother" "mood" 5 }}
+<p>Du gibst alles – aber {{ brother.properties.firstname }} ist einfach zu gut. Nach einer halben Stunde ist es vorbei.</p>
+<p style="color:#F44336; font-weight:bold">Du verlierst.</p>
+<p>{{ brother.properties.firstname }} grinst. "Du solltest vielleicht mehr üben."</p>
+<p>Ärgerlich. Heute war es nicht dein Tag.</p>
+[[Nochmal!, home_livingroom, choose_mode]]
+[[Aufgeben, home_livingroom]]
+#end
+
+#begin outcome_win_fun
+{{ brother = get_character "brother" }}
+{{ advance_time 30 }}
+{{ attr_change "mc" "mood" 12 }}
+{{ attr_change "brother" "mood" -3 }}
+<p>Du spielst locker und ohne Druck – und irgendwie läuft heute alles perfekt.</p>
+<p style="color:#4CAF50; font-weight:bold">🏆 Du gewinnst!</p>
+<p>Selbst {{ brother.properties.firstname }} muss kurz lachen. "Na, da hat dich wohl der Glücksgott geliebt."</p>
+<p>Ein schöner, entspannter Sieg. Manchmal reicht es, einfach dabei zu sein.</p>
+[[Nochmal!, home_livingroom, choose_mode]]
+[[Reicht für heute, home_livingroom]]
+#end
+
+#begin outcome_lose_fun
+{{ brother = get_character "brother" }}
+{{ advance_time 30 }}
+{{ attr_change "mc" "mood" 5 }}
+{{ attr_change "brother" "mood" 3 }}
+<p>Ihr spielt eine entspannte Runde. Kein Stress, kein Ehrgeiz – einfach spielen.</p>
+<p style="color:#FF9800; font-weight:bold">Du verlierst – aber das war auch okay so.</p>
+<p>{{ brother.properties.firstname }} entspannt sich sichtlich. "Ganz nett, für heute Abend."</p>
+<p>Kein Drama. Es hat trotzdem Spaß gemacht.</p>
+[[Nochmal!, home_livingroom, choose_mode]]
+[[Passt, home_livingroom]]
 #end

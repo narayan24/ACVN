@@ -1,4 +1,20 @@
 #begin start
-	You're standing inside the kitchen.
-	[[Hallway, home_hallway]]
+{{ if vars.meals_today == null }}{{ vars.meals_today = 0 }}{{ end }}
+Du stehst in der Küche. Es ist {{ time_str "HH:mm" }}.
+[[Flur, home_hallway]]
+{{ if vars.meals_today < 3 }}
+[[Etwas essen, home_kitchen, eat]]
+{{ else }}
+<p>Du hast heute schon {{ vars.meals_today }} mal gegessen. Du bist satt.</p>
+{{ end }}
+#end
+
+#begin eat
+Du kochst dir schnell etwas und isst.
+{{ vars.meals_today = vars.meals_today + 1 }}
+{{ attr_change "mc" "hunger" 30 }}
+{{ attr_change "mc" "energy" 10 }}
+{{ advance_time 20 }}
+<p>Gut gegessen! Es ist jetzt {{ time_str "HH:mm" }}.</p>
+[[Küche, home_kitchen]]
 #end

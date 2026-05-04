@@ -1,8 +1,8 @@
 #begin start
-	You're standing inside the hallway of your apartment.
-	[[Bedroom, home_room]]
-	[[Bathroom, home_bathroom]]
-	[[Kitchen, home_kitchen]]
-	[[Livingroom, home_livingroom]]
-	[[Your brothers room, home_brother]]
+Du stehst im Flur deiner Wohnung. Es ist {{ time_str "HH:mm" }}.
+[[Schlafzimmer, home_room]]
+[[Badezimmer, home_bathroom]]
+[[Küche, home_kitchen]]
+[[Wohnzimmer, home_livingroom]]
+[[Zimmer von {{ get_character("brother").properties.firstname }}, home_brother]]
 #end

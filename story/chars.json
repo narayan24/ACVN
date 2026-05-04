@@ -8,26 +8,25 @@
 			"relation": "mc",
 			"age": 18,
 			"gender": "female",
-			"attributes": 
-			{
-				"energy": {
-					"min": 0,
-					"max": 100,
-					"value": 67,
-					"name": "Energy"
-				},
-				"hunger": {
-					"min": 0,
-					"max": 100,
-					"value": 100,
-					"name": "Hunger"
-				},
-				"hygiene": {
-					"min": 0,
-					"max": 100,
-					"value": 30,
-					"name": "Hygiene"
-				}
+			"attributes": {
+				"health":     { "min": 0, "max": 100, "value": 100, "name": "Health" },
+				"energy":     { "min": 0, "max": 100, "value": 67,  "name": "Energy" },
+				"hunger":     { "min": 0, "max": 100, "value": 80,  "name": "Hunger" },
+				"hygiene":    { "min": 0, "max": 100, "value": 30,  "name": "Hygiene" },
+				"willpower":  { "min": 0, "max": 100, "value": 60,  "name": "Willpower" },
+				"stamina":    { "min": 0, "max": 100, "value": 70,  "name": "Stamina" },
+				"mood":       { "min": 0, "max": 100, "value": 55,  "name": "Mood" },
+
+				"inhibition":    { "min": 0, "max": 100, "value": 70, "name": "Inhibition",    "hidden": true },
+				"strength":      { "min": 0, "max": 100, "value": 30, "name": "Strength",      "hidden": true },
+				"agility":       { "min": 0, "max": 100, "value": 50, "name": "Agility",       "hidden": true },
+				"endurance":     { "min": 0, "max": 100, "value": 45, "name": "Endurance",     "hidden": true },
+				"intelligence":  { "min": 0, "max": 100, "value": 65, "name": "Intelligence",  "hidden": true },
+				"spirit":        { "min": 0, "max": 100, "value": 50, "name": "Spirit",        "hidden": true },
+				"reaction":      { "min": 0, "max": 100, "value": 55, "name": "Reaction",      "hidden": true },
+				"charisma":      { "min": 0, "max": 100, "value": 60, "name": "Charisma",      "hidden": true },
+				"perception":    { "min": 0, "max": 100, "value": 55, "name": "Perception",    "hidden": true },
+				"attractiveness":{ "min": 0, "max": 100, "value": 70, "name": "Attractiveness","hidden": true }
 			}
 		},
 		{
@@ -37,16 +36,10 @@
 			"nickname": "Rob",
 			"relation": "brother",
 			"age": 18,
-			"gender": "female",
-			"relationship": "20",
-			"attributes": 
-			{
-				"energy": {
-					"min": 0,
-					"max": 100,
-					"value": 100,
-					"name": "Energy"
-				}
+			"gender": "male",
+			"relationship": 20,
+			"attributes": {
+				"energy": { "min": 0, "max": 100, "value": 100, "name": "Energy" }
 			}
 		}
 	]

@@ -1,4 +1,19 @@
 #begin start
-	You're standing inside your brothers room.
-	[[Hallway, home_hallway]]
+{{ brother = get_character "brother" }}
+Du stehst im Zimmer von {{ brother.properties.firstname }}.
+<p>
+    Dein {{ brother.properties.relation }}, {{ brother.properties.firstname }},
+    ist {{ brother.properties.age }} Jahre alt.
+</p>
+[[Flur, home_hallway]]
+[[Mit {{ brother.properties.firstname }} reden, home_brother, talk]]
+#end
+
+#begin talk
+{{ brother = get_character "brother" }}
+Du redest eine Weile mit {{ brother.properties.firstname }}.
+{{ advance_time 10 }}
+{{ attr_change "mc" "mood" 5 }}
+<p>Es ist jetzt {{ time_str "HH:mm" }}.</p>
+[[Zimmer von {{ brother.properties.firstname }}, home_brother]]
 #end

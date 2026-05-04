@@ -1,11 +1,21 @@
 #begin start
-	<h1>Welcome to Project "LiveSim"</h1>
-	
-	<p>
-	At the bottom you find a row of buttons. Right now there is only one. But these buttons represent the rooms or places you can walk into.
-	So let's say you are inside a hallway, you'll find at least two or more buttons that lead in other rooms like a bathroom, a livingroom or something else.
-	I think you get the idea. ;)
-	</p>
-	[[Look around, home_room]]
+<h1>LiveSim</h1>
+<p>
+    Hallo, {{ mc.properties.firstname }}! Willkommen zurück.
+</p>
+<p>
+    Die Buttons unten zeigen dir die Räume und Aktionen, die du gerade aufrufen kannst.
+    Erkunde deine Wohnung und finde heraus, was der Tag bringt.
+</p>
+<p style="color:#666; font-size:0.85em;">
+    Es ist {{ time_str "dddd, dd. MMMM yyyy – HH:mm" }}.
+</p>
+{{ if (quest_step "tutorial") == -1 }}{{ start_quest "tutorial" }}{{ end }}
+{{ if quest_active "tutorial" }}
+<p style="color:#F5A623; font-size:0.9em;">📋 Aufgabe: {{ quest_objective "tutorial" }}</p>
+{{ end }}
+{{ if quest_done "tutorial" }}
+<p style="color:#55AA55; font-size:0.9em;">✓ Tutorial abgeschlossen!</p>
+{{ end }}
+[[Los geht's, home_room]]
 #end
-

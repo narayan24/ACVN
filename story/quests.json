@@ -1,0 +1,14 @@
+{
+  "quests": [
+    {
+      "id": "tutorial",
+      "name": "Erste Schritte",
+      "hint": "Gehe zum Schreibtisch in deinem Zimmer.",
+      "steps": [
+        { "id": "pickup_phone",    "description": "Nimm das Telefon vom Schreibtisch auf!" },
+        { "id": "go_to_bathroom",  "description": "Geh ins Badezimmer!" },
+        { "id": "shower_and_brush","description": "Dusche und putz dir die Zähne!" }
+      ]
+    }
+  ]
+}

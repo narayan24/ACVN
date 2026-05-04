@@ -1,49 +1,80 @@
 {
-    "items": [
-        {
-            "type": "clothing",
-            "subtype": "shirt",
-            "name": "T-Shirt",
-            "price": 10,
-            "condition": 100,
-            "quantity": 1
-        },
-        {
-            "type": "clothing",
-            "subtype": "bra",
-            "name": "Simple white bra",
-            "price": 10,
-            "condition": 100,
-            "quantity": 1
-        },
-        {
-            "type": "clothing",
-            "subtype": "panties",
-            "name": "Simple white panties",
-            "price": 10,
-            "condition": 100,
-            "quantity": 1
-        },
-        {
-            "type": "inventory",
-            "name": "Condoms",
-            "price": 5,
-            "condition": 100,
-            "quantity": 10
-        },
-        {
-            "type": "food",
-            "name": "Pizza",
-            "price": 10,
-            "condition": 100,
-            "quantity": 1
-        },
-        {
-            "type": "inventory",
-            "name": "Razor",
-            "price": 5,
-            "condition": 100,
-            "quantity": 1
-        }
-    ]
+  "items": [
+    {
+      "id": "tshirt",
+      "type": "clothing",
+      "subtype": "top",
+      "name": "T-Shirt",
+      "starting_quantity": 1,
+      "description": "Ein T-Shirt"
+    },
+    {
+      "id": "bra",
+      "type": "clothing",
+      "subtype": "bra",
+      "name": "BH (weiß)",
+      "starting_quantity": 1,
+      "description": "Ein weißer BH."
+    },
+    {
+      "id": "panties",
+      "type": "clothing",
+      "subtype": "panties",
+      "name": "Unterhose (weiß)",
+      "starting_quantity": 1,
+      "description": "Eine weiße Unterhose."
+    },
+    {
+      "id": "socks",
+      "type": "clothing",
+      "subtype": "socks",
+      "name": "Sportsocken",
+      "starting_quantity": 1,
+      "description": "Weiße Sportsocken."
+    },
+    {
+      "id": "jeans",
+      "type": "clothing",
+      "subtype": "bottom",
+      "name": "Jeans",
+      "starting_quantity": 1,
+      "description": "Eine blaue Jeans."
+    },
+    {
+      "id": "hoodie",
+      "type": "clothing",
+      "subtype": "jacket",
+      "name": "Hoodie",
+      "starting_quantity": 1,
+      "description": "Ein grauer Hoodie."
+    },
+    {
+      "id": "condom",
+      "type": "inventory",
+      "name": "Kondom",
+      "starting_quantity": 10,
+      "description": "Ein Kondom in normaler Größe."
+    },
+    {
+      "id": "pizza",
+      "type": "food",
+      "name": "Pizza",
+      "starting_quantity": 1,
+      "description": "Eine Pizza."
+    },
+    {
+      "id": "razor",
+      "type": "inventory",
+      "name": "Rasierer",
+      "starting_quantity": 0,
+      "description": "Ein Rasierer."
+    },
+    {
+      "id": "phone",
+      "type": "inventory",
+      "name": "Smartphone",
+      "starting_quantity": 0,
+      "description": "Dein Smartphone."
+    }
+  ]
 }

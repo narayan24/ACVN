@@ -1,22 +1,47 @@
 #begin start
-{{ if(typeof numberOfShowers === 'undefined'){ numberOfShowers = 0; } }}
-        You're standing inside the bathroom.
-    <br>
-        [[Hallway, home_hallway]]
-    {{ if(numberOfShowers < 5){ return "[[Shower, home_bathroom, shower]]"; } else { return "You took " + numberOfShowers + " showers today. That's enough."; } }}
-
+{{ if vars.shower_count == null }}{{ vars.shower_count = 0 }}{{ end }}
+{{ if vars.brush_count == null }}{{ vars.brush_count = 0 }}{{ end }}
+Du stehst im Badezimmer. Es ist {{ time_str "HH:mm" }}.
+{{ if (quest_step "tutorial") == 1 }}{{ advance_quest "tutorial" }}{{ end }}
+[[Flur, home_hallway]]
+{{ if vars.shower_count < 5 }}
+[[Duschen, home_bathroom, shower]]
+{{ else }}
+<p>Du hast heute schon {{ vars.shower_count }} mal geduscht. Das reicht für heute.</p>
+{{ end }}
+{{ if vars.brush_count < 3 }}
+[[Zähne putzen, home_bathroom, brushteeth]]
+{{ else }}
+<p>Du hast die Zähne heute schon geputzt.</p>
+{{ end }}
 #end
 
 #begin shower
-    You're taking a shower.
-    {{ numberOfShowers += 1; }}
-    {{ mc.properties.attributes.energy.value.value += 5; }}
-    {{ mc.properties.attributes.hygiene.value.value += 15; }}
-    [[Dry off, home_bathroom, dryoff]]
+Du duschst dich.
+{{ vars.shower_count = vars.shower_count + 1 }}
+{{ attr_change "mc" "hygiene" 20 }}
+{{ attr_change "mc" "energy" 5 }}
+{{ attr_change "mc" "mood" 5 }}
+{{ advance_time 15 }}
+{{ if (quest_step "tutorial") == 2 }}{{ vars.tut_showered = true }}{{ end }}
+{{ if (quest_step "tutorial") == 2 && vars.tut_showered == true && vars.tut_brushed == true }}{{ advance_quest "tutorial" }}{{ end }}
+<p>Du fühlst dich frisch. Es ist jetzt {{ time_str "HH:mm" }}.</p>
+[[Abtrocknen, home_bathroom, dryoff]]
+#end
+
+#begin brushteeth
+Du putzt dir die Zähne.
+{{ vars.brush_count = vars.brush_count + 1 }}
+{{ attr_change "mc" "hygiene" 5 }}
+{{ advance_time 5 }}
+{{ if (quest_step "tutorial") == 2 }}{{ vars.tut_brushed = true }}{{ end }}
+{{ if (quest_step "tutorial") == 2 && vars.tut_showered == true && vars.tut_brushed == true }}{{ advance_quest "tutorial" }}{{ end }}
+<p>Sauber! Es ist jetzt {{ time_str "HH:mm" }}.</p>
+[[Badezimmer, home_bathroom]]
 #end
 
 #begin dryoff
-  You're drying off.
-  [[Bathroom, home_bathroom]]
+Du trocknest dich ab.
+{{ advance_time 5 }}
+[[Badezimmer, home_bathroom]]
 #end
-
