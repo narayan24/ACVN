@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using Scriban;
 using Scriban.Runtime;
 
@@ -51,6 +52,16 @@ namespace ACVN
         private string phoneCurrentRoom;
         private string phoneCurrentAction;
         private Dictionary<string, string> wornClothing = new Dictionary<string, string>();
+        private MediaPlayer _cameraPlayer;
+
+        private static string SettingsFilePath => Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory, "appsettings.json");
+
+        private class AppSettings
+        {
+            public double Volume { get; set; } = 80;
+            public bool VideoAutoplay { get; set; } = true;
+        }
 
         private static readonly string[] OuterSubtypes = { "top", "bottom", "jacket" };
         private static readonly string[] InnerSubtypes = { "bra", "panties", "socks" };
@@ -107,6 +118,7 @@ namespace ACVN
 
             InitContent();
             InitTabs();
+            LoadAppSettings();
         }
 
         private void CheckFolder(string folder)
@@ -486,11 +498,37 @@ namespace ACVN
             int pct = (int)volumeSlider.Value;
             volumeLabel.Text = pct + "%";
             mainMedia.Volume = pct / 100.0;
+            SaveAppSettings();
         }
 
         public void videoAutoplay_Changed(object sender, RoutedEventArgs e)
         {
             videoAutoplay = videoAutoplayToggle.IsChecked == true;
+            SaveAppSettings();
+        }
+
+        private void LoadAppSettings()
+        {
+            try
+            {
+                if (!File.Exists(SettingsFilePath)) return;
+                var s = JsonConvert.DeserializeObject<AppSettings>(File.ReadAllText(SettingsFilePath));
+                if (s == null) return;
+                volumeSlider.Value = s.Volume;
+                videoAutoplayToggle.IsChecked = s.VideoAutoplay;
+                videoAutoplay = s.VideoAutoplay;
+            }
+            catch { /* ignore corrupt settings */ }
+        }
+
+        private void SaveAppSettings()
+        {
+            try
+            {
+                var s = new AppSettings { Volume = volumeSlider.Value, VideoAutoplay = videoAutoplay };
+                File.WriteAllText(SettingsFilePath, JsonConvert.SerializeObject(s, Formatting.Indented));
+            }
+            catch { }
         }
 
         private void LogError(string message, string detail = null)
@@ -1646,9 +1684,23 @@ namespace ACVN
             }
             else if (VideoExtensions.Contains(Path.GetExtension(currentMediaSource.LocalPath)))
             {
-                phoneCameraHintIcon.Text = "";   // Video icon
-                phoneCameraHintText.Text = Path.GetFileName(currentMediaSource.LocalPath);
-                phoneCameraHint.Visibility = Visibility.Visible;
+                // Render video through MediaPlayer + VideoDrawing (no HWND — works inside WPF overlays)
+                _cameraPlayer = new MediaPlayer();
+                var drawing = new System.Windows.Media.VideoDrawing
+                {
+                    Player = _cameraPlayer,
+                    Rect   = new System.Windows.Rect(0, 0, 1920, 1080)
+                };
+                _cameraPlayer.MediaOpened += (s, _) =>
+                {
+                    var p = (MediaPlayer)s;
+                    if (p.NaturalVideoWidth > 0)
+                        drawing.Rect = new System.Windows.Rect(0, 0, p.NaturalVideoWidth, p.NaturalVideoHeight);
+                    p.Play();
+                };
+                _cameraPlayer.Open(currentMediaSource);
+                phoneCameraPreview.Source     = new System.Windows.Media.DrawingImage(drawing);
+                phoneCameraPreview.Visibility = Visibility.Visible;
             }
             else
             {
@@ -1659,6 +1711,14 @@ namespace ACVN
             AddPhoneCloseButton();
         }
 
+        private void StopCameraPlayer()
+        {
+            if (_cameraPlayer == null) return;
+            _cameraPlayer.Stop();
+            _cameraPlayer.Close();
+            _cameraPlayer = null;
+        }
+
         public void phoneCaptureBtn_Click(object sender, RoutedEventArgs e)
         {
             e.Handled = true;
@@ -1667,6 +1727,17 @@ namespace ACVN
             if (!savedPhotos.Contains(path))
                 savedPhotos.Add(path);
             ClosePhoneApp();
+        }
+
+        private System.Windows.Media.Imaging.BitmapSource GetVideoThumbnail(string path)
+        {
+            try
+            {
+                using var shellFile = Microsoft.WindowsAPICodePack.Shell.ShellFile.FromFilePath(path);
+                shellFile.Thumbnail.CurrentSize = new System.Windows.Size(220, 220);
+                return shellFile.Thumbnail.BitmapSource;
+            }
+            catch { return null; }
         }
 
         private void OpenPhoneMedia()
@@ -1706,37 +1777,49 @@ namespace ACVN
 
                 if (isVideo)
                 {
-                    // Dark tile with video icon + filename
-                    container.Children.Add(new Border
+                    // Try to get a system-generated thumbnail via Shell
+                    var thumb = GetVideoThumbnail(capturedPath);
+                    if (thumb != null)
                     {
-                        Background = new System.Windows.Media.SolidColorBrush(
-                            System.Windows.Media.Color.FromRgb(0x18, 0x18, 0x18))
-                    });
-                    var vStack = new StackPanel
+                        // Thumbnail image + small play-icon overlay
+                        container.Children.Add(new Image
+                        {
+                            Source  = thumb,
+                            Stretch = System.Windows.Media.Stretch.UniformToFill,
+                            Width = 110, Height = 110
+                        });
+                        container.Children.Add(new TextBlock
+                        {
+                            Text = "", // Play icon (Segoe MDL2)
+                            FontFamily = new System.Windows.Media.FontFamily("Segoe MDL2 Assets"),
+                            FontSize = 22,
+                            Foreground = System.Windows.Media.Brushes.White,
+                            HorizontalAlignment = HorizontalAlignment.Center,
+                            VerticalAlignment   = VerticalAlignment.Center,
+                            Effect = new System.Windows.Media.Effects.DropShadowEffect
+                            {
+                                Color = System.Windows.Media.Colors.Black,
+                                BlurRadius = 6, ShadowDepth = 0, Opacity = 0.8
+                            }
+                        });
+                    }
+                    else
                     {
-                        VerticalAlignment   = VerticalAlignment.Center,
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        Margin = new Thickness(4)
-                    };
-                    vStack.Children.Add(new TextBlock
-                    {
-                        Text = "",
-                        FontFamily = new System.Windows.Media.FontFamily("Segoe MDL2 Assets"),
-                        FontSize = 30, Foreground = System.Windows.Media.Brushes.White,
-                        HorizontalAlignment = HorizontalAlignment.Center
-                    });
-                    vStack.Children.Add(new TextBlock
-                    {
-                        Text = Path.GetFileName(capturedPath),
-                        FontSize = 8,
-                        Foreground = new System.Windows.Media.SolidColorBrush(
-                            System.Windows.Media.Color.FromRgb(0x77, 0x77, 0x77)),
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        TextWrapping = System.Windows.TextWrapping.Wrap,
-                        TextAlignment = System.Windows.TextAlignment.Center,
-                        Margin = new Thickness(0, 4, 0, 0)
-                    });
-                    container.Children.Add(vStack);
+                        // Fallback: dark tile with icon
+                        container.Children.Add(new Border
+                        {
+                            Background = new System.Windows.Media.SolidColorBrush(
+                                System.Windows.Media.Color.FromRgb(0x18, 0x18, 0x18))
+                        });
+                        container.Children.Add(new TextBlock
+                        {
+                            Text = "",
+                            FontFamily = new System.Windows.Media.FontFamily("Segoe MDL2 Assets"),
+                            FontSize = 30, Foreground = System.Windows.Media.Brushes.White,
+                            HorizontalAlignment = HorizontalAlignment.Center,
+                            VerticalAlignment   = VerticalAlignment.Center
+                        });
+                    }
                 }
                 else
                 {
@@ -1812,6 +1895,7 @@ namespace ACVN
 
         private void ClosePhoneApp()
         {
+            StopCameraPlayer();
             phoneCallTimer?.Stop();
             phoneAppOverlay.Visibility = Visibility.Collapsed;
             // Restore HWND-based controls
