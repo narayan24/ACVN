@@ -1,54 +1,6 @@
 {
   "items": [
     {
-      "id": "tshirt",
-      "type": "clothing",
-      "subtype": "top",
-      "name": "T-Shirt",
-      "starting_quantity": 1,
-      "description": "Ein T-Shirt"
-    },
-    {
-      "id": "bra",
-      "type": "clothing",
-      "subtype": "bra",
-      "name": "BH (weiß)",
-      "starting_quantity": 1,
-      "description": "Ein weißer BH."
-    },
-    {
-      "id": "panties",
-      "type": "clothing",
-      "subtype": "panties",
-      "name": "Unterhose (weiß)",
-      "starting_quantity": 1,
-      "description": "Eine weiße Unterhose."
-    },
-    {
-      "id": "socks",
-      "type": "clothing",
-      "subtype": "socks",
-      "name": "Sportsocken",
-      "starting_quantity": 1,
-      "description": "Weiße Sportsocken."
-    },
-    {
-      "id": "jeans",
-      "type": "clothing",
-      "subtype": "bottom",
-      "name": "Jeans",
-      "starting_quantity": 1,
-      "description": "Eine blaue Jeans."
-    },
-    {
-      "id": "hoodie",
-      "type": "clothing",
-      "subtype": "jacket",
-      "name": "Hoodie",
-      "starting_quantity": 1,
-      "description": "Ein grauer Hoodie."
-    },
-    {
       "id": "condom",
       "type": "inventory",
       "name": "Kondom",

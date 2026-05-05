@@ -42,15 +42,25 @@ Du nimmst das Telefon vom Schreibtisch.
 
 #begin bed_naked
 Du liegst nackt in deinem Bett.
+[[Schlafen, home_room, sleep]]
 [[Aufstehen, home_room]]
 #end
 
 #begin bed_underwear
 Du liegst in Unterwäsche in deinem Bett.
+[[Schlafen, home_room, sleep]]
 [[Aufstehen, home_room]]
 #end
 
 #begin bed_dressed
 Du liegst angezogen in deinem Bett.
+[[Schlafen, home_room, sleep]]
+[[Aufstehen, home_room]]
+#end
+
+#begin sleep
+{{- reset_daily -}}
+{{ advance_time 480 }}
+Du schläfst tief und traumlos. Als du aufwachst, ist es {{ time_str "HH:mm" }}.
 [[Aufstehen, home_room]]
 #end

@@ -1,9 +1,14 @@
 #begin start
-{{ if vars.shower_count == null }}{{ vars.shower_count = 0 }}{{ end }}
-{{ if vars.brush_count == null }}{{ vars.brush_count = 0 }}{{ end }}
+{{- register_daily "shower_count" 0 -}}
+{{- register_daily "brush_count" 0 -}}
+{{ bro_in_bath = char_at "brother" "home_bathroom" }}
 Du stehst im Badezimmer. Es ist {{ time_str "HH:mm" }}.
 {{ if (quest_step "tutorial") == 1 }}{{ advance_quest "tutorial" }}{{ end }}
-[[Flur, home_hallway]]
+{{ if bro_in_bath }}
+<p>Die Tür ist von innen verriegelt. Man hört das Rauschen der Dusche – {{ brother.properties.firstname }} ist gerade dran.</p>
+[[An die Tür klopfen, home_bathroom, knock_brother]]
+[[Warten, home_bathroom, wait_brother]]
+{{ else }}
 {{ if vars.shower_count < 5 }}
 [[Duschen, home_bathroom, shower]]
 {{ else }}
@@ -14,6 +19,30 @@ Du stehst im Badezimmer. Es ist {{ time_str "HH:mm" }}.
 {{ else }}
 <p>Du hast die Zähne heute schon geputzt.</p>
 {{ end }}
+{{ end }}
+[[Flur, home_hallway]]
+#end
+
+#begin knock_brother
+Du klopfst an die Badezimmertür.
+{{ roll = random_int 1 100 }}
+{{ if roll > 40 }}
+<p>"Bin gleich fertig!", ruft {{ brother.properties.firstname }} über das Duschen hinweg. Es klingt genervt, aber nicht böse.</p>
+{{ advance_time 5 }}
+{{ attr_change "mc" "mood" -1 }}
+{{ else }}
+<p>Keine Antwort – das Wasser läuft weiter. Entweder hat er dich nicht gehört, oder er ignoriert dich bewusst.</p>
+{{ advance_time 2 }}
+{{ end }}
+[[Badezimmer, home_bathroom]]
+#end
+
+#begin wait_brother
+Du lehnst dich draußen an die Wand und wartest. Ein paar Minuten später öffnet sich die Tür.
+<p>{{ brother.properties.firstname }} tritt heraus, ein Handtuch um die Schultern, und sieht dich überrascht an. "Oh. Hättest du klopfen können."</p>
+{{ advance_time 10 }}
+{{ attr_change "mc" "mood" 2 }}
+[[Badezimmer, home_bathroom]]
 #end
 
 #begin shower

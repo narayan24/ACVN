@@ -14,39 +14,151 @@ ACVN ist ein raumbasiertes Story-System, inspiriert von QSP (Quest Soft Player),
 ## Ordnerstruktur
 
 ```
-story/
-├── chars.json          Charakter-Definitionen (Attribute, Eigenschaften)
-├── items.json          Gegenstands-Katalog (id, name, type, starting_quantity)
-├── quests.json         Quest-Definitionen (id, name, steps[])
-├── style.css           CSS für alle gerenderten Räume
-├── images/             Mediendateien (Bilder, Videos)
-│   └── <raum>/
-│       └── <aktion>/   Medien, die bei dieser Aktion angezeigt werden
-└── rooms/
-    ├── start.acvn      Startbildschirm (Block "start")
-    └── <raum>/
-        └── <raum>.acvn Raumdefinition mit mehreren Blöcken
+ACVN/
+├── story/
+│   ├── chars.json          Charakter-Definitionen (Attribute, Eigenschaften)
+│   ├── items.json          Gegenstands-Katalog (id, name, type, starting_quantity)
+│   ├── clothes.json        Kleidungs-Katalog (id, subtype, inhibition, tags, …)
+│   ├── quests.json         Quest-Definitionen (id, name, steps[])
+│   ├── schedules.json      Tagesplan-Definitionen für NPCs
+│   ├── style.css           CSS für alle gerenderten Räume
+│   ├── images/             Alle Mediendateien (Bilder, Videos) — siehe unten
+│   └── rooms/
+│       ├── start.acvn      Startbildschirm (Block "start")
+│       └── <raum>.acvn     Raumdefinition mit mehreren Blöcken
+├── savegames/              Spielstände (*.acvnsave) — zur Laufzeit erstellt
+├── Localization.cs         Alle UI-Texte (DE / EN), Loc.T("key") aufrufen
+└── appsettings.json        Einstellungen (Lautstärke, Autoplay, Sprache)
 ```
 
 Unterordner unter `rooms/` und `images/` verwenden Schrägstriche in `.acvn`-Befehlen, aber Unterstriche intern.  
 `home_bathroom` → `rooms/home/bathroom.acvn`
 
-## Medien-Lookup
+---
 
-Bei jeder Aktion sucht die Engine nach Medien in:
+## Medien-Suchpfade
+
+Alle Mediendateien liegen unter `story/images/`. Je nach Kontext sucht die Engine an verschiedenen Stellen.
+
+### Szenen-Hintergrund (linke Spalte)
+
+Wird angezeigt, wenn eine Aktion geladen wird.
+
+**Muster:** `story/images/<raum>/<aktion>/`
+
+Die Engine verwendet **Hierarchie-Walking**: Wird im exakten Ordner keine Datei gefunden, steigt sie eine Ebene hoch und probiert dort — bis eine Datei gefunden oder die Wurzel erreicht wird.
+
+| Raum | Aktion | Suchreihenfolge |
+|------|--------|-----------------|
+| `start` | `start` | `story/images/start/` |
+| `home_room` | `start` | `story/images/home/room/` → `story/images/home/` |
+| `home_bathroom` | `shower` | `story/images/home/bathroom/shower/` → `story/images/home/bathroom/` → `story/images/home/` |
+
+Werden mehrere Dateien gefunden, wird eine zufällig ausgewählt. Das **Debug-Panel** (Settings → aktivieren) zeigt den tatsächlich verwendeten Pfad.
+
+Unterstützte Formate: `.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`, `.bmp`, `.mp4`, `.avi`, `.mkv`, `.wmv`, `.mov`, `.webm`, `.flv`
+
+---
+
+### Charakter-Portraits
+
+Angezeigt im Kontakte-Tab und während Telefonaten.
+
+**Pfad:** `story/images/chars/<charId>.*`
 
 ```
-story/images/<raum>/<aktion>/
+story/images/chars/brother.png
+story/images/chars/mother.jpg
 ```
 
-| Aktueller Raum | Aktion  | Gesuchter Ordner                       |
-|----------------|---------|----------------------------------------|
-| `start`        | `start` | `story/images/start/`                  |
-| `home_room`    | `start` | `story/images/home/room/`              |
-| `home_bathroom`| `shower`| `story/images/home/bathroom/shower/`   |
+Pro Charakter eine Datei. Erste gefundene Extension gewinnt (`.png` → `.jpg` → `.jpeg` → `.webp` → `.bmp`).
 
-Eine zufällige Datei aus dem Ordner wird angezeigt. Fehlt der Ordner, wird das Medienfenster ausgeblendet.  
-Das **Debug-Panel** am unteren Rand zeigt Pfade und Fehler (aktivierbar im Settings-Menü).
+---
+
+### Item-Bilder (Inventar)
+
+Angezeigt im Item-Info-Overlay (Klick auf Gegenstand).
+
+**Pfad:** `story/images/items/<itemId>.*`
+
+```
+story/images/items/condom.png
+story/images/items/pizza.jpg
+```
+
+---
+
+### Kleidungs-Bilder (Garderobe)
+
+Angezeigt in der Garderobe (Hauptansicht, Kategorie-Grid, Detailansicht).
+
+**Primärer Pfad:** Das `image`-Feld in `clothes.json`, relativ zu `story/images/`.
+
+```json
+{ "id": "swimsuit", "image": "clothes/swimsuit_special.png", ... }
+```
+
+**Fallback (automatisch):** `story/images/clothes/<clothingId>.*`
+
+```
+story/images/clothes/bra_white.png
+story/images/clothes/outfit_casual.jpg
+story/images/clothes/sneakers.webp
+```
+
+Das `image`-Feld wird zuerst geprüft. Existiert die Datei, wird sie verwendet. Sonst greift der Fallback über die Kleidungs-`id`.
+
+---
+
+### Inline-Media in Templates
+
+Scriban-Funktion `{{ inline_media "pfad/zum/ordner" }}` bettet eine zufällige Mediendatei als `<img>`-Tag in den Story-HTML ein. Verwendet dieselbe Hierarchie-Walking-Logik wie Szenen-Hintergründe.
+
+```
+{{ inline_media "park/bench" }}
+```
+Sucht: `story/images/park/bench/` → `story/images/park/` → gibt bei Misserfolg leeren String zurück.
+
+---
+
+## Kleidungssystem (`clothes.json`)
+
+| Feld | Typ | Beschreibung |
+|------|-----|-------------|
+| `id` | string | Eindeutige ID (wird für Bildsuche verwendet) |
+| `name` | string | Anzeigename |
+| `description` | string | Gezeigt in der Detailansicht |
+| `subtype` | string | `bra` \| `panties` \| `clothes` \| `shoes` |
+| `durability` | int | 0–100, für zukünftige Verschleißmechanik |
+| `daring` | int | 0–100, wie gewagt das Teil ist |
+| `inhibition` | int | MC-Hemmung muss ≤ diesem Wert sein (0 = immer tragbar) |
+| `tags` | string[] | Abfragbar mit `wearing_has_tag` / `any_clothing_has_tag` |
+| `image` | string | Optional: Pfad relativ zu `story/images/` |
+
+**Kleidungszustand:**
+- `dressed` — `clothes`-Slot belegt
+- `underwear` — nur `bra` und/oder `panties` vorhanden
+- `naked` — kein Kleidungsstück getragen
+
+**Automatisches Anziehen beim Spielstart:**  
+Die Engine zieht beim Start für jeden Slot (`bra`, `panties`, `clothes`, `shoes`) zufällig ein verfügbares Kleidungsstück an — aber **nur solche mit dem Tag `"basic"`**. Kleidung ohne diesen Tag wird beim Start ignoriert und muss im Spiel aktiv angezogen werden.
+
+---
+
+## Mehrsprachigkeit
+
+Alle UI-Texte leben in `Localization.cs` in der statischen `Loc`-Klasse.
+
+```csharp
+Loc.T("tab.status")              // einfacher String
+Loc.T("confirm.discard", name)   // mit Formatargument ({0})
+```
+
+Die Sprache wird über das Dropdown in den Einstellungen gewählt und in `appsettings.json` gespeichert.
+
+Um eine neue Sprache hinzuzufügen:
+1. `Loc.LanguageNames["fr"] = "Français";` eintragen
+2. Passendes Dictionary in `Loc._strings["fr"]` anlegen
 
 ---
 

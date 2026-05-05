@@ -25,6 +25,19 @@ public class ItemDefinition
     public int StartingQuantity { get; set; }
 }
 
+public class ClothingDefinition
+{
+    public string Id { get; set; }
+    public string Name { get; set; }
+    public string Description { get; set; }
+    public string Subtype { get; set; }          // bra | panties | clothes | shoes
+    public int Durability { get; set; } = 100;
+    public int Daring { get; set; }
+    public int Inhibition { get; set; }           // player inhibition must be <= this to wear
+    public List<string> Tags { get; set; } = new List<string>();
+    public string Image { get; set; }
+}
+
 public class QuestStepDef
 {
     public string Id { get; set; }

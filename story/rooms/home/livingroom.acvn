@@ -1,20 +1,33 @@
 #begin start
 {{ if vars.tv_hours == null }}{{ vars.tv_hours = 0 }}{{ end }}
-{{ brother = get_character "brother" }}
 {{ bro_here = char_at "brother" "home_livingroom" }}
+{{ mom_here = char_at "mother"  "home_livingroom" }}
+{{ dad_here = char_at "father"  "home_livingroom" }}
 Du stehst im Wohnzimmer. Es ist {{ time_str "HH:mm" }}.
 {{ if bro_here }}
-<p>{{ brother.properties.firstname }} sitzt auf der Couch und daddelt lautstark an der Konsole.</p>
+<p>{{ brother.properties.firstname }} sitzt auf der Couch und daddelt lautstark an der Konsole. Du hättest Lust eine Runde mit ihm zu spielen. Möchtest du ihn fragen?</p>
 [[{{ brother.properties.firstname }} um Mitspielen bitten, home_livingroom, ask_play]]
-{{ else }}
+{{ end }}
+{{ if mom_here }}
+<p>{{ mother.properties.firstname }} macht es sich auf dem Sofa bequem – {{ char_activity "mother" }}.</p>
+[[Mit {{ mother.properties.firstname }} reden, home_livingroom, chat_mother]]
+{{ end }}
+{{ if dad_here }}
+<p>{{ father.properties.firstname }} sitzt im Sessel – {{ char_activity "father" }}.</p>
+[[Mit {{ father.properties.firstname }} reden, home_livingroom, chat_father]]
+{{ end }}
+{{ if mom_here && dad_here }}
+[[Zusammen fernsehen, home_livingroom, watch_family]]
+{{ end }}
+{{ if !bro_here && !mom_here && !dad_here }}
 {{ if (char_activity "brother") != "" }}
 <p style="color:#666; font-size:11px; font-style:italic">{{ brother.properties.firstname }} ist gerade woanders – {{ char_activity "brother" }}.</p>
+{{ end }}
 {{ end }}
 {{ if vars.tv_hours < 4 }}
 [[Fernsehen, home_livingroom, watch_tv]]
 {{ else }}
 <p>Du hast heute schon {{ vars.tv_hours }} Stunden ferngesehen. Genug für heute.</p>
-{{ end }}
 {{ end }}
 [[Flur, home_hallway]]
 #end
@@ -29,12 +42,58 @@ Du setzt dich auf die Couch und schaust eine Weile fern.
 [[Wohnzimmer, home_livingroom]]
 #end
 
+#begin chat_mother
+{{ mom_mood = get_attr "mother" "mood" }}
+Du setzt dich zu {{ mother.properties.firstname }}.
+{{ if mom_mood > 65 }}
+<p>Sie lächelt, als sie dich sieht, und klopft auf den Platz neben sich. "Komm, setz dich. Ich hab dir eigentlich gar nicht richtig erzählt, wie mein Tag war."</p>
+<p>Ihr redet eine Weile – sie erzählt von einer Freundin, fragt nach dir, hört zu. Es tut gut.</p>
+{{ attr_change "mc" "mood" 12 }}
+{{ attr_change "mother" "mood" 5 }}
+{{ else }}
+<p>{{ mother.properties.firstname }} wirkt ein bisschen erschöpft. Sie lächelt trotzdem kurz. "Schöner Abend?"</p>
+<p>Das Gespräch ist kurz, aber freundlich.</p>
+{{ attr_change "mc" "mood" 5 }}
+{{ attr_change "mother" "mood" 3 }}
+{{ end }}
+{{ advance_time 15 }}
+[[Wohnzimmer, home_livingroom]]
+#end
+
+#begin chat_father
+{{ dad_mood = get_attr "father" "mood" }}
+Du setzt dich zu {{ father.properties.firstname }}.
+{{ if dad_mood > 55 }}
+<p>{{ father.properties.firstname }} stellt den Ton etwas leiser. "Na, wie läuft's?" Er klingt aufrichtig interessiert, was ihn von seinen sonst eher kargen Abenden unterscheidet.</p>
+<p>Ihr redet über dies und das. Er erzählt kurz von der Arbeit, fragt nach deinen Plänen.</p>
+{{ attr_change "mc" "mood" 8 }}
+{{ attr_change "father" "mood" 4 }}
+{{ else }}
+<p>{{ father.properties.firstname }} schaut kurz auf. "Alles okay?" Mehr kommt nicht – er wirkt müde.</p>
+{{ attr_change "mc" "mood" 3 }}
+{{ end }}
+{{ advance_time 15 }}
+[[Wohnzimmer, home_livingroom]]
+#end
+
+#begin watch_family
+Du setzt dich dazu. {{ mother.properties.firstname }} und {{ father.properties.firstname }} sitzen zusammen auf der Couch, eine Sendung läuft.
+<p>{{ mother.properties.firstname }} macht für dich Platz. "Komm, hier ist noch Platz."</p>
+<p>Ihr schaut eine Weile gemeinsam fern. Nichts Besonderes – einfach zusammen sein.</p>
+{{ advance_time 45 }}
+{{ attr_change "mc" "mood" 15 }}
+{{ attr_change "mother" "mood" 5 }}
+{{ attr_change "father" "mood" 5 }}
+[[Wohnzimmer, home_livingroom]]
+#end
+
 #begin ask_play
-{{ brother = get_character "brother" }}
 {{ mood = get_attr "brother" "mood" }}
 Du tippst {{ brother.properties.firstname }} auf die Schulter. Er pausiert kurz das Spiel und schaut dich an.
 <p>"Hey, darf ich mitspielen?"</p>
-{{ if mood > 60 }}
+{{ roll = random_int 1 100 }}
+{{ threshold = (mood > 60) ? 20 : 90 }}
+{{ if roll > threshold }}
 <p>{{ brother.properties.firstname }} zuckt mit den Schultern. "Na gut. Hol dir einen Controller."</p>
 {{ attr_change "brother" "mood" -2 }}
 [[Super!, home_livingroom, choose_mode]]
@@ -46,7 +105,6 @@ Du tippst {{ brother.properties.firstname }} auf die Schulter. Er pausiert kurz 
 #end
 
 #begin choose_mode
-{{ brother = get_character "brother" }}
 Du setzt dich neben {{ brother.properties.firstname }} und schnappst dir einen Controller.
 <p>Wie gehst du das an?</p>
 [[Ich gebe alles! <small style="color:#888">(60 % Siegeschance)</small>, home_livingroom, play_serious]]
@@ -72,7 +130,6 @@ Du setzt dich neben {{ brother.properties.firstname }} und schnappst dir einen C
 #end
 
 #begin outcome_win_serious
-{{ brother = get_character "brother" }}
 {{ advance_time 30 }}
 {{ attr_change "mc" "mood" 20 }}
 {{ attr_change "brother" "mood" -8 }}
@@ -85,7 +142,6 @@ Du setzt dich neben {{ brother.properties.firstname }} und schnappst dir einen C
 #end
 
 #begin outcome_lose_serious
-{{ brother = get_character "brother" }}
 {{ advance_time 30 }}
 {{ attr_change "mc" "mood" -8 }}
 {{ attr_change "brother" "mood" 5 }}
@@ -98,7 +154,6 @@ Du setzt dich neben {{ brother.properties.firstname }} und schnappst dir einen C
 #end
 
 #begin outcome_win_fun
-{{ brother = get_character "brother" }}
 {{ advance_time 30 }}
 {{ attr_change "mc" "mood" 12 }}
 {{ attr_change "brother" "mood" -3 }}
@@ -111,7 +166,6 @@ Du setzt dich neben {{ brother.properties.firstname }} und schnappst dir einen C
 #end
 
 #begin outcome_lose_fun
-{{ brother = get_character "brother" }}
 {{ advance_time 30 }}
 {{ attr_change "mc" "mood" 5 }}
 {{ attr_change "brother" "mood" 3 }}

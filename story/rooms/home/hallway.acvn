@@ -4,5 +4,6 @@ Du stehst im Flur deiner Wohnung. Es ist {{ time_str "HH:mm" }}.
 [[Badezimmer, home_bathroom]]
 [[Küche, home_kitchen]]
 [[Wohnzimmer, home_livingroom]]
-[[Zimmer von {{ get_character("brother").properties.firstname }}, home_brother]]
+[[Zimmer von {{ brother.properties.firstname }}, home_brother]]
+[[Elternzimmer, home_parentroom]]
 #end

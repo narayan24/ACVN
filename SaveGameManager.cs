@@ -15,6 +15,7 @@ public class GameState
     public Dictionary<string, int> Inventory { get; set; }
     public Dictionary<string, int> QuestProgress { get; set; }
     public Dictionary<string, string> WornClothing { get; set; }
+    public List<string> OwnedClothing { get; set; }
 
     public GameState()
     {
@@ -26,6 +27,7 @@ public class GameState
         Inventory = new Dictionary<string, int>();
         QuestProgress = new Dictionary<string, int>();
         WornClothing = new Dictionary<string, string>();
+        OwnedClothing = new List<string>();
     }
 }
 

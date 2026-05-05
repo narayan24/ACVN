@@ -1,16 +1,98 @@
 #begin start
-{{ brother = get_character "brother" }}
+{{ bro_here = char_at "brother" "home_brother" }}
+{{ bro_activity = char_activity "brother" }}
 Du stehst im Zimmer von {{ brother.properties.firstname }}.
-<p>
-    Dein {{ brother.properties.relation }}, {{ brother.properties.firstname }},
-    ist {{ brother.properties.age }} Jahre alt.
-</p>
-[[Flur, home_hallway]]
+{{ if bro_here }}
+{{ if bro_activity == "schläft" || bro_activity == "schläft aus" }}
+<p>Das Zimmer ist dunkel. {{ brother.properties.firstname }} schläft, sein Atem gleichmäßig und ruhig.</p>
+[[{{ brother.properties.firstname }} wecken, home_brother, wake_up]]
+{{ else if bro_activity == "macht Hausaufgaben" }}
+<p>{{ brother.properties.firstname }} sitzt mit gerunzelter Stirn am Schreibtisch und kämpft sich durch seine Hausaufgaben. Ein paar zerknüllte Zettel liegen auf dem Boden.</p>
+[[{{ brother.properties.firstname }} ansprechen, home_brother, talk_homework]]
+[[Ihm bei den Hausaufgaben helfen, home_brother, help_homework]]
+{{ else if bro_activity == "liegt im Bett und spielt mit dem Handy" }}
+<p>{{ brother.properties.firstname }} liegt auf dem Bett und scrollt gedankenversunken durch sein Handy, völlig in seiner eigenen Welt.</p>
+[[Ihn ansprechen, home_brother, talk_phone]]
+{{ else if bro_activity == "sieht fern oder streamt" }}
+<p>{{ brother.properties.firstname }} hat sich auf dem Bett ausgestreckt und starrt auf seinen Laptop – irgendeine Serie läuft.</p>
+[[Mitkucken, home_brother, watch_together]]
+{{ else }}
+<p>{{ brother.properties.firstname }} ist hier.</p>
 [[Mit {{ brother.properties.firstname }} reden, home_brother, talk]]
+{{ end }}
+{{ else }}
+<p>Das Zimmer ist leer.</p>
+{{ if bro_activity != "" }}
+<p style="color:#666; font-size:11px; font-style:italic">{{ brother.properties.firstname }} ist gerade woanders – {{ bro_activity }}.</p>
+{{ end }}
+{{ end }}
+[[Flur, home_hallway]]
+#end
+
+#begin wake_up
+{{ bro_mood = get_attr "brother" "mood" }}
+Du schüttelst {{ brother.properties.firstname }} leicht an der Schulter.
+{{ if bro_mood > 50 }}
+<p>Er blinzelt verschlafen, brummelt etwas Unverständliches und dreht sich dann auf die andere Seite. "Mmh... noch fünf Minuten."</p>
+{{ attr_change "mc" "mood" 3 }}
+{{ else }}
+<p>Er reißt die Augen auf und sieht dich genervt an. "Was zur Hölle?! Lass mich schlafen!"</p>
+{{ attr_change "mc" "mood" -2 }}
+{{ attr_change "brother" "mood" -5 }}
+{{ end }}
+{{ advance_time 3 }}
+[[Zimmer von {{ brother.properties.firstname }}, home_brother]]
+#end
+
+#begin talk_homework
+Du klopfst an den Türrahmen. {{ brother.properties.firstname }} schaut kurz auf, ein leicht genervter Blick im Gesicht.
+<p>"Was willst du?" Er klingt angespannt, aber nicht unfreundlich.</p>
+<p>"Nichts Besonderes. Wie läuft's?"</p>
+<p>Er seufzt und lehnt sich zurück. "Mathe. Drei Aufgaben, und ich versteh die Hälfte nicht. Typisch."</p>
+<p>Ihr redet kurz, dann wendet er sich wieder seinem Heft zu.</p>
+{{ advance_time 5 }}
+{{ attr_change "mc" "mood" 3 }}
+[[Zimmer von {{ brother.properties.firstname }}, home_brother]]
+#end
+
+#begin help_homework
+Du setzt dich neben {{ brother.properties.firstname }} und schaust dir die Aufgaben an.
+{{ roll = random_int 1 100 }}
+{{ if roll > 35 }}
+<p>Die Aufgaben sind lösbar – du zeigst ihm Schritt für Schritt, wie es geht. {{ brother.properties.firstname }} nickt langsam, als es bei ihm klick macht.</p>
+<p>"Oh. Okay, das... macht eigentlich Sinn." Er klingt überraschend dankbar.</p>
+{{ attr_change "brother" "mood" 10 }}
+{{ attr_change "mc" "mood" 8 }}
+{{ else }}
+<p>Du schaust dir die Aufgaben an und runzelst die Stirn. Mathe war noch nie deine Stärke.</p>
+<p>{{ brother.properties.firstname }} grinst. "Siehst du? Hoffnungsloser Fall, du und ich beide."</p>
+{{ attr_change "mc" "mood" -2 }}
+{{ attr_change "brother" "mood" 3 }}
+{{ end }}
+{{ advance_time 20 }}
+[[Zimmer von {{ brother.properties.firstname }}, home_brother]]
+#end
+
+#begin talk_phone
+Du tippst {{ brother.properties.firstname }} auf den Arm. Er schaut kurz vom Display auf.
+<p>"Hm?"</p>
+<p>Ihr tauscht ein paar Worte aus – er ist halbwegs dabei, der Großteil seiner Aufmerksamkeit bleibt auf dem Bildschirm.</p>
+{{ advance_time 5 }}
+{{ attr_change "mc" "mood" 2 }}
+[[Zimmer von {{ brother.properties.firstname }}, home_brother]]
+#end
+
+#begin watch_together
+Du setzt dich auf die Bettkante und schaust mit. {{ brother.properties.firstname }} macht ein wenig Platz, ohne den Blick vom Laptop zu nehmen.
+<p>"Das ist die dritte Folge heute", sagt er beiläufig. "Wird besser."</p>
+<p>Ihr schaut eine halbe Stunde zusammen – kein großes Gespräch, einfach da sein.</p>
+{{ advance_time 30 }}
+{{ attr_change "mc" "mood" 10 }}
+{{ attr_change "brother" "mood" 5 }}
+[[Zimmer von {{ brother.properties.firstname }}, home_brother]]
 #end
 
 #begin talk
-{{ brother = get_character "brother" }}
 Du redest eine Weile mit {{ brother.properties.firstname }}.
 {{ advance_time 10 }}
 {{ attr_change "mc" "mood" 5 }}
