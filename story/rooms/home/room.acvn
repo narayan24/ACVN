@@ -63,8 +63,43 @@ You are lying in your bed fully dressed.
 #end
 
 #begin sleep
+How long do you want to sleep?
+[[Nap (30 min.), home_room, sleep_nap]]
+[[1 hour, home_room, sleep_1h]]
+[[3 hours, home_room, sleep_3h]]
+[[Until morning (07:00), home_room, sleep_night]]
+#end
+
+#begin sleep_nap
+{{ advance_time 30 }}
+You close your eyes for a short while. When you open them again it's {{ time_str "HH:mm" }}.
+<p>You feel a little more rested – not fully, but enough.</p>
+{{ attr_change "mc" "energy" 10 }}
+[[Get up, home_room]]
+#end
+
+#begin sleep_1h
+{{ advance_time 60 }}
+You drift off for an hour. When you wake up it's {{ time_str "HH:mm" }}.
+<p>Your head feels clearer.</p>
+{{ attr_change "mc" "energy" 20 }}
+[[Get up, home_room]]
+#end
+
+#begin sleep_3h
+{{ advance_time 180 }}
+You fall into a deep sleep. Three hours later you surface slowly – it's {{ time_str "HH:mm" }}.
+<p>Much better.</p>
+{{ attr_change "mc" "energy" 45 }}
+[[Get up, home_room]]
+#end
+
+#begin sleep_night
 {{- reset_daily -}}
-{{ advance_time 480 }}
-You sleep deeply and dreamlessly. When you wake up it is {{ time_str "HH:mm" }}.
+{{ advance_to_hour 7 }}
+You sleep deeply and dreamlessly through the night. When you wake up it's {{ time_str "HH:mm" }}.
+<p>A new day.</p>
+{{ attr_change "mc" "energy" 100 }}
+{{ attr_change "mc" "hunger" -30 }}
 [[Get up, home_room]]
 #end

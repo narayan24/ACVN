@@ -225,7 +225,9 @@ Buttons with 2 parts appear as room navigation (larger); 3 parts as action butto
 | Call                | Returns  | Description                                    |
 |---------------------|----------|------------------------------------------------|
 | `time_str "format"` | string   | Format current game time (`"HH:mm"` etc.)      |
+| `game_hour`         | int      | Current game hour as integer (0–23)            |
 | `advance_time N`    | *(empty)*| Advance game clock by N minutes                |
+| `advance_to_hour N` | *(empty)*| Advance clock to next occurrence of hour N (0–23); always moves forward at least to the next day if already past |
 
 ```scriban
 It is {{ time_str "HH:mm" }}.

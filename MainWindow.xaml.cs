@@ -2966,9 +2966,22 @@ namespace ACVN
             public static string TimeStr(string format)
                 => _instance.gameTime.ToString(format);
 
+            public static int GameHour()
+                => _instance.gameTime.Hour;
+
             public static string AdvanceTime(int minutes)
             {
                 _instance.gameTime = _instance.gameTime.AddMinutes(minutes);
+                return string.Empty;
+            }
+
+            public static string AdvanceToHour(int targetHour)
+            {
+                var t = _instance.gameTime;
+                var target = t.Date.AddHours(targetHour);
+                if (target <= t)
+                    target = target.AddDays(1);
+                _instance.gameTime = target;
                 return string.Empty;
             }
 
