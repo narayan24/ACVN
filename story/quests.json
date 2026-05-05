@@ -2,12 +2,12 @@
   "quests": [
     {
       "id": "tutorial",
-      "name": "Erste Schritte",
-      "hint": "Gehe zum Schreibtisch in deinem Zimmer.",
+      "name": "First Steps",
+      "hint": "Go to the desk in your room.",
       "steps": [
-        { "id": "pickup_phone",    "description": "Nimm das Telefon vom Schreibtisch auf!" },
-        { "id": "go_to_bathroom",  "description": "Geh ins Badezimmer!" },
-        { "id": "shower_and_brush","description": "Dusche und putz dir die Zähne!" }
+        { "id": "pickup_phone",    "description": "Pick up the phone from the desk!" },
+        { "id": "go_to_bathroom",  "description": "Go to the bathroom!" },
+        { "id": "shower_and_brush","description": "Shower and brush your teeth!" }
       ]
     }
   ]

@@ -3,30 +3,30 @@
     {
       "id": "condom",
       "type": "inventory",
-      "name": "Kondom",
+      "name": "Condom",
       "starting_quantity": 10,
-      "description": "Ein Kondom in normaler Größe."
+      "description": "A standard-size condom."
     },
     {
       "id": "pizza",
       "type": "food",
       "name": "Pizza",
       "starting_quantity": 1,
-      "description": "Eine Pizza."
+      "description": "A pizza."
     },
     {
       "id": "razor",
       "type": "inventory",
-      "name": "Rasierer",
+      "name": "Razor",
       "starting_quantity": 0,
-      "description": "Ein Rasierer."
+      "description": "A razor."
     },
     {
       "id": "phone",
       "type": "inventory",
       "name": "Smartphone",
       "starting_quantity": 0,
-      "description": "Dein Smartphone."
+      "description": "Your smartphone."
     }
   ]
 }

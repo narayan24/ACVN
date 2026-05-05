@@ -1,85 +1,97 @@
 # ACVN – Adaptive Creative Visual Novel
 
-## Idee
+## Concept
 
-ACVN ist ein raumbasiertes Story-System, inspiriert von QSP (Quest Soft Player), aber moderner und flexibler. Es ist ein Container mit Grundfunktionen für:
+ACVN is a room-based story system inspired by QSP (Quest Soft Player), but more modern and flexible. It is a container providing core features for:
 
-- Navigation zwischen Räumen und Aktionen
-- Charakter-Attribute mit Min/Max-Clamp
-- Persistente Story-Variablen
-- Inventar-Verwaltung
-- Quest-System mit Fortschritt
-- Automatische Medien-Erkennung (Bilder, Videos)
+- Navigation between rooms and actions
+- Character attributes with min/max clamping
+- Persistent story variables
+- Inventory management
+- Quest system with progress tracking
+- Automatic media detection (images, videos)
 
-## Ordnerstruktur
+## Folder structure
 
 ```
 ACVN/
 ├── story/
-│   ├── chars.json          Charakter-Definitionen (Attribute, Eigenschaften)
-│   ├── items.json          Gegenstands-Katalog (id, name, type, starting_quantity)
-│   ├── clothes.json        Kleidungs-Katalog (id, subtype, inhibition, tags, …)
-│   ├── quests.json         Quest-Definitionen (id, name, steps[])
-│   ├── schedules.json      Tagesplan-Definitionen für NPCs
-│   ├── style.css           CSS für alle gerenderten Räume
-│   ├── images/             Alle Mediendateien (Bilder, Videos) — siehe unten
+│   ├── chars.json          Character definitions (attributes, properties)
+│   ├── items.json          Item catalogue (id, name, type, starting_quantity)
+│   ├── clothes.json        Clothing catalogue (id, subtype, inhibition, tags, …)
+│   ├── quests.json         Quest definitions (id, name, steps[])
+│   ├── config.json         Game-level configuration (adultgame, start_room, …)
+│   ├── schedules.json      Daily schedule definitions for NPCs
+│   ├── style.css           CSS for all rendered rooms
+│   ├── images/             All media files (images, videos) — see below
 │   └── rooms/
-│       ├── start.acvn      Startbildschirm (Block "start")
-│       └── <raum>.acvn     Raumdefinition mit mehreren Blöcken
-├── savegames/              Spielstände (*.acvnsave) — zur Laufzeit erstellt
-├── Localization.cs         Alle UI-Texte (DE / EN), Loc.T("key") aufrufen
-└── appsettings.json        Einstellungen (Lautstärke, Autoplay, Sprache)
+│       ├── intro.acvn      Intro / age-check screen
+│       ├── start.acvn      Game start screen (block "start")
+│       └── <room>.acvn     Room definition with multiple blocks
+├── savegames/              Save files (*.acvnsave) — created at runtime
+├── Localization.cs         All UI texts (DE / EN), call via Loc.T("key")
+└── appsettings.json        Settings (volume, autoplay, language)
 ```
 
-Unterordner unter `rooms/` und `images/` verwenden Schrägstriche in `.acvn`-Befehlen, aber Unterstriche intern.  
+Subfolders under `rooms/` and `images/` use slashes in `.acvn` commands but underscores internally.  
 `home_bathroom` → `rooms/home/bathroom.acvn`
 
 ---
 
-## Medien-Suchpfade
+## Game configuration (`config.json`)
 
-Alle Mediendateien liegen unter `story/images/`. Je nach Kontext sucht die Engine an verschiedenen Stellen.
+| Key | Values | Description |
+|-----|--------|-------------|
+| `adultgame` | `"yes"` / `"no"` | Shows age-verification screen before setup if `"yes"` |
+| `start_room` | room id | Room to navigate to after character setup |
+| `start_action` | action name | Action within start_room (default: `"start"`) |
 
-### Szenen-Hintergrund (linke Spalte)
+---
 
-Wird angezeigt, wenn eine Aktion geladen wird.
+## Media search paths
 
-**Muster:** `story/images/<raum>/<aktion>/`
+All media files live under `story/images/`. The engine searches in different locations depending on context.
 
-Die Engine verwendet **Hierarchie-Walking**: Wird im exakten Ordner keine Datei gefunden, steigt sie eine Ebene hoch und probiert dort — bis eine Datei gefunden oder die Wurzel erreicht wird.
+### Scene background (left column)
 
-| Raum | Aktion | Suchreihenfolge |
-|------|--------|-----------------|
+Displayed when an action is loaded.
+
+**Pattern:** `story/images/<room>/<action>/`
+
+The engine uses **hierarchy walking**: if no file is found in the exact folder, it moves one level up and tries there — until a file is found or the root is reached.
+
+| Room | Action | Search order |
+|------|--------|--------------|
 | `start` | `start` | `story/images/start/` |
 | `home_room` | `start` | `story/images/home/room/` → `story/images/home/` |
 | `home_bathroom` | `shower` | `story/images/home/bathroom/shower/` → `story/images/home/bathroom/` → `story/images/home/` |
 
-Werden mehrere Dateien gefunden, wird eine zufällig ausgewählt. Das **Debug-Panel** (Settings → aktivieren) zeigt den tatsächlich verwendeten Pfad.
+If multiple files are found, one is chosen at random. The **debug panel** (Settings → enable) shows the path actually used.
 
-Unterstützte Formate: `.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`, `.bmp`, `.mp4`, `.avi`, `.mkv`, `.wmv`, `.mov`, `.webm`, `.flv`
+Supported formats: `.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`, `.bmp`, `.mp4`, `.avi`, `.mkv`, `.wmv`, `.mov`, `.webm`, `.flv`
 
 ---
 
-### Charakter-Portraits
+### Character portraits
 
-Angezeigt im Kontakte-Tab und während Telefonaten.
+Shown in the Contacts tab and during phone calls.
 
-**Pfad:** `story/images/chars/<charId>.*`
+**Path:** `story/images/chars/<charId>.*`
 
 ```
 story/images/chars/brother.png
 story/images/chars/mother.jpg
 ```
 
-Pro Charakter eine Datei. Erste gefundene Extension gewinnt (`.png` → `.jpg` → `.jpeg` → `.webp` → `.bmp`).
+One file per character. First matching extension wins (`.png` → `.jpg` → `.jpeg` → `.webp` → `.bmp`).
 
 ---
 
-### Item-Bilder (Inventar)
+### Item images (inventory)
 
-Angezeigt im Item-Info-Overlay (Klick auf Gegenstand).
+Shown in the item info overlay (click on an item).
 
-**Pfad:** `story/images/items/<itemId>.*`
+**Path:** `story/images/items/<itemId>.*`
 
 ```
 story/images/items/condom.png
@@ -88,17 +100,17 @@ story/images/items/pizza.jpg
 
 ---
 
-### Kleidungs-Bilder (Garderobe)
+### Clothing images (wardrobe)
 
-Angezeigt in der Garderobe (Hauptansicht, Kategorie-Grid, Detailansicht).
+Shown in the wardrobe (main view, category grid, detail view).
 
-**Primärer Pfad:** Das `image`-Feld in `clothes.json`, relativ zu `story/images/`.
+**Primary path:** The `image` field in `clothes.json`, relative to `story/images/`.
 
 ```json
 { "id": "swimsuit", "image": "clothes/swimsuit_special.png", ... }
 ```
 
-**Fallback (automatisch):** `story/images/clothes/<clothingId>.*`
+**Fallback (automatic):** `story/images/clothes/<clothingId>.*`
 
 ```
 story/images/clothes/bra_white.png
@@ -106,226 +118,246 @@ story/images/clothes/outfit_casual.jpg
 story/images/clothes/sneakers.webp
 ```
 
-Das `image`-Feld wird zuerst geprüft. Existiert die Datei, wird sie verwendet. Sonst greift der Fallback über die Kleidungs-`id`.
+The `image` field is checked first. If the file exists, it is used. Otherwise the fallback via the clothing `id` applies.
 
 ---
 
-### Inline-Media in Templates
+### Inline media in templates
 
-Scriban-Funktion `{{ inline_media "pfad/zum/ordner" }}` bettet eine zufällige Mediendatei als `<img>`-Tag in den Story-HTML ein. Verwendet dieselbe Hierarchie-Walking-Logik wie Szenen-Hintergründe.
+Scriban function `{{ inline_media "path/to/folder" }}` embeds a random media file as an `<img>` tag in the story HTML. Uses the same hierarchy-walking logic as scene backgrounds.
 
 ```
 {{ inline_media "park/bench" }}
 ```
-Sucht: `story/images/park/bench/` → `story/images/park/` → gibt bei Misserfolg leeren String zurück.
+Searches: `story/images/park/bench/` → `story/images/park/` → returns empty string on failure.
 
 ---
 
-## Kleidungssystem (`clothes.json`)
+## Clothing system (`clothes.json`)
 
-| Feld | Typ | Beschreibung |
-|------|-----|-------------|
-| `id` | string | Eindeutige ID (wird für Bildsuche verwendet) |
-| `name` | string | Anzeigename |
-| `description` | string | Gezeigt in der Detailansicht |
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique ID (used for image lookup) |
+| `name` | string | Display name |
+| `description` | string | Shown in the detail view |
 | `subtype` | string | `bra` \| `panties` \| `clothes` \| `shoes` |
-| `durability` | int | 0–100, für zukünftige Verschleißmechanik |
-| `daring` | int | 0–100, wie gewagt das Teil ist |
-| `inhibition` | int | MC-Hemmung muss ≤ diesem Wert sein (0 = immer tragbar) |
-| `tags` | string[] | Abfragbar mit `wearing_has_tag` / `any_clothing_has_tag` |
-| `image` | string | Optional: Pfad relativ zu `story/images/` |
+| `durability` | int | 0–100, for future wear mechanics |
+| `daring` | int | 0–100, how daring the item is |
+| `inhibition` | int | MC's inhibition must be ≤ this value (0 = always wearable) |
+| `tags` | string[] | Queryable with `wearing_has_tag` / `any_clothing_has_tag` |
+| `image` | string | Optional: path relative to `story/images/` |
 
-**Kleidungszustand:**
-- `dressed` — `clothes`-Slot belegt
-- `underwear` — nur `bra` und/oder `panties` vorhanden
-- `naked` — kein Kleidungsstück getragen
+**Clothing state:**
+- `dressed` — `clothes` slot occupied
+- `underwear` — only `bra` and/or `panties` worn
+- `naked` — no clothing worn
 
-**Automatisches Anziehen beim Spielstart:**  
-Die Engine zieht beim Start für jeden Slot (`bra`, `panties`, `clothes`, `shoes`) zufällig ein verfügbares Kleidungsstück an — aber **nur solche mit dem Tag `"basic"`**. Kleidung ohne diesen Tag wird beim Start ignoriert und muss im Spiel aktiv angezogen werden.
+**Auto-equip on game start:**  
+The engine randomly equips one available item per slot (`bra`, `panties`, `clothes`, `shoes`) at startup — but **only items tagged `"basic"`**. Clothing without this tag is ignored at startup and must be put on manually during the game.
 
 ---
 
-## Mehrsprachigkeit
+## Localisation
 
-Alle UI-Texte leben in `Localization.cs` in der statischen `Loc`-Klasse.
+All UI texts live in `Localization.cs` in the static `Loc` class.
 
 ```csharp
-Loc.T("tab.status")              // einfacher String
-Loc.T("confirm.discard", name)   // mit Formatargument ({0})
+Loc.T("tab.status")              // simple string
+Loc.T("confirm.discard", name)   // with format argument ({0})
 ```
 
-Die Sprache wird über das Dropdown in den Einstellungen gewählt und in `appsettings.json` gespeichert.
+The language is selected via the dropdown in the settings flyout and saved to `appsettings.json`.
 
-Um eine neue Sprache hinzuzufügen:
-1. `Loc.LanguageNames["fr"] = "Français";` eintragen
-2. Passendes Dictionary in `Loc._strings["fr"]` anlegen
+To add a new language:
+1. Add `Loc.LanguageNames["fr"] = "Français";`
+2. Create a matching dictionary in `Loc._strings["fr"]`
 
 ---
 
-## Template-Syntax (Scriban)
+## Template syntax (Scriban)
 
-Raum-Dateien werden mit [Scriban](https://github.com/scriban/scriban) gerendert.  
-Blöcke mit `{{ ... }}` für Ausgabe, Zuweisungen und Kontrollstrukturen.
+Room files are rendered with [Scriban](https://github.com/scriban/scriban).  
+Use `{{ ... }}` for output, assignments, and control structures.
 
-### Blöcke
+### Blocks
 
-Jeder Block beginnt mit `#begin <name>` und endet mit `#end`:
+Every block starts with `#begin <name>` and ends with `#end`:
 
 ```
 #begin start
-Inhalt des Startblocks...
+Content of the start block...
 #end
 
 #begin shower
-Inhalt der Dusch-Aktion...
+Content of the shower action...
 #end
 ```
 
-Der Standardblock beim Betreten eines Raums ist immer `start`.
+The default block when entering a room is always `start`.
 
-### Navigation / Aktions-Buttons
+### Navigation / action buttons
 
 ```
-[[Label, ziel_raum]]               # Raumwechsel (Aktion = start)
-[[Label, ziel_raum, aktion]]       # Raumwechsel + Aktion
+[[Label, target_room]]               # room change (action = start)
+[[Label, target_room, action]]       # room change + action
+[[Label, target_room, #hexcolor]]    # room change with custom button colour
 ```
 
-Buttons mit 2 Teilen erscheinen als Raumnavigation (größer), mit 3 Teilen als Aktionsbutton.
+Buttons with 2 parts appear as room navigation (larger); 3 parts as action buttons.
 
 ---
 
-## Eingebaute Variablen
+## Built-in variables
 
-| Variable    | Typ                | Beschreibung                          |
-|-------------|--------------------|---------------------------------------|
-| `mc`        | Character          | Hauptcharakter (aus `chars.json`)     |
-| `characters`| List\<Character\>  | Alle Charaktere                       |
-| `inventory` | ScriptObject       | Inventar: `inventory.phone` = Anzahl  |
-| `vars`      | ScriptObject       | Freie persistente Variablen           |
+| Variable    | Type               | Description                            |
+|-------------|--------------------|----------------------------------------|
+| `mc`        | Character          | Player character (from `chars.json`)   |
+| `characters`| List\<Character\>  | All characters                         |
+| `inventory` | ScriptObject       | Inventory: `inventory.phone` = count   |
+| `vars`      | ScriptObject       | Free persistent variables              |
 
 ---
 
-## Eingebaute Funktionen
+## Built-in functions
 
-### Zeit
+### Time
 
-| Aufruf              | Rückgabe | Beschreibung                                  |
-|---------------------|----------|-----------------------------------------------|
-| `time_str "format"` | string   | Aktuelle Spielzeit formatieren (`"HH:mm"` etc.) |
-| `advance_time N`    | *(leer)* | Spieluhr um N Minuten vorspulen               |
+| Call                | Returns  | Description                                    |
+|---------------------|----------|------------------------------------------------|
+| `time_str "format"` | string   | Format current game time (`"HH:mm"` etc.)      |
+| `advance_time N`    | *(empty)*| Advance game clock by N minutes                |
 
 ```scriban
-Es ist {{ time_str "HH:mm" }}.
+It is {{ time_str "HH:mm" }}.
 {{ advance_time 15 }}
-Eine Viertelstunde später: {{ time_str "HH:mm" }}.
+A quarter hour later: {{ time_str "HH:mm" }}.
 ```
 
-### Charaktere
+### Characters
 
-| Aufruf                      | Rückgabe  | Beschreibung                            |
+| Call                        | Returns   | Description                              |
 |-----------------------------|-----------|------------------------------------------|
-| `get_character "id"`        | Character | Charakter anhand ID laden               |
-| `attr_change "id" "attr" N` | *(leer)*  | Attribut um N verändern (min/max-Clamp) |
-| `get_attr "id" "attr"`      | int       | Aktuellen Attributwert lesen            |
-| `set_attr "id" "attr" N`    | *(leer)*  | Attribut direkt auf N setzen            |
+| `get_character "id"`        | Character | Load character by ID                     |
+| `attr_change "id" "attr" N` | *(empty)* | Change attribute by N (min/max clamped)  |
+| `get_attr "id" "attr"`      | int       | Read current attribute value             |
+| `set_attr "id" "attr" N`    | *(empty)* | Set attribute directly to N             |
 
 ```scriban
 {{ attr_change "mc" "mood" 10 }}
 {{ attr_change "mc" "energy" -5 }}
-Stimmung: {{ get_attr "mc" "mood" }}
+Mood: {{ get_attr "mc" "mood" }}
 {{ set_attr "mc" "energy" 100 }}
 ```
 
-### Inventar
+### Inventory
 
-Gegenstände werden in `items.json` definiert (id, name, type, starting_quantity).
+Items are defined in `items.json` (id, name, type, starting_quantity).
 
-| Aufruf             | Rückgabe | Beschreibung                              |
-|--------------------|----------|-------------------------------------------|
-| `add_item "id"`    | *(leer)* | Gegenstand hinzufügen (+1)                |
-| `remove_item "id"` | *(leer)* | Gegenstand entfernen (-1)                 |
-| `has_item "id"`    | bool     | Ist mindestens 1 Stück vorhanden?         |
-| `item_count "id"`  | int      | Anzahl des Gegenstands im Inventar        |
+| Call               | Returns  | Description                              |
+|--------------------|----------|------------------------------------------|
+| `add_item "id"`    | *(empty)*| Add item (+1)                            |
+| `remove_item "id"` | *(empty)*| Remove item (-1)                         |
+| `has_item "id"`    | bool     | Is at least 1 in inventory?             |
+| `item_count "id"`  | int      | Number of that item in inventory         |
 
 ```scriban
 {{ add_item "phone" }}
 {{ if has_item "phone" }}
-<p>Du hast dein Smartphone dabei.</p>
+<p>You have your smartphone with you.</p>
 {{ end }}
-{{ if (item_count "condoms") > 0 }}
-[[Kondom benutzen, home_room, use_condom]]
+{{ if (item_count "condom") > 0 }}
+[[Use condom, home_room, use_condom]]
 {{ end }}
 ```
 
-Das Inventar ist im **Inventar-Tab** (rechtes Panel) sichtbar und wird in Spielständen gespeichert.
+The inventory is visible in the **Inventory tab** (right panel) and saved with the game state.
 
 ### Quests
 
-Quests werden in `story/quests.json` definiert. Jede Quest hat eine ID, einen Namen und eine Liste von Schritten.
+Quests are defined in `story/quests.json`. Each quest has an ID, a name, and a list of steps.
 
-| Aufruf                  | Rückgabe | Beschreibung                                        |
-|-------------------------|----------|-----------------------------------------------------|
-| `start_quest "id"`      | *(leer)* | Quest starten (Schritt 0 aktiv)                     |
-| `advance_quest "id"`    | *(leer)* | Zum nächsten Schritt wechseln                       |
-| `quest_step "id"`       | int      | Aktueller Schritt-Index (-1 = nicht gestartet)      |
-| `quest_active "id"`     | bool     | Quest läuft und ist noch nicht abgeschlossen        |
-| `quest_done "id"`       | bool     | Quest abgeschlossen?                                |
-| `quest_objective "id"`  | string   | Beschreibung des aktuellen Schritts                 |
+| Call                    | Returns  | Description                                          |
+|-------------------------|----------|------------------------------------------------------|
+| `start_quest "id"`      | *(empty)*| Start quest (step 0 active)                          |
+| `advance_quest "id"`    | *(empty)*| Move to the next step                                |
+| `quest_step "id"`       | int      | Current step index (-1 = not started)                |
+| `quest_active "id"`     | bool     | Quest running and not yet complete                   |
+| `quest_done "id"`       | bool     | Quest complete?                                      |
+| `quest_objective "id"`  | string   | Description of the current step                      |
 
 ```scriban
 {{ if (quest_step "tutorial") == -1 }}{{ start_quest "tutorial" }}{{ end }}
 
 {{ if quest_active "tutorial" }}
-<p>Aufgabe: {{ quest_objective "tutorial" }}</p>
+<p>Objective: {{ quest_objective "tutorial" }}</p>
 {{ end }}
 
 {{ if quest_done "tutorial" }}
-<p>Tutorial abgeschlossen!</p>
+<p>Tutorial complete!</p>
 {{ end }}
 ```
 
-Quest-Fortschritt wird im **Journal-Tab** angezeigt und mit dem Spielstand gespeichert.
+Quest progress is shown in the **Journal tab** and saved with the game state.
 
-**`quests.json` Beispiel:**
+**`quests.json` example:**
 
 ```json
 {
   "quests": [
     {
       "id": "tutorial",
-      "name": "Erste Schritte",
+      "name": "First Steps",
       "steps": [
-        { "id": "pickup_phone",    "description": "Nimm das Telefon auf!" },
-        { "id": "go_to_bathroom",  "description": "Geh ins Badezimmer!" },
-        { "id": "shower_and_brush","description": "Dusche und putz die Zähne!" }
+        { "id": "pickup_phone",    "description": "Pick up the phone!" },
+        { "id": "go_to_bathroom",  "description": "Go to the bathroom!" },
+        { "id": "shower_and_brush","description": "Shower and brush your teeth!" }
       ]
     }
   ]
 }
 ```
 
-### Freie Variablen (vars)
+### Free variables (vars)
 
-`vars` ist ein persistentes Objekt für eigene Zustände. Zuweisungen werden mit dem Spielstand gespeichert.
+`vars` is a persistent object for custom state. Assignments are saved with the game state.
 
 ```scriban
 {{- if vars.quest_flag == null }}{{ vars.quest_flag = false }}{{ end -}}
 {{ vars.quest_flag = true }}
 {{ if vars.quest_flag == true }}
-<p>Das Flag ist gesetzt.</p>
+<p>The flag is set.</p>
 {{ end }}
 ```
 
-**Wichtig:** Nur `vars.x = ...` speichert persistent. Bloße `{{ x = 5 }}` leben nur für den aktuellen Render.
+**Important:** Only `vars.x = ...` persists. A bare `{{ x = 5 }}` only lives for the current render.
+
+### Daily variables
+
+Variables that reset automatically when the player sleeps. Use `register_daily` instead of manual null-checks.
+
+| Call                           | Returns  | Description                                        |
+|--------------------------------|----------|----------------------------------------------------|
+| `register_daily "name" default`| *(empty)*| Register as daily var and initialise if null       |
+| `reset_daily`                  | *(empty)*| Reset all registered daily vars to their defaults  |
+
+```scriban
+{{- register_daily "shower_count" 0 -}}
+
+{{ if vars.shower_count < 5 }}
+[[Shower, home_bathroom, shower]]
+{{ end }}
+```
+
+Call `reset_daily` in the `sleep` action to reset all daily vars at once.
 
 ---
 
-## Kontrollstrukturen
+## Control structures
 
 ```scriban
-{{ if bedingung }}
+{{ if condition }}
   ...
-{{ else if andere_bedingung }}
+{{ else if other_condition }}
   ...
 {{ else }}
   ...
@@ -334,50 +366,50 @@ Quest-Fortschritt wird im **Journal-Tab** angezeigt und mit dem Spielstand gespe
 
 ---
 
-## Vollständiges Beispiel – Badezimmer
+## Full example – Bathroom
 
 ```scriban
 #begin start
-{{ if vars.shower_count == null }}{{ vars.shower_count = 0 }}{{ end }}
-Du stehst im Badezimmer. Es ist {{ time_str "HH:mm" }}.
-[[Flur, home_hallway]]
+{{- register_daily "shower_count" 0 -}}
+You are in the bathroom. It is {{ time_str "HH:mm" }}.
+[[Hallway, home_hallway]]
 {{ if vars.shower_count < 5 }}
-[[Duschen, home_bathroom, shower]]
+[[Shower, home_bathroom, shower]]
 {{ else }}
-<p>Du hast heute schon {{ vars.shower_count }} mal geduscht.</p>
+<p>You've already showered {{ vars.shower_count }} times today.</p>
 {{ end }}
 #end
 
 #begin shower
-Du duschst dich.
+You take a shower.
 {{ vars.shower_count = vars.shower_count + 1 }}
 {{ attr_change "mc" "hygiene" 20 }}
 {{ attr_change "mc" "energy" 5 }}
 {{ advance_time 15 }}
-<p>Du fühlst dich frisch. Es ist {{ time_str "HH:mm" }}.</p>
-[[Abtrocknen, home_bathroom, dryoff]]
+<p>You feel fresh. It's now {{ time_str "HH:mm" }}.</p>
+[[Dry off, home_bathroom, dryoff]]
 #end
 ```
 
 ---
 
-## Speichern / Laden
+## Save / Load
 
-- **Quicksave / Quickload**: speichert/lädt in `savegames/quicksave.acvnsave`
-- **Save / Load**: Dateidialog, Format `*.acvnsave`
-- Spielstände werden mit AES-128 verschlüsselt gespeichert (nicht einfach editierbar)
-- Gespeichert werden: Spielzeit, Charakterwerte, aktueller Raum, `vars`, Inventar, Quest-Fortschritt
+- **Quicksave / Quickload**: saves/loads to `savegames/quicksave.acvnsave`
+- **Save / Load**: file dialog, format `*.acvnsave`
+- Save files are AES-128 encrypted (not easily editable)
+- Saved: game time, character values, current room, `vars`, inventory, quest progress
 
 ---
 
-## Charakter-Attribute (`chars.json`)
+## Character attributes (`chars.json`)
 
-Sichtbare Attribute erscheinen im Status-Tab. Versteckte (`"hidden": true`) werden nur intern verfolgt.
+Visible attributes appear in the Status tab. Hidden ones (`"hidden": true`) are tracked internally only.
 
 ```json
 {
   "id": "mood",
-  "name": "Stimmung",
+  "name": "Mood",
   "value": 50,
   "min": 0,
   "max": 100

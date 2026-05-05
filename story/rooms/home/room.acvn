@@ -1,66 +1,66 @@
 #begin start
-Du stehst in deinem Zimmer.
+You are standing in your room.
 <p>
-    Dein Name ist {{ mc.properties.firstname }} {{ mc.properties.lastname }},
-    du bist {{ mc.properties.age }} Jahre alt.
+    Your name is {{ mc.properties.firstname }} {{ mc.properties.lastname }},
+    you are {{ mc.properties.age }} years old.
 </p>
-[[Schreibtisch, home_room, desk]]
-[[Kleiderschrank, home_room, wardrobe]]
+[[Desk, home_room, desk]]
+[[Wardrobe, home_room, wardrobe]]
 {{ state = clothing_state }}
 {{ if state == "naked" }}
-[[Nackt ins Bett legen, home_room, bed_naked]]
+[[Lie down naked, home_room, bed_naked]]
 {{ else if state == "underwear" }}
-[[In Unterwäsche ins Bett legen, home_room, bed_underwear]]
+[[Lie down in underwear, home_room, bed_underwear]]
 {{ else }}
-[[Ins Bett legen, home_room, bed_dressed]]
+[[Go to bed, home_room, bed_dressed]]
 {{ end }}
-[[Flur, home_hallway]]
+[[Hallway, home_hallway]]
 #end
 
 #begin desk
-Du sitzt an deinem Schreibtisch.
+You sit down at your desk.
 <p>
-    Es ist {{ time_str "HH:mm" }}. Du setzt dich und arbeitest ein bisschen.
+    It's {{ time_str "HH:mm" }}. You sit down and get some work done.
 </p>
 {{ advance_time 15 }}
 <p>
-    Eine Weile später ist es {{ time_str "HH:mm" }}.
+    A while later it's {{ time_str "HH:mm" }}.
 </p>
 {{ if (item_count "phone") == 0 }}
-[[Telefon aufnehmen, home_room, pickup_phone]]
+[[Pick up phone, home_room, pickup_phone]]
 {{ end }}
-[[Aufstehen, home_room]]
+[[Get up, home_room]]
 #end
 
 #begin pickup_phone
-Du nimmst das Telefon vom Schreibtisch.
+You pick up the phone from the desk.
 {{ add_item "phone" }}
 {{ if (quest_step "tutorial") == 0 }}{{ advance_quest "tutorial" }}{{ end }}
-<p>Das Smartphone ist jetzt in deinem Inventar.</p>
-[[Schreibtisch, home_room, desk]]
+<p>The smartphone is now in your inventory.</p>
+[[Desk, home_room, desk]]
 #end
 
 #begin bed_naked
-Du liegst nackt in deinem Bett.
-[[Schlafen, home_room, sleep]]
-[[Aufstehen, home_room]]
+You are lying naked in your bed.
+[[Sleep, home_room, sleep]]
+[[Get up, home_room]]
 #end
 
 #begin bed_underwear
-Du liegst in Unterwäsche in deinem Bett.
-[[Schlafen, home_room, sleep]]
-[[Aufstehen, home_room]]
+You are lying in your bed in your underwear.
+[[Sleep, home_room, sleep]]
+[[Get up, home_room]]
 #end
 
 #begin bed_dressed
-Du liegst angezogen in deinem Bett.
-[[Schlafen, home_room, sleep]]
-[[Aufstehen, home_room]]
+You are lying in your bed fully dressed.
+[[Sleep, home_room, sleep]]
+[[Get up, home_room]]
 #end
 
 #begin sleep
 {{- reset_daily -}}
 {{ advance_time 480 }}
-Du schläfst tief und traumlos. Als du aufwachst, ist es {{ time_str "HH:mm" }}.
-[[Aufstehen, home_room]]
+You sleep deeply and dreamlessly. When you wake up it is {{ time_str "HH:mm" }}.
+[[Get up, home_room]]
 #end

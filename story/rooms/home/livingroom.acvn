@@ -1,131 +1,131 @@
 #begin start
-{{ if vars.tv_hours == null }}{{ vars.tv_hours = 0 }}{{ end }}
+{{- register_daily "tv_hours" 0 -}}
 {{ bro_here = char_at "brother" "home_livingroom" }}
 {{ mom_here = char_at "mother"  "home_livingroom" }}
 {{ dad_here = char_at "father"  "home_livingroom" }}
-Du stehst im Wohnzimmer. Es ist {{ time_str "HH:mm" }}.
+You are standing in the living room. It is {{ time_str "HH:mm" }}.
 {{ if bro_here }}
-<p>{{ brother.properties.firstname }} sitzt auf der Couch und daddelt lautstark an der Konsole. Du hättest Lust eine Runde mit ihm zu spielen. Möchtest du ihn fragen?</p>
-[[{{ brother.properties.firstname }} um Mitspielen bitten, home_livingroom, ask_play]]
+<p>{{ brother.properties.firstname }} is sitting on the couch noisily gaming on the console. You feel like playing a round with him. Want to ask?</p>
+[[Ask {{ brother.properties.firstname }} to play, home_livingroom, ask_play]]
 {{ end }}
 {{ if mom_here }}
-<p>{{ mother.properties.firstname }} macht es sich auf dem Sofa bequem – {{ char_activity "mother" }}.</p>
-[[Mit {{ mother.properties.firstname }} reden, home_livingroom, chat_mother]]
+<p>{{ mother.properties.firstname }} is making herself comfortable on the sofa – {{ char_activity "mother" }}.</p>
+[[Talk to {{ mother.properties.firstname }}, home_livingroom, chat_mother]]
 {{ end }}
 {{ if dad_here }}
-<p>{{ father.properties.firstname }} sitzt im Sessel – {{ char_activity "father" }}.</p>
-[[Mit {{ father.properties.firstname }} reden, home_livingroom, chat_father]]
+<p>{{ father.properties.firstname }} is sitting in the armchair – {{ char_activity "father" }}.</p>
+[[Talk to {{ father.properties.firstname }}, home_livingroom, chat_father]]
 {{ end }}
 {{ if mom_here && dad_here }}
-[[Zusammen fernsehen, home_livingroom, watch_family]]
+[[Watch TV together, home_livingroom, watch_family]]
 {{ end }}
 {{ if !bro_here && !mom_here && !dad_here }}
 {{ if (char_activity "brother") != "" }}
-<p style="color:#666; font-size:11px; font-style:italic">{{ brother.properties.firstname }} ist gerade woanders – {{ char_activity "brother" }}.</p>
+<p style="color:#666; font-size:11px; font-style:italic">{{ brother.properties.firstname }} is somewhere else right now – {{ char_activity "brother" }}.</p>
 {{ end }}
 {{ end }}
 {{ if vars.tv_hours < 4 }}
-[[Fernsehen, home_livingroom, watch_tv]]
+[[Watch TV, home_livingroom, watch_tv]]
 {{ else }}
-<p>Du hast heute schon {{ vars.tv_hours }} Stunden ferngesehen. Genug für heute.</p>
+<p>You've already watched {{ vars.tv_hours }} hours of TV today. That's enough.</p>
 {{ end }}
-[[Flur, home_hallway]]
+[[Hallway, home_hallway]]
 #end
 
 #begin watch_tv
-Du setzt dich auf die Couch und schaust eine Weile fern.
+You sit down on the couch and watch TV for a while.
 {{ vars.tv_hours = vars.tv_hours + 1 }}
 {{ attr_change "mc" "mood" 10 }}
 {{ attr_change "mc" "energy" -5 }}
 {{ advance_time 60 }}
-<p>Eine Stunde später ist es {{ time_str "HH:mm" }}.</p>
-[[Wohnzimmer, home_livingroom]]
+<p>An hour later it's {{ time_str "HH:mm" }}.</p>
+[[Living Room, home_livingroom]]
 #end
 
 #begin chat_mother
 {{ mom_mood = get_attr "mother" "mood" }}
-Du setzt dich zu {{ mother.properties.firstname }}.
+You sit down next to {{ mother.properties.firstname }}.
 {{ if mom_mood > 65 }}
-<p>Sie lächelt, als sie dich sieht, und klopft auf den Platz neben sich. "Komm, setz dich. Ich hab dir eigentlich gar nicht richtig erzählt, wie mein Tag war."</p>
-<p>Ihr redet eine Weile – sie erzählt von einer Freundin, fragt nach dir, hört zu. Es tut gut.</p>
+<p>She smiles when she sees you and pats the spot beside her. "Come, sit. I haven't really told you about my day yet."</p>
+<p>You talk for a while – she shares about a friend, asks about you, listens. It feels good.</p>
 {{ attr_change "mc" "mood" 12 }}
 {{ attr_change "mother" "mood" 5 }}
 {{ else }}
-<p>{{ mother.properties.firstname }} wirkt ein bisschen erschöpft. Sie lächelt trotzdem kurz. "Schöner Abend?"</p>
-<p>Das Gespräch ist kurz, aber freundlich.</p>
+<p>{{ mother.properties.firstname }} looks a little tired. She smiles briefly anyway. "Nice evening?"</p>
+<p>The conversation is short, but friendly.</p>
 {{ attr_change "mc" "mood" 5 }}
 {{ attr_change "mother" "mood" 3 }}
 {{ end }}
 {{ advance_time 15 }}
-[[Wohnzimmer, home_livingroom]]
+[[Living Room, home_livingroom]]
 #end
 
 #begin chat_father
 {{ dad_mood = get_attr "father" "mood" }}
-Du setzt dich zu {{ father.properties.firstname }}.
+You sit down next to {{ father.properties.firstname }}.
 {{ if dad_mood > 55 }}
-<p>{{ father.properties.firstname }} stellt den Ton etwas leiser. "Na, wie läuft's?" Er klingt aufrichtig interessiert, was ihn von seinen sonst eher kargen Abenden unterscheidet.</p>
-<p>Ihr redet über dies und das. Er erzählt kurz von der Arbeit, fragt nach deinen Plänen.</p>
+<p>{{ father.properties.firstname }} turns the volume down a little. "So, how's it going?" He sounds genuinely interested, which is different from his usual quiet evenings.</p>
+<p>You talk about this and that. He briefly mentions work, asks about your plans.</p>
 {{ attr_change "mc" "mood" 8 }}
 {{ attr_change "father" "mood" 4 }}
 {{ else }}
-<p>{{ father.properties.firstname }} schaut kurz auf. "Alles okay?" Mehr kommt nicht – er wirkt müde.</p>
+<p>{{ father.properties.firstname }} glances up. "Everything okay?" That's all – he looks tired.</p>
 {{ attr_change "mc" "mood" 3 }}
 {{ end }}
 {{ advance_time 15 }}
-[[Wohnzimmer, home_livingroom]]
+[[Living Room, home_livingroom]]
 #end
 
 #begin watch_family
-Du setzt dich dazu. {{ mother.properties.firstname }} und {{ father.properties.firstname }} sitzen zusammen auf der Couch, eine Sendung läuft.
-<p>{{ mother.properties.firstname }} macht für dich Platz. "Komm, hier ist noch Platz."</p>
-<p>Ihr schaut eine Weile gemeinsam fern. Nichts Besonderes – einfach zusammen sein.</p>
+You join them. {{ mother.properties.firstname }} and {{ father.properties.firstname }} are sitting together on the couch, a show playing.
+<p>{{ mother.properties.firstname }} makes room for you. "Come, there's space here."</p>
+<p>You watch together for a while. Nothing special – just being together.</p>
 {{ advance_time 45 }}
 {{ attr_change "mc" "mood" 15 }}
 {{ attr_change "mother" "mood" 5 }}
 {{ attr_change "father" "mood" 5 }}
-[[Wohnzimmer, home_livingroom]]
+[[Living Room, home_livingroom]]
 #end
 
 #begin ask_play
 {{ mood = get_attr "brother" "mood" }}
-Du tippst {{ brother.properties.firstname }} auf die Schulter. Er pausiert kurz das Spiel und schaut dich an.
-<p>"Hey, darf ich mitspielen?"</p>
+You tap {{ brother.properties.firstname }} on the shoulder. He pauses the game briefly and looks at you.
+<p>"Hey, can I play too?"</p>
 {{ roll = random_int 1 100 }}
 {{ threshold = (mood > 60) ? 20 : 90 }}
 {{ if roll > threshold }}
-<p>{{ brother.properties.firstname }} zuckt mit den Schultern. "Na gut. Hol dir einen Controller."</p>
+<p>{{ brother.properties.firstname }} shrugs. "Fine. Grab a controller."</p>
 {{ attr_change "brother" "mood" -2 }}
-[[Super!, home_livingroom, choose_mode]]
+[[Let's go!, home_livingroom, choose_mode]]
 {{ else }}
-<p>{{ brother.properties.firstname }} seufzt genervt und dreht sich wieder zum Bildschirm. "Nee. Ich will grade meine Ruhe."</p>
+<p>{{ brother.properties.firstname }} sighs irritably and turns back to the screen. "Nah. I want some peace and quiet."</p>
 {{ attr_change "mc" "mood" -3 }}
 [[Okay..., home_livingroom]]
 {{ end }}
 #end
 
 #begin choose_mode
-Du setzt dich neben {{ brother.properties.firstname }} und schnappst dir einen Controller.
-<p>Wie gehst du das an?</p>
-[[Ich gebe alles! <small style="color:#888">(60 % Siegeschance)</small>, home_livingroom, play_serious]]
-[[Nur zum Spaß <small style="color:#888">(25 % Siegeschance)</small>, home_livingroom, play_fun]]
+You sit down next to {{ brother.properties.firstname }} and grab a controller.
+<p>How do you approach this?</p>
+[[Give it everything! <small style="color:#888">(60% win chance)</small>, home_livingroom, play_serious]]
+[[Just for fun <small style="color:#888">(25% win chance)</small>, home_livingroom, play_fun]]
 #end
 
 #begin play_serious
 {{ vars.play_roll = random_int 1 100 }}
 {{ if vars.play_roll > 40 }}
-[[Spielen!, home_livingroom, outcome_win_serious]]
+[[Play!, home_livingroom, outcome_win_serious]]
 {{ else }}
-[[Spielen!, home_livingroom, outcome_lose_serious]]
+[[Play!, home_livingroom, outcome_lose_serious]]
 {{ end }}
 #end
 
 #begin play_fun
 {{ vars.play_roll = random_int 1 100 }}
 {{ if vars.play_roll > 75 }}
-[[Spielen!, home_livingroom, outcome_win_fun]]
+[[Play!, home_livingroom, outcome_win_fun]]
 {{ else }}
-[[Spielen!, home_livingroom, outcome_lose_fun]]
+[[Play!, home_livingroom, outcome_lose_fun]]
 {{ end }}
 #end
 
@@ -133,46 +133,46 @@ Du setzt dich neben {{ brother.properties.firstname }} und schnappst dir einen C
 {{ advance_time 30 }}
 {{ attr_change "mc" "mood" 20 }}
 {{ attr_change "brother" "mood" -8 }}
-<p>Ihr spielt gut eine halbe Stunde. Du gibst wirklich alles – und es zahlt sich aus.</p>
-<p style="color:#4CAF50; font-weight:bold">🏆 Du gewinnst!</p>
-<p>{{ brother.properties.firstname }} legt schnaubend den Controller hin. "Anfängerglück. Beim nächsten Mal nicht mehr."</p>
-<p>Du lehnst dich grinsend zurück. Es fühlt sich wirklich gut an.</p>
-[[Nochmal!, home_livingroom, choose_mode]]
-[[Reicht für heute, home_livingroom]]
+<p>You play for a good half hour. You give it everything – and it pays off.</p>
+<p style="color:#4CAF50; font-weight:bold">🏆 You win!</p>
+<p>{{ brother.properties.firstname }} puts the controller down with a snort. "Beginner's luck. Next time it'll be different."</p>
+<p>You lean back grinning. It feels really good.</p>
+[[Again!, home_livingroom, choose_mode]]
+[[That's enough for today, home_livingroom]]
 #end
 
 #begin outcome_lose_serious
 {{ advance_time 30 }}
 {{ attr_change "mc" "mood" -8 }}
 {{ attr_change "brother" "mood" 5 }}
-<p>Du gibst alles – aber {{ brother.properties.firstname }} ist einfach zu gut. Nach einer halben Stunde ist es vorbei.</p>
-<p style="color:#F44336; font-weight:bold">Du verlierst.</p>
-<p>{{ brother.properties.firstname }} grinst. "Du solltest vielleicht mehr üben."</p>
-<p>Ärgerlich. Heute war es nicht dein Tag.</p>
-[[Nochmal!, home_livingroom, choose_mode]]
-[[Aufgeben, home_livingroom]]
+<p>You give it everything – but {{ brother.properties.firstname }} is just too good. After half an hour, it's over.</p>
+<p style="color:#F44336; font-weight:bold">You lose.</p>
+<p>{{ brother.properties.firstname }} grins. "Maybe you should practise more."</p>
+<p>Frustrating. Today just wasn't your day.</p>
+[[Again!, home_livingroom, choose_mode]]
+[[Give up, home_livingroom]]
 #end
 
 #begin outcome_win_fun
 {{ advance_time 30 }}
 {{ attr_change "mc" "mood" 12 }}
 {{ attr_change "brother" "mood" -3 }}
-<p>Du spielst locker und ohne Druck – und irgendwie läuft heute alles perfekt.</p>
-<p style="color:#4CAF50; font-weight:bold">🏆 Du gewinnst!</p>
-<p>Selbst {{ brother.properties.firstname }} muss kurz lachen. "Na, da hat dich wohl der Glücksgott geliebt."</p>
-<p>Ein schöner, entspannter Sieg. Manchmal reicht es, einfach dabei zu sein.</p>
-[[Nochmal!, home_livingroom, choose_mode]]
-[[Reicht für heute, home_livingroom]]
+<p>You play relaxed and without pressure – and somehow everything goes perfectly today.</p>
+<p style="color:#4CAF50; font-weight:bold">🏆 You win!</p>
+<p>Even {{ brother.properties.firstname }} has to laugh for a moment. "Wow, lady luck was really on your side."</p>
+<p>A nice, easy win. Sometimes it's enough to just show up.</p>
+[[Again!, home_livingroom, choose_mode]]
+[[That's enough for today, home_livingroom]]
 #end
 
 #begin outcome_lose_fun
 {{ advance_time 30 }}
 {{ attr_change "mc" "mood" 5 }}
 {{ attr_change "brother" "mood" 3 }}
-<p>Ihr spielt eine entspannte Runde. Kein Stress, kein Ehrgeiz – einfach spielen.</p>
-<p style="color:#FF9800; font-weight:bold">Du verlierst – aber das war auch okay so.</p>
-<p>{{ brother.properties.firstname }} entspannt sich sichtlich. "Ganz nett, für heute Abend."</p>
-<p>Kein Drama. Es hat trotzdem Spaß gemacht.</p>
-[[Nochmal!, home_livingroom, choose_mode]]
-[[Passt, home_livingroom]]
+<p>You play a relaxed round. No stress, no ego – just playing.</p>
+<p style="color:#FF9800; font-weight:bold">You lose – but that's okay.</p>
+<p>{{ brother.properties.firstname }} visibly relaxes. "Pretty nice, for an evening."</p>
+<p>No drama. It was still fun.</p>
+[[Again!, home_livingroom, choose_mode]]
+[[Good enough, home_livingroom]]
 #end

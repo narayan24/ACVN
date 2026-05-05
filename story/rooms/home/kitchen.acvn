@@ -1,114 +1,114 @@
 #begin start
-{{ if vars.meals_today == null }}{{ vars.meals_today = 0 }}{{ end }}
+{{- register_daily "meals_today" 0 -}}
 {{ bro_here    = char_at "brother" "home_kitchen" }}
 {{ mom_here    = char_at "mother"  "home_kitchen" }}
 {{ dad_here    = char_at "father"  "home_kitchen" }}
 {{ anyone_here = bro_here || mom_here || dad_here }}
-Du stehst in der Küche. Es ist {{ time_str "HH:mm" }}.
+You are standing in the kitchen. It is {{ time_str "HH:mm" }}.
 {{ if anyone_here }}
 <p>
-{{ if bro_here }}{{ brother.properties.firstname }} ist hier – {{ char_activity "brother" }}.{{ end }}
-{{ if mom_here }}{{ mother.properties.firstname }} ist hier – {{ char_activity "mother" }}.{{ end }}
-{{ if dad_here }}{{ father.properties.firstname }} ist hier – {{ char_activity "father" }}.{{ end }}
+{{ if bro_here }}{{ brother.properties.firstname }} is here – {{ char_activity "brother" }}.{{ end }}
+{{ if mom_here }}{{ mother.properties.firstname }} is here – {{ char_activity "mother" }}.{{ end }}
+{{ if dad_here }}{{ father.properties.firstname }} is here – {{ char_activity "father" }}.{{ end }}
 </p>
-{{ if bro_here }}[[Dich zu {{ brother.properties.firstname }} setzen, home_kitchen, join_brother]]{{ end }}
-{{ if mom_here }}[[Mit {{ mother.properties.firstname }} reden, home_kitchen, chat_mother]]{{ end }}
-{{ if dad_here }}[[Mit {{ father.properties.firstname }} reden, home_kitchen, chat_father]]{{ end }}
+{{ if bro_here }}[[Sit with {{ brother.properties.firstname }}, home_kitchen, join_brother]]{{ end }}
+{{ if mom_here }}[[Talk to {{ mother.properties.firstname }}, home_kitchen, chat_mother]]{{ end }}
+{{ if dad_here }}[[Talk to {{ father.properties.firstname }}, home_kitchen, chat_father]]{{ end }}
 {{ end }}
 {{ if vars.meals_today < 3 }}
-[[Etwas essen, home_kitchen, eat]]
+[[Eat something, home_kitchen, eat]]
 {{ else }}
-<p>Du hast heute schon {{ vars.meals_today }} mal gegessen. Du bist satt.</p>
+<p>You've already eaten {{ vars.meals_today }} times today. You're full.</p>
 {{ end }}
-[[Flur, home_hallway]]
+[[Hallway, home_hallway]]
 #end
 
 #begin join_brother
 {{ bro_activity = char_activity "brother" }}
-Du setzt dich {{ brother.properties.firstname }} gegenüber an den Küchentisch.
-{{ if bro_activity == "frühstückt" || bro_activity == "frühstückt spät" }}
-<p>{{ brother.properties.firstname }} schiebt sich schweigend Cornflakes in den Mund und scrollt dabei mit dem Daumen durch sein Handy. Als er dich bemerkt, nickt er kurz. "Morgen."</p>
-<p>Ihr frühstückt eine Weile zusammen, ohne viel zu sagen. Es ist eine angenehme Stille.</p>
+You sit down across from {{ brother.properties.firstname }} at the kitchen table.
+{{ if bro_activity == "having breakfast" || bro_activity == "having a late breakfast" }}
+<p>{{ brother.properties.firstname }} is shovelling cornflakes into his mouth in silence while scrolling through his phone. When he notices you, he nods briefly. "Morning."</p>
+<p>You have breakfast together for a while without saying much. It's a comfortable silence.</p>
 {{ attr_change "mc" "mood" 5 }}
 {{ attr_change "mc" "hunger" 15 }}
 {{ attr_change "brother" "mood" 3 }}
 {{ vars.meals_today = vars.meals_today + 1 }}
-{{ else if bro_activity == "isst Mittag" }}
-<p>{{ brother.properties.firstname }} hat sich irgendwas aufgewärmt und isst es halb gelangweilt. "Willst du auch was? Ist noch Pasta von gestern da."</p>
-<p>Ihr esst zusammen und redet ein bisschen über den Tag.</p>
+{{ else if bro_activity == "having lunch" }}
+<p>{{ brother.properties.firstname }} has heated something up and is eating it half-heartedly. "Want some? There's leftover pasta from yesterday."</p>
+<p>You eat together and talk a bit about the day.</p>
 {{ attr_change "mc" "mood" 7 }}
 {{ attr_change "mc" "hunger" 20 }}
 {{ attr_change "brother" "mood" 4 }}
 {{ vars.meals_today = vars.meals_today + 1 }}
-{{ else if bro_activity == "isst zu Abend" }}
-<p>{{ brother.properties.firstname }} sitzt mit einem Teller am Tisch. "Mach dir auch was", sagt er, ohne aufzublicken. Ihr esst schweigend, aber es fühlt sich nicht unangenehm an.</p>
+{{ else if bro_activity == "having dinner" }}
+<p>{{ brother.properties.firstname }} is sitting at the table with a plate. "Make yourself something too," he says without looking up. You eat in silence, but it doesn't feel uncomfortable.</p>
 {{ attr_change "mc" "mood" 6 }}
 {{ attr_change "mc" "hunger" 20 }}
 {{ attr_change "brother" "mood" 3 }}
 {{ vars.meals_today = vars.meals_today + 1 }}
 {{ else }}
-<p>Ihr redet kurz in der Küche, dann geht jeder wieder seines Weges.</p>
+<p>You chat briefly in the kitchen, then go your separate ways.</p>
 {{ attr_change "mc" "mood" 3 }}
 {{ end }}
 {{ advance_time 15 }}
-[[Küche, home_kitchen]]
+[[Kitchen, home_kitchen]]
 #end
 
 #begin chat_mother
 {{ mom_activity = char_activity "mother" }}
-Du sprichst {{ mother.properties.firstname }} in der Küche an.
-{{ if mom_activity == "bereitet das Frühstück vor" }}
-<p>{{ mother.properties.firstname }} steht am Herd, rührt in einem Topf und summt leise vor sich hin. Als sie dich hört, dreht sie sich lächelnd um. "Guten Morgen, Schatz. Setz dich, ich bin gleich fertig."</p>
-<p>Sie stellt dir einen Teller hin. Es riecht gut.</p>
+You talk to {{ mother.properties.firstname }} in the kitchen.
+{{ if mom_activity == "preparing breakfast" }}
+<p>{{ mother.properties.firstname }} is standing at the stove, stirring a pot and humming softly. When she hears you, she turns around with a smile. "Good morning, sweetheart. Sit down, I'm almost done."</p>
+<p>She puts a plate in front of you. It smells good.</p>
 {{ attr_change "mc" "mood" 10 }}
 {{ attr_change "mc" "hunger" 20 }}
 {{ attr_change "mother" "mood" 5 }}
 {{ vars.meals_today = vars.meals_today + 1 }}
-{{ else if mom_activity == "kocht Mittagessen" || mom_activity == "kocht Abendessen" }}
-<p>{{ mother.properties.firstname }} hantiert zwischen Töpfen und Pfannen. "Noch zwanzig Minuten", sagt sie, ohne die Augen vom Herd zu nehmen. "Wie war dein Tag?"</p>
-<p>Ihr redet kurz, während sie kocht. Sie hört aufmerksam zu, auch wenn sie dabei weiterrührt.</p>
+{{ else if mom_activity == "cooking lunch" || mom_activity == "cooking dinner" }}
+<p>{{ mother.properties.firstname }} is busy between pots and pans. "Twenty more minutes," she says without taking her eyes off the stove. "How was your day?"</p>
+<p>You chat briefly while she cooks. She listens carefully, even while she keeps stirring.</p>
 {{ attr_change "mc" "mood" 8 }}
 {{ attr_change "mother" "mood" 4 }}
 {{ else }}
-<p>Ihr redet kurz miteinander. {{ mother.properties.firstname }} fragt, wie es dir geht, und hört wirklich zu.</p>
+<p>You talk for a moment. {{ mother.properties.firstname }} asks how you're doing and genuinely listens.</p>
 {{ attr_change "mc" "mood" 5 }}
 {{ attr_change "mother" "mood" 3 }}
 {{ end }}
 {{ advance_time 10 }}
-[[Küche, home_kitchen]]
+[[Kitchen, home_kitchen]]
 #end
 
 #begin chat_father
 {{ dad_activity = char_activity "father" }}
-Du sprichst {{ father.properties.firstname }} in der Küche an.
-{{ if dad_activity == "frühstückt" || dad_activity == "frühstückt gemütlich" }}
-<p>{{ father.properties.firstname }} sitzt mit einer Tasse Kaffee am Tisch und liest die Nachrichten auf seinem Handy. Er schaut kurz auf. "Morgen. Kaffee ist noch heiß."</p>
-<p>Ihr frühstückt kurz zusammen. Er erzählt ein bisschen von seiner Arbeit – mehr als sonst.</p>
+You talk to {{ father.properties.firstname }} in the kitchen.
+{{ if dad_activity == "having breakfast" || dad_activity == "having a leisurely breakfast" }}
+<p>{{ father.properties.firstname }} is sitting at the table with a cup of coffee, reading the news on his phone. He glances up. "Morning. Coffee's still hot."</p>
+<p>You have a quick breakfast together. He talks a little about work – more than usual.</p>
 {{ attr_change "mc" "mood" 6 }}
 {{ attr_change "mc" "hunger" 10 }}
 {{ attr_change "father" "mood" 4 }}
 {{ vars.meals_today = vars.meals_today + 1 }}
-{{ else if dad_activity == "isst zu Abend" || dad_activity == "isst Mittag" }}
-<p>{{ father.properties.firstname }} hat sich hingesetzt und isst. Er macht eine einladende Geste. "Setz dich."</p>
-<p>Ihr esst zusammen. Das Gespräch ist kurz, aber angenehm.</p>
+{{ else if dad_activity == "having dinner" || dad_activity == "having lunch" }}
+<p>{{ father.properties.firstname }} has sat down to eat. He makes a welcoming gesture. "Sit down."</p>
+<p>You eat together. The conversation is brief but pleasant.</p>
 {{ attr_change "mc" "mood" 5 }}
 {{ attr_change "mc" "hunger" 15 }}
 {{ attr_change "father" "mood" 3 }}
 {{ vars.meals_today = vars.meals_today + 1 }}
 {{ else }}
-<p>Ihr wechseln ein paar Worte. {{ father.properties.firstname }} ist freundlich, wenn auch etwas kurz angebunden.</p>
+<p>You exchange a few words. {{ father.properties.firstname }} is friendly, if a little short.</p>
 {{ attr_change "mc" "mood" 3 }}
 {{ end }}
 {{ advance_time 10 }}
-[[Küche, home_kitchen]]
+[[Kitchen, home_kitchen]]
 #end
 
 #begin eat
-Du kochst dir schnell etwas und isst.
+You quickly cook something and eat.
 {{ vars.meals_today = vars.meals_today + 1 }}
 {{ attr_change "mc" "hunger" 30 }}
 {{ attr_change "mc" "energy" 10 }}
 {{ advance_time 20 }}
-<p>Gut gegessen! Es ist jetzt {{ time_str "HH:mm" }}.</p>
-[[Küche, home_kitchen]]
+<p>That hit the spot! It's now {{ time_str "HH:mm" }}.</p>
+[[Kitchen, home_kitchen]]
 #end

@@ -548,6 +548,7 @@ namespace ACVN
                     {
                         RestoreGameState(new SaveGameManager().LoadGame(dlg.FileName));
                         mainContent.Visibility = Visibility.Visible;
+                        SetIntroLayout(false);
                         InitContent();
                     }
                     return;
@@ -557,6 +558,7 @@ namespace ACVN
                     if (!File.Exists(qpath)) { MessageBox.Show(Loc.T("confirm.noQuicksave")); return; }
                     RestoreGameState(new SaveGameManager().LoadGame(qpath));
                     mainContent.Visibility = Visibility.Visible;
+                    SetIntroLayout(false);
                     InitContent();
                     return;
 
@@ -1534,6 +1536,7 @@ namespace ACVN
             if (dialog.ShowDialog() == true)
             {
                 RestoreGameState(new SaveGameManager().LoadGame(dialog.FileName));
+                SetIntroLayout(false);
                 InitContent();
             }
         }
@@ -1553,6 +1556,7 @@ namespace ACVN
                 return;
             }
             RestoreGameState(new SaveGameManager().LoadGame(path));
+            SetIntroLayout(false);
             InitContent();
         }
 
