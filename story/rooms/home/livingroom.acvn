@@ -43,12 +43,13 @@ You sit down on the couch and watch TV for a while.
 #end
 
 #begin chat_mother
+{{ attr_change "mc" "energy" -2 }}
 {{ mom_mood = get_attr "mother" "mood" }}
 You sit down next to {{ mother.properties.firstname }}.
 {{ if mom_mood > 65 }}
 <p>She smiles when she sees you and pats the spot beside her. "Come, sit. I haven't really told you about my day yet."</p>
 <p>You talk for a while – she shares about a friend, asks about you, listens. It feels good.</p>
-{{ attr_change "mc" "mood" 12 }}
+{{ attr_change "mc" "mood" 5 }}
 {{ attr_change "mother" "mood" 5 }}
 {{ else }}
 <p>{{ mother.properties.firstname }} looks a little tired. She smiles briefly anyway. "Nice evening?"</p>
@@ -61,6 +62,7 @@ You sit down next to {{ mother.properties.firstname }}.
 #end
 
 #begin chat_father
+{{ attr_change "mc" "energy" -2 }}
 {{ dad_mood = get_attr "father" "mood" }}
 You sit down next to {{ father.properties.firstname }}.
 {{ if dad_mood > 55 }}
@@ -77,6 +79,7 @@ You sit down next to {{ father.properties.firstname }}.
 #end
 
 #begin watch_family
+{{ attr_change "mc" "energy" -2 }}
 You join them. {{ mother.properties.firstname }} and {{ father.properties.firstname }} are sitting together on the couch, a show playing.
 <p>{{ mother.properties.firstname }} makes room for you. "Come, there's space here."</p>
 <p>You watch together for a while. Nothing special – just being together.</p>
@@ -112,6 +115,8 @@ You sit down next to {{ brother.properties.firstname }} and grab a controller.
 #end
 
 #begin play_serious
+{{ attr_change "mc" "energy" -4 }}
+{{ attr_change "mc" "mood" 1 }}
 {{ vars.play_roll = random_int 1 100 }}
 {{ if vars.play_roll > 40 }}
 [[Play!, home_livingroom, outcome_win_serious]]
@@ -121,6 +126,8 @@ You sit down next to {{ brother.properties.firstname }} and grab a controller.
 #end
 
 #begin play_fun
+{{ attr_change "mc" "energy" -1 }}
+{{ attr_change "mc" "mood" 3 }}
 {{ vars.play_roll = random_int 1 100 }}
 {{ if vars.play_roll > 75 }}
 [[Play!, home_livingroom, outcome_win_fun]]
@@ -131,7 +138,7 @@ You sit down next to {{ brother.properties.firstname }} and grab a controller.
 
 #begin outcome_win_serious
 {{ advance_time 30 }}
-{{ attr_change "mc" "mood" 20 }}
+{{ attr_change "mc" "mood" 8 }}
 {{ attr_change "brother" "mood" -8 }}
 <p>You play for a good half hour. You give it everything – and it pays off.</p>
 <p style="color:#4CAF50; font-weight:bold">🏆 You win!</p>
@@ -167,7 +174,7 @@ You sit down next to {{ brother.properties.firstname }} and grab a controller.
 
 #begin outcome_lose_fun
 {{ advance_time 30 }}
-{{ attr_change "mc" "mood" 5 }}
+{{ attr_change "mc" "mood" 3 }}
 {{ attr_change "brother" "mood" 3 }}
 <p>You play a relaxed round. No stress, no ego – just playing.</p>
 <p style="color:#FF9800; font-weight:bold">You lose – but that's okay.</p>

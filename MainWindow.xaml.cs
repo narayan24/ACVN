@@ -459,6 +459,23 @@ namespace ACVN
             mainContent.NavigateToString(contentClean);
         }
 
+        private static System.Windows.Media.SolidColorBrush BarBrush(int value, int min, int max, bool invert = false)
+        {
+            double t = max == min ? 1.0 : Math.Clamp((double)(value - min) / (max - min), 0.0, 1.0);
+            if (invert) t = 1.0 - t;
+            byte r = (byte)(255 * (1 - t));
+            byte g = (byte)(180 * t);
+            return new System.Windows.Media.SolidColorBrush(
+                System.Windows.Media.Color.FromRgb(r, g, 0x00));
+        }
+
+        private static ProgressBar ColoredBar(int value, int min, int max, Thickness margin, bool invert = false)
+        {
+            var bar = new ProgressBar { Minimum = min, Maximum = max, Value = value, Margin = margin };
+            bar.Foreground = BarBrush(value, min, max, invert);
+            return bar;
+        }
+
         private void UpdateStatusBar()
         {
             Character mc = GetCharacter("mc");
@@ -503,13 +520,8 @@ namespace ACVN
                         });
 
                         wrapper.Children.Add(labelRow);
-                        wrapper.Children.Add(new ProgressBar
-                        {
-                            Minimum = min,
-                            Maximum = max,
-                            Value = value,
-                            Margin = new Thickness(0, 4, 0, 0)
-                        });
+                        bool invertBar = attribute.Key.Equals("horny", StringComparison.OrdinalIgnoreCase);
+                        wrapper.Children.Add(ColoredBar(value, min, max, new Thickness(0, 4, 0, 0), invertBar));
 
                         statusStack.Children.Add(wrapper);
                     }
@@ -1708,11 +1720,7 @@ namespace ACVN
                             HorizontalAlignment = HorizontalAlignment.Right
                         });
                         inner.Children.Add(row);
-                        inner.Children.Add(new ProgressBar
-                        {
-                            Minimum = min, Maximum = max, Value = val,
-                            Margin = new Thickness(0, 2, 0, 0)
-                        });
+                        inner.Children.Add(ColoredBar(val, min, max, new Thickness(0, 2, 0, 0)));
                     }
                 }
 
