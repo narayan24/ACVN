@@ -63,6 +63,8 @@ namespace ACVN
             public double Volume { get; set; } = 80;
             public bool VideoAutoplay { get; set; } = true;
             public string Language { get; set; } = "de";
+            public bool ShowHiddenAttributes { get; set; } = false;
+            public Dictionary<string, Dictionary<string, string>> OutfitPresets { get; set; } = new();
         }
 
         private Dictionary<string, string> _config = new Dictionary<string, string>();
@@ -74,6 +76,7 @@ namespace ACVN
         private string _wardrobeState = "main";
         private string _wardrobeCategorySelected;
         private string _wardrobeItemSelected;
+        private bool   _wardrobeReadOnly = false;
 
         private static readonly string[] ClothingSubtypes = { "bra", "panties", "clothes", "shoes" };
 
@@ -486,37 +489,58 @@ namespace ACVN
 
                 if (mc.Properties.TryGetValue("attributes", out var attributes) && attributes is JObject attributesObject)
                 {
+                    bool showHidden = showHiddenToggle.IsChecked == true;
+                    bool firstHidden = true;
+
                     foreach (var attribute in attributesObject)
                     {
                         var attributeValues = attribute.Value as JObject;
+                        bool isHidden = attributeValues?.Value<bool?>("hidden") == true;
 
-                        if (attributeValues?.Value<bool?>("hidden") == true)
+                        if (isHidden && !showHidden)
                             continue;
 
-                        int min = attributeValues.Value<int>("min");
-                        int max = attributeValues.Value<int>("max");
+                        int min   = attributeValues.Value<int>("min");
+                        int max   = attributeValues.Value<int>("max");
                         int value = attributeValues.Value<int>("value");
                         string name = attributeValues.Value<string>("name");
 
+                        // Separator before first hidden attribute
+                        if (isHidden && firstHidden)
+                        {
+                            firstHidden = false;
+                            statusStack.Children.Add(new System.Windows.Shapes.Rectangle
+                            {
+                                Height = 1,
+                                Fill   = new System.Windows.Media.SolidColorBrush(
+                                             System.Windows.Media.Color.FromRgb(0x2A, 0x2A, 0x2A)),
+                                Margin = new Thickness(0, 4, 0, 8)
+                            });
+                        }
+
                         var wrapper = new StackPanel { Margin = new Thickness(0, 0, 0, 10) };
 
-                        // Label row: attribute name left, value/max right
+                        var labelFg = isHidden
+                            ? System.Windows.Media.Color.FromRgb(0x66, 0x66, 0x66)
+                            : System.Windows.Media.Color.FromRgb(0xAB, 0xAB, 0xAB);
+                        var valueFg = isHidden
+                            ? System.Windows.Media.Color.FromRgb(0x44, 0x44, 0x44)
+                            : System.Windows.Media.Color.FromRgb(0x66, 0x66, 0x66);
+
                         var labelRow = new Grid();
                         labelRow.Children.Add(new TextBlock
                         {
                             Text = name,
                             HorizontalAlignment = HorizontalAlignment.Left,
-                            Foreground = new System.Windows.Media.SolidColorBrush(
-                                System.Windows.Media.Color.FromRgb(0xAB, 0xAB, 0xAB)),
-                            FontSize = 11
+                            Foreground = new System.Windows.Media.SolidColorBrush(labelFg),
+                            FontSize = isHidden ? 10 : 11
                         });
                         labelRow.Children.Add(new TextBlock
                         {
                             Text = $"{value} / {max}",
                             HorizontalAlignment = HorizontalAlignment.Right,
-                            Foreground = new System.Windows.Media.SolidColorBrush(
-                                System.Windows.Media.Color.FromRgb(0x66, 0x66, 0x66)),
-                            FontSize = 11
+                            Foreground = new System.Windows.Media.SolidColorBrush(valueFg),
+                            FontSize = isHidden ? 10 : 11
                         });
 
                         wrapper.Children.Add(labelRow);
@@ -595,6 +619,7 @@ namespace ACVN
 
             if (action == "wardrobe")
             {
+                _wardrobeReadOnly = false;
                 ShowWardrobe();
                 return;
             }
@@ -727,6 +752,12 @@ namespace ACVN
             SaveAppSettings();
         }
 
+        public void showHiddenToggle_Changed(object sender, RoutedEventArgs e)
+        {
+            SaveAppSettings();
+            UpdateStatusBar();
+        }
+
         private void LoadAppSettings()
         {
             try
@@ -737,6 +768,7 @@ namespace ACVN
                 volumeSlider.Value = s.Volume;
                 videoAutoplayToggle.IsChecked = s.VideoAutoplay;
                 videoAutoplay = s.VideoAutoplay;
+                showHiddenToggle.IsChecked = s.ShowHiddenAttributes;
                 if (!string.IsNullOrEmpty(s.Language))
                     Loc.SetLanguage(s.Language);
             }
@@ -748,9 +780,33 @@ namespace ACVN
             if (!_settingsReady) return;
             try
             {
-                var s = new AppSettings { Volume = volumeSlider.Value, VideoAutoplay = videoAutoplay, Language = Loc.CurrentLanguage };
-                File.WriteAllText(SettingsFilePath, JsonConvert.SerializeObject(s, Formatting.Indented));
+                var existing = ReadAppSettings();
+                existing.Volume               = volumeSlider.Value;
+                existing.VideoAutoplay        = videoAutoplay;
+                existing.Language             = Loc.CurrentLanguage;
+                existing.ShowHiddenAttributes = showHiddenToggle.IsChecked == true;
+                File.WriteAllText(SettingsFilePath, JsonConvert.SerializeObject(existing, Formatting.Indented));
             }
+            catch { }
+        }
+
+        private AppSettings ReadAppSettings()
+        {
+            try
+            {
+                if (File.Exists(SettingsFilePath))
+                {
+                    var s = JsonConvert.DeserializeObject<AppSettings>(File.ReadAllText(SettingsFilePath));
+                    if (s != null) return s;
+                }
+            }
+            catch { }
+            return new AppSettings();
+        }
+
+        private void WriteAppSettings(AppSettings s)
+        {
+            try { File.WriteAllText(SettingsFilePath, JsonConvert.SerializeObject(s, Formatting.Indented)); }
             catch { }
         }
 
@@ -1240,6 +1296,7 @@ namespace ACVN
                     {
                         _wardrobeState        = "item";
                         _wardrobeItemSelected = capturedDefId;
+                        _wardrobeReadOnly     = true;
                         ShowWardrobe(resetState: false);
                     };
                     inventoryStack.Children.Add(btn);
@@ -1750,6 +1807,8 @@ namespace ACVN
         private void ShowWardrobe(bool resetState = true)
         {
             if (resetState) _wardrobeState = "main";
+            wardrobeCard.Width  = ActualWidth  * 0.90;
+            wardrobeCard.Height = ActualHeight * 0.88;
             mainContent.Visibility = Visibility.Hidden;
             mainMedia.Visibility   = Visibility.Hidden;
             mainImage.Visibility   = Visibility.Hidden;
@@ -1760,12 +1819,17 @@ namespace ACVN
         private void CloseWardrobe()
         {
             wardrobeOverlay.Visibility = Visibility.Collapsed;
-            mainContent.Visibility = Visibility.Visible;
-            if (currentMediaSource != null)
+            if (!_wardrobeReadOnly)
+                InitContent();
+            else
             {
-                bool isVid = VideoExtensions.Contains(Path.GetExtension(currentMediaSource.LocalPath));
-                mainMedia.Visibility = isVid ? Visibility.Visible : Visibility.Collapsed;
-                mainImage.Visibility = isVid ? Visibility.Collapsed : Visibility.Visible;
+                mainContent.Visibility = Visibility.Visible;
+                if (currentMediaSource != null)
+                {
+                    bool isVid = VideoExtensions.Contains(Path.GetExtension(currentMediaSource.LocalPath));
+                    mainMedia.Visibility = isVid ? Visibility.Visible : Visibility.Collapsed;
+                    mainImage.Visibility = isVid ? Visibility.Collapsed : Visibility.Visible;
+                }
             }
         }
 
@@ -1790,15 +1854,145 @@ namespace ACVN
             grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
 
-            // Column 0 spanning all 3 rows: "clothes" (large display)
             AddWardrobeTile(grid, "clothes", row: 0, col: 0, rowSpan: 3, large: true);
-
-            // Column 1: bra / panties / shoes stacked
             AddWardrobeTile(grid, "bra",     row: 0, col: 1);
             AddWardrobeTile(grid, "panties", row: 1, col: 1);
             AddWardrobeTile(grid, "shoes",   row: 2, col: 1);
 
             wardrobeStack.Children.Add(grid);
+
+            // ── Undress all ──────────────────────────────────────────────
+            var undressBtn = new Button
+            {
+                Content    = Loc.T("wardrobe.undress_all"),
+                Margin     = new Thickness(0, 10, 0, 0),
+                Padding    = new Thickness(14, 6, 14, 6),
+                Background = new SolidColorBrush(Color.FromRgb(0x5A, 0x1A, 0x1A)),
+                Foreground = Brushes.White,
+                BorderThickness = new Thickness(0),
+                Cursor     = System.Windows.Input.Cursors.Hand,
+                HorizontalAlignment = HorizontalAlignment.Left
+            };
+            undressBtn.Click += (_, __) =>
+            {
+                wornClothing.Clear();
+                RebuildWardrobePanel();
+            };
+            wardrobeStack.Children.Add(undressBtn);
+
+            // ── Outfit presets ───────────────────────────────────────────
+            wardrobeStack.Children.Add(new TextBlock
+            {
+                Text       = Loc.T("wardrobe.outfits"),
+                FontSize   = 11,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+                Margin     = new Thickness(0, 14, 0, 4)
+            });
+
+            // Save row: text box + save button
+            var saveRow = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 8) };
+            var nameBox = new TextBox
+            {
+                Width           = 180,
+                Background      = new SolidColorBrush(Color.FromRgb(0x2A, 0x2A, 0x2A)),
+                Foreground      = Brushes.White,
+                BorderBrush     = new SolidColorBrush(Color.FromRgb(0x44, 0x44, 0x44)),
+                BorderThickness = new Thickness(1),
+                Padding         = new Thickness(6, 4, 6, 4),
+                VerticalContentAlignment = VerticalAlignment.Center
+            };
+            var saveBtn = new Button
+            {
+                Content    = Loc.T("wardrobe.save_outfit"),
+                Margin     = new Thickness(6, 0, 0, 0),
+                Padding    = new Thickness(10, 4, 10, 4),
+                Background = new SolidColorBrush(Color.FromRgb(0x1E, 0x50, 0x30)),
+                Foreground = Brushes.White,
+                BorderThickness = new Thickness(0),
+                Cursor     = System.Windows.Input.Cursors.Hand
+            };
+            saveBtn.Click += (_, __) =>
+            {
+                string name = nameBox.Text.Trim();
+                if (string.IsNullOrEmpty(name)) return;
+                var settings = ReadAppSettings();
+                settings.OutfitPresets[name] = new Dictionary<string, string>(wornClothing);
+                WriteAppSettings(settings);
+                RebuildWardrobePanel();
+            };
+            saveRow.Children.Add(nameBox);
+            saveRow.Children.Add(saveBtn);
+            wardrobeStack.Children.Add(saveRow);
+
+            // Saved preset list
+            var settings2 = ReadAppSettings();
+            foreach (var kv in settings2.OutfitPresets)
+            {
+                string presetName = kv.Key;
+                var preset        = kv.Value;
+                var row = new Border
+                {
+                    Background      = new SolidColorBrush(Color.FromRgb(0x22, 0x22, 0x22)),
+                    CornerRadius    = new CornerRadius(4),
+                    Padding         = new Thickness(8, 6, 8, 6),
+                    Margin          = new Thickness(0, 2, 0, 2),
+                    BorderBrush     = new SolidColorBrush(Color.FromRgb(0x38, 0x38, 0x38)),
+                    BorderThickness = new Thickness(1)
+                };
+                var rowPanel = new Grid();
+                rowPanel.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                rowPanel.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                rowPanel.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+                var nameLabel = new TextBlock
+                {
+                    Text              = presetName,
+                    Foreground        = Brushes.White,
+                    FontSize          = 12,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                var loadBtn = new Button
+                {
+                    Content    = Loc.T("wardrobe.load_outfit"),
+                    Margin     = new Thickness(6, 0, 4, 0),
+                    Padding    = new Thickness(8, 3, 8, 3),
+                    Background = new SolidColorBrush(Color.FromRgb(0x1A, 0x3A, 0x5A)),
+                    Foreground = Brushes.White,
+                    BorderThickness = new Thickness(0),
+                    Cursor     = System.Windows.Input.Cursors.Hand
+                };
+                loadBtn.Click += (_, __) =>
+                {
+                    wornClothing.Clear();
+                    foreach (var p in preset) wornClothing[p.Key] = p.Value;
+                    RebuildWardrobePanel();
+                };
+                var deleteBtn = new Button
+                {
+                    Content    = "✕",
+                    Padding    = new Thickness(6, 3, 6, 3),
+                    Background = new SolidColorBrush(Color.FromRgb(0x44, 0x22, 0x22)),
+                    Foreground = Brushes.White,
+                    BorderThickness = new Thickness(0),
+                    Cursor     = System.Windows.Input.Cursors.Hand
+                };
+                deleteBtn.Click += (_, __) =>
+                {
+                    var s = ReadAppSettings();
+                    s.OutfitPresets.Remove(presetName);
+                    WriteAppSettings(s);
+                    RebuildWardrobePanel();
+                };
+
+                Grid.SetColumn(nameLabel,  0);
+                Grid.SetColumn(loadBtn,    1);
+                Grid.SetColumn(deleteBtn,  2);
+                rowPanel.Children.Add(nameLabel);
+                rowPanel.Children.Add(loadBtn);
+                rowPanel.Children.Add(deleteBtn);
+                row.Child = rowPanel;
+                wardrobeStack.Children.Add(row);
+            }
         }
 
         private void AddWardrobeTile(Grid grid, string subtype, int row, int col, int rowSpan = 1, bool large = false)
@@ -1812,7 +2006,7 @@ namespace ACVN
                 Background      = new SolidColorBrush(Color.FromRgb(0x1E, 0x1E, 0x1E)),
                 CornerRadius    = new CornerRadius(6),
                 Margin          = new Thickness(4),
-                MinHeight       = large ? 160 : 70,
+                MinHeight       = large ? 320 : 140,
                 Cursor          = System.Windows.Input.Cursors.Hand,
                 BorderBrush     = new SolidColorBrush(Color.FromRgb(0x3A, 0x3A, 0x3A)),
                 BorderThickness = new Thickness(1)
@@ -1840,7 +2034,7 @@ namespace ACVN
                     inner.Children.Add(new Image
                     {
                         Source  = new System.Windows.Media.Imaging.BitmapImage(new Uri(imgPath)),
-                        Height  = large ? 100 : 44,
+                        Height  = large ? 200 : 88,
                         Stretch = System.Windows.Media.Stretch.Uniform
                     });
                 else
@@ -2030,7 +2224,7 @@ namespace ACVN
                     Margin     = new Thickness(0, 0, 0, 8)
                 });
 
-            if (!canWear && !isWorn)
+            if (!_wardrobeReadOnly && !canWear && !isWorn)
                 wardrobeStack.Children.Add(new TextBlock
                 {
                     Text       = Loc.T("wardrobe.inhib_hint", def.Inhibition),
@@ -2041,40 +2235,43 @@ namespace ACVN
 
             var btnRow = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 0) };
 
-            if (isWorn)
+            if (!_wardrobeReadOnly)
             {
-                var undressBtn = new Button
+                if (isWorn)
                 {
-                    Content = Loc.T("wardrobe.unwear"),
-                    Height  = 32, Padding = new Thickness(12, 0, 12, 0),
-                    Margin  = new Thickness(0, 0, 8, 0)
-                };
-                string capturedSubtype = def.Subtype;
-                undressBtn.Click += (_, __) =>
+                    var undressBtn = new Button
+                    {
+                        Content = Loc.T("wardrobe.unwear"),
+                        Height  = 32, Padding = new Thickness(12, 0, 12, 0),
+                        Margin  = new Thickness(0, 0, 8, 0)
+                    };
+                    string capturedSubtype = def.Subtype;
+                    undressBtn.Click += (_, __) =>
+                    {
+                        wornClothing.Remove(capturedSubtype);
+                        _wardrobeState = "category";
+                        RebuildWardrobePanel();
+                    };
+                    btnRow.Children.Add(undressBtn);
+                }
+                else
                 {
-                    wornClothing.Remove(capturedSubtype);
-                    _wardrobeState = "category";
-                    RebuildWardrobePanel();
-                };
-                btnRow.Children.Add(undressBtn);
-            }
-            else
-            {
-                var dressBtn = new Button
-                {
-                    Content   = Loc.T("wardrobe.wear"),
-                    Height    = 32, Padding = new Thickness(12, 0, 12, 0),
-                    Margin    = new Thickness(0, 0, 8, 0),
-                    IsEnabled = canWear
-                };
-                string capturedId = def.Id, capturedSubtype = def.Subtype;
-                dressBtn.Click += (_, __) =>
-                {
-                    wornClothing[capturedSubtype] = capturedId;
-                    _wardrobeState = "category";
-                    RebuildWardrobePanel();
-                };
-                btnRow.Children.Add(dressBtn);
+                    var dressBtn = new Button
+                    {
+                        Content   = Loc.T("wardrobe.wear"),
+                        Height    = 32, Padding = new Thickness(12, 0, 12, 0),
+                        Margin    = new Thickness(0, 0, 8, 0),
+                        IsEnabled = canWear
+                    };
+                    string capturedId = def.Id, capturedSubtype = def.Subtype;
+                    dressBtn.Click += (_, __) =>
+                    {
+                        wornClothing[capturedSubtype] = capturedId;
+                        _wardrobeState = "category";
+                        RebuildWardrobePanel();
+                    };
+                    btnRow.Children.Add(dressBtn);
+                }
             }
 
             var discardBtn = new Button
@@ -2581,6 +2778,9 @@ namespace ACVN
             tbVolLabel.Text                 = Loc.T("settings.volume");
             tbLangLabel.Text                = Loc.T("settings.language");
             tbSettingsRestart.Text          = Loc.T("settings.restart");
+            // Game settings tab
+            tbSettingsDisplayHeader.Text    = Loc.T("settings.display");
+            tbSettingShowHidden.Text        = Loc.T("settings.show_hidden");
             tbSettingsBack.Text             = Loc.T("settings.backscene");
 
             // Overlays

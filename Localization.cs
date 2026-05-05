@@ -53,13 +53,15 @@ public static class Loc
             ["btn.load"]          = "Laden",
 
             // Settings
-            ["settings.title"]    = "Einstellungen",
-            ["settings.debug"]    = "Debug-Ausgabe aktivieren",
-            ["settings.autoplay"] = "Videos automatisch abspielen",
-            ["settings.volume"]   = "Lautstärke",
-            ["settings.restart"]  = "Spiel neu starten",
-            ["settings.backscene"]= "Vorherige Szene",
-            ["settings.language"] = "Sprache",
+            ["settings.title"]         = "Einstellungen",
+            ["settings.debug"]         = "Debug-Ausgabe aktivieren",
+            ["settings.autoplay"]      = "Videos automatisch abspielen",
+            ["settings.volume"]        = "Lautstärke",
+            ["settings.restart"]       = "Spiel neu starten",
+            ["settings.backscene"]     = "Vorherige Szene",
+            ["settings.language"]      = "Sprache",
+            ["settings.display"]       = "Anzeige",
+            ["settings.show_hidden"]   = "Versteckte Attribute anzeigen",
 
             // Wardrobe
             ["wardrobe.title"]       = "Kleiderschrank",
@@ -79,6 +81,10 @@ public static class Loc
             ["wardrobe.panties"]     = "Unterhose",
             ["wardrobe.clothes"]     = "Kleidung",
             ["wardrobe.shoes"]       = "Schuhe",
+            ["wardrobe.undress_all"] = "Alles ausziehen",
+            ["wardrobe.outfits"]     = "Gespeicherte Outfits",
+            ["wardrobe.save_outfit"] = "Speichern",
+            ["wardrobe.load_outfit"] = "Laden",
 
             // Inventory
             ["inv.clothing"]     = "Kleidung",
@@ -157,13 +163,15 @@ public static class Loc
             ["btn.load"]          = "Load",
 
             // Settings
-            ["settings.title"]    = "Settings",
-            ["settings.debug"]    = "Enable debug output",
-            ["settings.autoplay"] = "Auto-play videos",
-            ["settings.volume"]   = "Volume",
-            ["settings.restart"]  = "Restart game",
-            ["settings.backscene"]= "Previous scene",
-            ["settings.language"] = "Language",
+            ["settings.title"]         = "Settings",
+            ["settings.debug"]         = "Enable debug output",
+            ["settings.autoplay"]      = "Auto-play videos",
+            ["settings.volume"]        = "Volume",
+            ["settings.restart"]       = "Restart game",
+            ["settings.backscene"]     = "Previous scene",
+            ["settings.language"]      = "Language",
+            ["settings.display"]       = "Display",
+            ["settings.show_hidden"]   = "Show hidden attributes",
 
             // Wardrobe
             ["wardrobe.title"]       = "Wardrobe",
@@ -183,6 +191,10 @@ public static class Loc
             ["wardrobe.panties"]     = "Panties",
             ["wardrobe.clothes"]     = "Clothes",
             ["wardrobe.shoes"]       = "Shoes",
+            ["wardrobe.undress_all"] = "Undress all",
+            ["wardrobe.outfits"]     = "Saved Outfits",
+            ["wardrobe.save_outfit"] = "Save",
+            ["wardrobe.load_outfit"] = "Load",
 
             // Inventory
             ["inv.clothing"]     = "Clothing",

@@ -14,7 +14,11 @@ You are standing in your room.
 {{ else }}
 [[Go to bed, home_room, bed_dressed]]
 {{ end }}
+{{ if state == "naked" && (get_attr "mc" "inhibition") >= 20 }}
+<p style="color:#FF6B6B; font-size:12px">You are naked. You feel far too self-conscious to step out into the hallway like this.</p>
+{{ else }}
 [[Hallway, home_hallway]]
+{{ end }}
 #end
 
 #begin desk
