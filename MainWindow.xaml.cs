@@ -243,33 +243,33 @@ namespace ACVN
             list.SelectedIndex = 0;
             root.Children.Add(list);
 
-            var btn = new Button
+            string result = packages[0];
+
+            var btnBorder = new Border
             {
-                Content = new TextBlock
+                Background = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(0x33, 0x88, 0xFF)),
+                CornerRadius = new CornerRadius(4),
+                Margin = new Thickness(0, 14, 0, 0),
+                Padding = new Thickness(0, 10, 0, 10),
+                Cursor = System.Windows.Input.Cursors.Hand,
+                Child = new TextBlock
                 {
                     Text = "▶  Play",
                     Foreground = System.Windows.Media.Brushes.White,
                     FontSize = 14,
+                    FontWeight = FontWeights.SemiBold,
                     HorizontalAlignment = HorizontalAlignment.Center
-                },
-                Margin = new Thickness(0, 14, 0, 0),
-                Padding = new Thickness(0, 9, 0, 9),
-                Background = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(0x33, 0x88, 0xFF)),
-                Foreground = System.Windows.Media.Brushes.White,
-                BorderThickness = new Thickness(0),
-                FontSize = 14,
-                Cursor = System.Windows.Input.Cursors.Hand
+                }
             };
 
-            string result = packages[0];
-            btn.Click += (_, _) =>
+            btnBorder.MouseLeftButtonDown += (_, _) =>
             {
                 if (list.SelectedItem is ListBoxItem li && li.Tag is string p)
                     result = p;
                 win.DialogResult = true;
             };
-            root.Children.Add(btn);
+            root.Children.Add(btnBorder);
 
             win.Content = root;
             win.ShowDialog();
