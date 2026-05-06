@@ -245,7 +245,13 @@ namespace ACVN
 
             var btn = new Button
             {
-                Content = "▶  Play",
+                Content = new TextBlock
+                {
+                    Text = "▶  Play",
+                    Foreground = System.Windows.Media.Brushes.White,
+                    FontSize = 14,
+                    HorizontalAlignment = HorizontalAlignment.Center
+                },
                 Margin = new Thickness(0, 14, 0, 0),
                 Padding = new Thickness(0, 9, 0, 9),
                 Background = new System.Windows.Media.SolidColorBrush(
