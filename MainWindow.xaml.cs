@@ -19,6 +19,7 @@ namespace ACVN
     /// </summary>
     public partial class MainWindow : Window
     {
+        private string storiesBasePath;
         private string storyPath;
         private string roomsPath;
         private string imagesPath;
@@ -90,15 +91,18 @@ namespace ACVN
             string rootPath = AppDomain.CurrentDomain.BaseDirectory;
             Directory.SetCurrentDirectory(rootPath);
 
-            storyPath = Path.Combine(rootPath, "../../../story/");
-            if (!Directory.Exists(storyPath))
+            storiesBasePath = Path.Combine(rootPath, "../../../story/");
+            if (!Directory.Exists(storiesBasePath))
+                storiesBasePath = Path.Combine(rootPath, "story/");
+            if (!Directory.Exists(storiesBasePath))
             {
-                storyPath = Path.Combine(rootPath, "story/");
-                if (!Directory.Exists(storyPath))
-                {
-                    MessageBox.Show("The folder 'story' wasn't found. Not able to start the game!");
-                }
+                MessageBox.Show("The folder 'story' wasn't found. Not able to start the game!");
+                return;
             }
+
+            storyPath = PickStoryPackage(storiesBasePath);
+            if (storyPath == null) return;
+
             roomsPath = Path.Combine(storyPath, "rooms");
             imagesPath = Path.Combine(storyPath, "images");
             saveGamePath = Path.Combine(rootPath, "savegames");
@@ -107,7 +111,6 @@ namespace ACVN
                 Directory.CreateDirectory(saveGamePath);
             }
             logPath = Path.Combine(rootPath, "game.log");
-            CheckFolder(storyPath);
             CheckFolder(roomsPath);
             CheckFolder(imagesPath);
 
@@ -149,9 +152,122 @@ namespace ACVN
             {
                 dynamic data = JsonConvert.DeserializeObject<dynamic>(File.ReadAllText(path, System.Text.Encoding.UTF8));
                 foreach (var prop in (Newtonsoft.Json.Linq.JObject)data)
-                    _config[prop.Key.ToLower()] = prop.Value.ToString().ToLower();
+                {
+                    string key = prop.Key.ToLower();
+                    string val = prop.Value.ToString();
+                    // Preserve display fields as-is; lowercase comparison fields
+                    _config[key] = key is "name" or "version" or "language" ? val : val.ToLower();
+                }
             }
             catch { }
+        }
+
+        // ── Story package selection ─────────────────────────────────────────────
+
+        private string PickStoryPackage(string basePath)
+        {
+            var packages = Directory.GetDirectories(basePath)
+                .Where(d => File.Exists(Path.Combine(d, "config.json")))
+                .OrderBy(d => d)
+                .ToList();
+
+            if (packages.Count == 0)
+            {
+                MessageBox.Show("No story packages found in 'story/'.\n" +
+                    "Each story needs its own subfolder containing a config.json.");
+                return null;
+            }
+
+            if (packages.Count == 1)
+                return packages[0];
+
+            return ShowStoryPicker(packages);
+        }
+
+        private string ShowStoryPicker(List<string> packages)
+        {
+            var win = new Window
+            {
+                Title = "ACVN – Select Story",
+                Width = 440,
+                Height = 310,
+                WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                ResizeMode = ResizeMode.NoResize,
+                Background = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(0x1C, 0x1C, 0x1C))
+            };
+
+            var root = new StackPanel { Margin = new Thickness(24) };
+
+            root.Children.Add(new TextBlock
+            {
+                Text = "Choose a Story",
+                Foreground = System.Windows.Media.Brushes.White,
+                FontSize = 18,
+                FontWeight = FontWeights.Bold,
+                Margin = new Thickness(0, 0, 0, 14)
+            });
+
+            var list = new ListBox
+            {
+                Background = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(0x2A, 0x2A, 0x2A)),
+                Foreground = System.Windows.Media.Brushes.White,
+                BorderThickness = new Thickness(0),
+                Padding = new Thickness(4),
+                Height = 160
+            };
+
+            foreach (var pkg in packages)
+            {
+                string label = Path.GetFileName(pkg);
+                try
+                {
+                    dynamic cfg = JsonConvert.DeserializeObject<dynamic>(
+                        File.ReadAllText(Path.Combine(pkg, "config.json"), System.Text.Encoding.UTF8));
+                    string n = cfg?.name?.ToString();
+                    string v = cfg?.version?.ToString();
+                    if (!string.IsNullOrWhiteSpace(n)) label = n;
+                    if (!string.IsNullOrWhiteSpace(v)) label += $"  v{v}";
+                }
+                catch { }
+
+                list.Items.Add(new ListBoxItem
+                {
+                    Content = label,
+                    Tag = pkg,
+                    Padding = new Thickness(8, 6, 8, 6)
+                });
+            }
+
+            list.SelectedIndex = 0;
+            root.Children.Add(list);
+
+            var btn = new Button
+            {
+                Content = "▶  Play",
+                Margin = new Thickness(0, 14, 0, 0),
+                Padding = new Thickness(0, 9, 0, 9),
+                Background = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(0x33, 0x88, 0xFF)),
+                Foreground = System.Windows.Media.Brushes.White,
+                BorderThickness = new Thickness(0),
+                FontSize = 14,
+                Cursor = System.Windows.Input.Cursors.Hand
+            };
+
+            string result = packages[0];
+            btn.Click += (_, _) =>
+            {
+                if (list.SelectedItem is ListBoxItem li && li.Tag is string p)
+                    result = p;
+                win.DialogResult = true;
+            };
+            root.Children.Add(btn);
+
+            win.Content = root;
+            win.ShowDialog();
+            return result;
         }
 
         private void SetIntroLayout(bool introMode)
@@ -206,6 +322,7 @@ namespace ACVN
 
         private string clearPath(string path)
         {
+            if (string.IsNullOrEmpty(path)) return path ?? string.Empty;
             return Regex.Replace(path, @"_", "/");
         }
 
@@ -651,7 +768,8 @@ namespace ACVN
         {
             // Walk up the hierarchy until a folder with media files is found.
             // e.g. "home/room/bed_naked" → "home/room" → "home"
-            string search = pathToSearch.TrimEnd('/');
+            string originalSearch = pathToSearch.TrimEnd('/');
+            string search = originalSearch;
             while (true)
             {
                 if (!string.IsNullOrEmpty(search))
@@ -664,7 +782,18 @@ namespace ACVN
                         {
                             int idx = new Random().Next(0, files.Length);
                             DisplayMedia(files[idx]);
-                            ShowDebugInfo($"Media [{search}]: {Path.GetFileName(files[idx])}", isError: false);
+                            bool isFallback = search != originalSearch;
+                            string fileName = Path.GetFileName(files[idx]);
+                            if (isFallback)
+                            {
+                                string msg = $"Media fallback [{originalSearch}] → [{search}]: {fileName}";
+                                ShowDebugInfo(msg, isError: false);
+                                LogError(msg);
+                            }
+                            else
+                            {
+                                ShowDebugInfo($"Media [{search}]: {fileName}", isError: false);
+                            }
                             return;
                         }
                     }
@@ -677,7 +806,9 @@ namespace ACVN
                     mainMedia.Visibility = Visibility.Collapsed;
                     mainImage.Visibility = Visibility.Collapsed;
                     mediaFullscreenHint.Visibility = Visibility.Collapsed;
-                    ShowDebugInfo($"No media found for: {pathToSearch}", isError: true);
+                    string noMediaMsg = $"No media found for: {originalSearch}";
+                    ShowDebugInfo(noMediaMsg, isError: true);
+                    LogError(noMediaMsg);
                     return;
                 }
                 search = search[..lastSlash];

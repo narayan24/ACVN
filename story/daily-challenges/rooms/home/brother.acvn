@@ -5,17 +5,17 @@ You are standing in {{ brother.properties.firstname }}'s room.
 {{ if bro_here }}
 {{ if bro_activity == "sleeping" || bro_activity == "sleeping in" }}
 <p>The room is dark. {{ brother.properties.firstname }} is asleep, his breathing slow and steady.</p>
-[[Wake {{ brother.properties.firstname }} up, home_brother, wake_up]]
+[[Wake {{ brother.properties.firstname }} up, home_brother, wakeup]]
 {{ else if bro_activity == "doing homework" }}
 <p>{{ brother.properties.firstname }} sits at his desk with a furrowed brow, working through his homework. A few crumpled sheets of paper are scattered on the floor.</p>
-[[Talk to {{ brother.properties.firstname }}, home_brother, talk_homework]]
-[[Help with homework, home_brother, help_homework]]
+[[Talk to {{ brother.properties.firstname }}, home_brother, talkhomework]]
+[[Help with homework, home_brother, helphomework]]
 {{ else if bro_activity == "lying in bed on his phone" }}
 <p>{{ brother.properties.firstname }} is lying on his bed, scrolling absent-mindedly through his phone, completely in his own world.</p>
-[[Talk to him, home_brother, talk_phone]]
+[[Talk to him, home_brother, talkphone]]
 {{ else if bro_activity == "watching TV or streaming" }}
 <p>{{ brother.properties.firstname }} is stretched out on his bed staring at his laptop – some show is playing.</p>
-[[Watch with him, home_brother, watch_together]]
+[[Watch with him, home_brother, watchtogether]]
 {{ else }}
 <p>{{ brother.properties.firstname }} is here.</p>
 [[Talk to {{ brother.properties.firstname }}, home_brother, talk]]
@@ -29,7 +29,7 @@ You are standing in {{ brother.properties.firstname }}'s room.
 [[Hallway, home_hallway]]
 #end
 
-#begin wake_up
+#begin wakeup
 {{ bro_mood = get_attr "brother" "mood" }}
 You gently shake {{ brother.properties.firstname }} by the shoulder.
 {{ if bro_mood > 50 }}
@@ -44,7 +44,7 @@ You gently shake {{ brother.properties.firstname }} by the shoulder.
 [[{{ brother.properties.firstname }}'s Room, home_brother]]
 #end
 
-#begin talk_homework
+#begin talkhomework
 You knock on the door frame. {{ brother.properties.firstname }} looks up briefly, a slightly annoyed expression on his face.
 <p>"What do you want?" He sounds tense, but not unfriendly.</p>
 <p>"Nothing much. How's it going?"</p>
@@ -55,7 +55,7 @@ You knock on the door frame. {{ brother.properties.firstname }} looks up briefly
 [[{{ brother.properties.firstname }}'s Room, home_brother]]
 #end
 
-#begin help_homework
+#begin helphomework
 You sit down next to {{ brother.properties.firstname }} and look at the problems.
 {{ roll = random_int 1 100 }}
 {{ if roll > 35 }}
@@ -73,7 +73,7 @@ You sit down next to {{ brother.properties.firstname }} and look at the problems
 [[{{ brother.properties.firstname }}'s Room, home_brother]]
 #end
 
-#begin talk_phone
+#begin talkphone
 You tap {{ brother.properties.firstname }} on the arm. He briefly glances up from the screen.
 <p>"Hm?"</p>
 <p>You exchange a few words – he's half there, most of his attention still on the screen.</p>
@@ -82,7 +82,7 @@ You tap {{ brother.properties.firstname }} on the arm. He briefly glances up fro
 [[{{ brother.properties.firstname }}'s Room, home_brother]]
 #end
 
-#begin watch_together
+#begin watchtogether
 You sit on the edge of the bed and watch with him. {{ brother.properties.firstname }} makes a little room without taking his eyes off the laptop.
 <p>"This is the third episode today", he says casually. "It gets better."</p>
 <p>You watch together for half an hour – no big conversation, just being there.</p>
