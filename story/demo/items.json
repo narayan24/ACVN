@@ -1,0 +1,5 @@
+{
+  "items": [
+    { "id": "journal", "name": "Journal", "type": "misc", "starting_quantity": 0 }
+  ]
+}

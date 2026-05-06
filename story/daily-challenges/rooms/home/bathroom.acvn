@@ -6,8 +6,8 @@ You are standing in the bathroom. It is {{ time_str "HH:mm" }}.
 {{ if (quest_step "tutorial") == 1 }}{{ advance_quest "tutorial" }}{{ end }}
 {{ if bro_in_bath }}
 <p>The door is locked from the inside. You can hear the shower running – {{ brother.properties.firstname }} is in there.</p>
-[[Knock on the door, home_bathroom, knock_brother]]
-[[Wait, home_bathroom, wait_brother]]
+[[Knock on the door, home_bathroom, knockbrother]]
+[[Wait, home_bathroom, waitbrother]]
 {{ else }}
 {{ if vars.shower_count < 5 }}
 [[Shower, home_bathroom, shower]]
@@ -23,7 +23,7 @@ You are standing in the bathroom. It is {{ time_str "HH:mm" }}.
 [[Hallway, home_hallway]]
 #end
 
-#begin knock_brother
+#begin knockbrother
 You knock on the bathroom door.
 {{ roll = random_int 1 100 }}
 {{ if roll > 40 }}
@@ -37,7 +37,7 @@ You knock on the bathroom door.
 [[Bathroom, home_bathroom]]
 #end
 
-#begin wait_brother
+#begin waitbrother
 You lean against the wall outside and wait. A few minutes later the door opens.
 <p>{{ brother.properties.firstname }} steps out with a towel over his shoulders and looks at you surprised. "Oh. You could have knocked."</p>
 {{ advance_time 10 }}
@@ -62,19 +62,19 @@ You undress and step into the shower.
 <p>{{ brother.properties.firstname }}'s voice: "Oh – sorry, I didn't know—" He freezes in the doorway, clearly not having heard the shower over his headphones. For a moment neither of you moves.</p>
 {{ if inhibition >= 60 }}
 <p>Your heart jumps into your throat. The shower curtain is only half-drawn.</p>
-[[Tell him to get out!, home_bathroom, shower_interrupt_kick]]
-[[Freeze and say nothing, home_bathroom, shower_interrupt_freeze]]
+[[Tell him to get out!, home_bathroom, interruptkick]]
+[[Freeze and say nothing, home_bathroom, interruptfreeze]]
 {{ else if inhibition >= 30 }}
 <p>A flush of heat rises to your face – but it's not entirely from embarrassment.</p>
-[[Tell him to get out!, home_bathroom, shower_interrupt_kick]]
-[[Freeze and say nothing, home_bathroom, shower_interrupt_freeze]]
-[["Close the door behind you – on the outside.", home_bathroom, shower_interrupt_tease]]
+[[Tell him to get out!, home_bathroom, interruptkick]]
+[[Freeze and say nothing, home_bathroom, interruptfreeze]]
+[["Close the door behind you – on the outside.", home_bathroom, interrupttease]]
 {{ else }}
 <p>You feel a little rush of something – not quite embarrassment. You could handle this in several ways.</p>
-[[Tell him to get out!, home_bathroom, shower_interrupt_kick]]
-[[Freeze and say nothing, home_bathroom, shower_interrupt_freeze]]
-[["Close the door behind you – on the outside.", home_bathroom, shower_interrupt_tease]]
-[["You can stay – if you hand me the shampoo.", home_bathroom, shower_interrupt_invite]]
+[[Tell him to get out!, home_bathroom, interruptkick]]
+[[Freeze and say nothing, home_bathroom, interruptfreeze]]
+[["Close the door behind you – on the outside.", home_bathroom, interrupttease]]
+[["You can stay – if you hand me the shampoo.", home_bathroom, interruptinvite]]
 {{ end }}
 {{ else }}
 {{ advance_time 5 }}
@@ -85,7 +85,7 @@ You undress and step into the shower.
 {{ end }}
 #end
 
-#begin shower_interrupt_kick
+#begin interruptkick
 {{ attr_change "mc" "mood" -5 }}
 {{ attr_change "brother" "mood" -5 }}
 {{ advance_time 5 }}
@@ -96,7 +96,7 @@ You undress and step into the shower.
 [[Dry off, home_bathroom, dryoff]]
 #end
 
-#begin shower_interrupt_freeze
+#begin interruptfreeze
 {{ attr_change "brother" "mood" 5 }}
 {{ advance_time 8 }}
 You don't move. Don't speak. The water keeps running.
@@ -109,7 +109,7 @@ You don't move. Don't speak. The water keeps running.
 [[Dry off, home_bathroom, dryoff]]
 #end
 
-#begin shower_interrupt_tease
+#begin interrupttease
 {{ attr_change "mc" "mood" 5 }}
 {{ attr_change "mc" "horny" 10 }}
 {{ attr_change "brother" "mood" 8 }}
@@ -124,7 +124,7 @@ You keep your voice perfectly level. "Close the door behind you – on the outsi
 [[Dry off, home_bathroom, dryoff]]
 #end
 
-#begin shower_interrupt_invite
+#begin interruptinvite
 {{ attr_change "mc" "mood" 8 }}
 {{ attr_change "mc" "horny" 20 }}
 {{ attr_change "brother" "mood" 12 }}

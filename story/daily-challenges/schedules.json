@@ -30,7 +30,7 @@
       "entries": [
         { "days": "4",        "from": "18:00", "to": "23:30", "location": "restaurant",      "activity": "going out with dad" },
 
-        { "days": "weekdays", "from": "23:00", "to": "07:00", "location": "home_parent_room","activity": "sleeping" },
+        { "days": "weekdays", "from": "23:00", "to": "07:00", "location": "home_parentroom","activity": "sleeping" },
         { "days": "weekdays", "from": "07:00", "to": "08:30", "location": "home_kitchen",    "activity": "preparing breakfast" },
         { "days": "weekdays", "from": "08:30", "to": "10:30", "location": "shopping",        "activity": "out shopping" },
         { "days": "weekdays", "from": "10:30", "to": "12:00", "location": "home_livingroom", "activity": "doing housework" },
@@ -40,9 +40,9 @@
         { "days": "weekdays", "from": "17:30", "to": "18:30", "location": "home_kitchen",    "activity": "cooking dinner" },
         { "days": "weekdays", "from": "18:30", "to": "19:30", "location": "home_kitchen",    "activity": "having dinner" },
         { "days": "weekdays", "from": "19:30", "to": "21:30", "location": "home_livingroom", "activity": "relaxing" },
-        { "days": "weekdays", "from": "21:30", "to": "23:00", "location": "home_parent_room","activity": "reading and dozing off" },
+        { "days": "weekdays", "from": "21:30", "to": "23:00", "location": "home_parentroom","activity": "reading and dozing off" },
 
-        { "days": "weekends", "from": "23:00", "to": "08:30", "location": "home_parent_room","activity": "sleeping in" },
+        { "days": "weekends", "from": "23:00", "to": "08:30", "location": "home_parentroom","activity": "sleeping in" },
         { "days": "weekends", "from": "08:30", "to": "10:00", "location": "home_kitchen",    "activity": "having a leisurely breakfast" },
         { "days": "weekends", "from": "10:00", "to": "13:00", "location": "shopping",        "activity": "out and about" },
         { "days": "weekends", "from": "13:00", "to": "14:00", "location": "home_kitchen",    "activity": "having lunch" },
@@ -50,7 +50,7 @@
         { "days": "weekends", "from": "17:00", "to": "18:30", "location": "home_kitchen",    "activity": "cooking dinner" },
         { "days": "weekends", "from": "18:30", "to": "19:30", "location": "home_kitchen",    "activity": "having dinner" },
         { "days": "weekends", "from": "19:30", "to": "22:00", "location": "home_livingroom", "activity": "spending the evening" },
-        { "days": "weekends", "from": "22:00", "to": "23:00", "location": "home_parent_room","activity": "sleeping" }
+        { "days": "weekends", "from": "22:00", "to": "23:00", "location": "home_parentroom","activity": "sleeping" }
       ]
     },
     {
@@ -58,7 +58,7 @@
       "entries": [
         { "days": "4",        "from": "18:00", "to": "23:30", "location": "restaurant",      "activity": "going out with mom" },
 
-        { "days": "weekdays", "from": "21:30", "to": "06:30", "location": "home_parent_room","activity": "sleeping" },
+        { "days": "weekdays", "from": "21:30", "to": "06:30", "location": "home_parentroom","activity": "sleeping" },
         { "days": "weekdays", "from": "06:30", "to": "07:00", "location": "home_bathroom",   "activity": "getting ready" },
         { "days": "weekdays", "from": "07:00", "to": "07:30", "location": "home_kitchen",    "activity": "having breakfast" },
         { "days": "weekdays", "from": "07:30", "to": "17:00", "location": "work",            "activity": "at work" },
@@ -66,7 +66,7 @@
         { "days": "weekdays", "from": "18:30", "to": "19:30", "location": "home_kitchen",    "activity": "having dinner" },
         { "days": "weekdays", "from": "19:30", "to": "21:30", "location": "home_livingroom", "activity": "watching TV" },
 
-        { "days": "weekends", "from": "22:00", "to": "08:00", "location": "home_parent_room","activity": "sleeping in" },
+        { "days": "weekends", "from": "22:00", "to": "08:00", "location": "home_parentroom","activity": "sleeping in" },
         { "days": "weekends", "from": "08:00", "to": "09:00", "location": "home_kitchen",    "activity": "having a leisurely breakfast" },
         { "days": "weekends", "from": "09:00", "to": "12:00", "location": "home_livingroom", "activity": "spending free time" },
         { "days": "weekends", "from": "12:00", "to": "13:00", "location": "home_kitchen",    "activity": "having lunch" },

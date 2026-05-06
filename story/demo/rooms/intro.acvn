@@ -1,0 +1,8 @@
+#begin start
+<div style="text-align:center; padding:60px 20px 40px;">
+  <h1 style="font-size:2.6em; margin:0 0 8px;">The Meadow</h1>
+  <p style="color:#888; font-size:0.85em; letter-spacing:0.15em; margin:0 0 50px;">A short ACVN demo</p>
+</div>
+[[Start, __startgame__]]
+[[Quit, __quit__]]
+#end

@@ -1,6 +1,6 @@
 #begin start
-{{ mom_here = char_at "mother" "home_parent_room" }}
-{{ dad_here = char_at "father" "home_parent_room" }}
+{{ mom_here = char_at "mother" "home_parentroom" }}
+{{ dad_here = char_at "father" "home_parentroom" }}
 You are standing outside your parents' bedroom.
 {{ if mom_here || dad_here }}
 <p>
@@ -12,8 +12,8 @@ You are standing outside your parents' bedroom.
 {{ father.properties.firstname }} is here – {{ char_activity "father" }}.
 {{ end }}
 </p>
-{{ if mom_here }}[[Talk to {{ mother.properties.firstname }}, home_parent_room, chat_mother]]{{ end }}
-{{ if dad_here }}[[Talk to {{ father.properties.firstname }}, home_parent_room, chat_father]]{{ end }}
+{{ if mom_here }}[[Talk to {{ mother.properties.firstname }}, home_parentroom, chatmother]]{{ end }}
+{{ if dad_here }}[[Talk to {{ father.properties.firstname }}, home_parentroom, chatfather]]{{ end }}
 {{ else }}
 <p>The room is empty.</p>
 {{ if (char_activity "mother") != "" }}
@@ -26,7 +26,7 @@ You are standing outside your parents' bedroom.
 [[Hallway, home_hallway]]
 #end
 
-#begin chat_mother
+#begin chatmother
 {{ mom_activity = char_activity "mother" }}
 {{ mom_mood = get_attr "mother" "mood" }}
 You knock softly and open the door a crack.
@@ -45,17 +45,17 @@ You knock softly and open the door a crack.
 {{ attr_change "mother" "mood" 3 }}
 {{ end }}
 {{ advance_time 8 }}
-[[Parents' Room, home_parent_room]]
+[[Parents' Room, home_parentroom]]
 #end
 
-#begin chat_father
+#begin chatfather
 {{ dad_activity = char_activity "father" }}
 {{ dad_mood = get_attr "father" "mood" }}
 You knock and open the door.
 {{ if dad_activity == "sleeping" || dad_activity == "sleeping in" }}
 <p>{{ father.properties.firstname }} is already asleep. You quietly pull the door closed again.</p>
 {{ advance_time 2 }}
-[[Parents' Room, home_parent_room]]
+[[Parents' Room, home_parentroom]]
 {{ else }}
 {{ if dad_mood > 55 }}
 <p>{{ father.properties.firstname }} looks up from his book. "What's up?" He doesn't sound unfriendly, just a little surprised. You chat for a moment.</p>
@@ -66,6 +66,6 @@ You knock and open the door.
 {{ attr_change "mc" "mood" 2 }}
 {{ end }}
 {{ advance_time 8 }}
-[[Parents' Room, home_parent_room]]
+[[Parents' Room, home_parentroom]]
 {{ end }}
 #end

@@ -73,7 +73,7 @@
       "description": "A blue one-piece swimsuit.",
       "durability": 100,
       "daring": 40,
-      "inhibition": 50,
+      "inhibition": 80,
       "tags": ["swimming", "outdoor"],
       "image": ""
     },

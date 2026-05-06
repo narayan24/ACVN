@@ -6,18 +6,18 @@
 You are standing in the living room. It is {{ time_str "HH:mm" }}.
 {{ if bro_here }}
 <p>{{ brother.properties.firstname }} is sitting on the couch noisily gaming on the console. You feel like playing a round with him. Want to ask?</p>
-[[Ask {{ brother.properties.firstname }} to play, home_livingroom, ask_play]]
+[[Ask {{ brother.properties.firstname }} to play, home_livingroom, askplay]]
 {{ end }}
 {{ if mom_here }}
 <p>{{ mother.properties.firstname }} is making herself comfortable on the sofa – {{ char_activity "mother" }}.</p>
-[[Talk to {{ mother.properties.firstname }}, home_livingroom, chat_mother]]
+[[Talk to {{ mother.properties.firstname }}, home_livingroom, chatmother]]
 {{ end }}
 {{ if dad_here }}
 <p>{{ father.properties.firstname }} is sitting in the armchair – {{ char_activity "father" }}.</p>
-[[Talk to {{ father.properties.firstname }}, home_livingroom, chat_father]]
+[[Talk to {{ father.properties.firstname }}, home_livingroom, chatfather]]
 {{ end }}
 {{ if mom_here && dad_here }}
-[[Watch TV together, home_livingroom, watch_family]]
+[[Watch TV together, home_livingroom, watchfamily]]
 {{ end }}
 {{ if !bro_here && !mom_here && !dad_here }}
 {{ if (char_activity "brother") != "" }}
@@ -25,7 +25,7 @@ You are standing in the living room. It is {{ time_str "HH:mm" }}.
 {{ end }}
 {{ end }}
 {{ if vars.tv_hours < 4 }}
-[[Watch TV, home_livingroom, watch_tv]]
+[[Watch TV, home_livingroom, watchtv]]
 {{ else }}
 <p>You've already watched {{ vars.tv_hours }} hours of TV today. That's enough.</p>
 {{ end }}
@@ -33,12 +33,12 @@ You are standing in the living room. It is {{ time_str "HH:mm" }}.
 {{ mom_mood = get_attr "mother" "mood" }}
 {{ if alone && game_hour >= 22 && mom_mood >= 60 && !vars.late_encounter_done_today }}
 <p style="color:#888; font-size:11px; font-style:italic">The apartment is quiet. Late enough that almost anything feels possible.</p>
-[[Stay up a little longer, home_livingroom, late_night_start]]
+[[Stay up a little longer, home_livingroom, latenight]]
 {{ end }}
 [[Hallway, home_hallway]]
 #end
 
-#begin watch_tv
+#begin watchtv
 You sit down on the couch and watch TV for a while.
 {{ vars.tv_hours = vars.tv_hours + 1 }}
 {{ attr_change "mc" "mood" 10 }}
@@ -48,7 +48,7 @@ You sit down on the couch and watch TV for a while.
 [[Living Room, home_livingroom]]
 #end
 
-#begin chat_mother
+#begin chatmother
 {{ attr_change "mc" "energy" -2 }}
 {{ mom_mood = get_attr "mother" "mood" }}
 You sit down next to {{ mother.properties.firstname }}.
@@ -67,7 +67,7 @@ You sit down next to {{ mother.properties.firstname }}.
 [[Living Room, home_livingroom]]
 #end
 
-#begin chat_father
+#begin chatfather
 {{ attr_change "mc" "energy" -2 }}
 {{ dad_mood = get_attr "father" "mood" }}
 You sit down next to {{ father.properties.firstname }}.
@@ -84,7 +84,7 @@ You sit down next to {{ father.properties.firstname }}.
 [[Living Room, home_livingroom]]
 #end
 
-#begin watch_family
+#begin watchfamily
 {{ attr_change "mc" "energy" -2 }}
 You join them. {{ mother.properties.firstname }} and {{ father.properties.firstname }} are sitting together on the couch, a show playing.
 <p>{{ mother.properties.firstname }} makes room for you. "Come, there's space here."</p>
@@ -96,7 +96,7 @@ You join them. {{ mother.properties.firstname }} and {{ father.properties.firstn
 [[Living Room, home_livingroom]]
 #end
 
-#begin ask_play
+#begin askplay
 {{ mood = get_attr "brother" "mood" }}
 You tap {{ brother.properties.firstname }} on the shoulder. He pauses the game briefly and looks at you.
 <p>"Hey, can I play too?"</p>
@@ -105,7 +105,7 @@ You tap {{ brother.properties.firstname }} on the shoulder. He pauses the game b
 {{ if roll > threshold }}
 <p>{{ brother.properties.firstname }} shrugs. "Fine. Grab a controller."</p>
 {{ attr_change "brother" "mood" -2 }}
-[[Let's go!, home_livingroom, choose_mode]]
+[[Let's go!, home_livingroom, choosemode]]
 {{ else }}
 <p>{{ brother.properties.firstname }} sighs irritably and turns back to the screen. "Nah. I want some peace and quiet."</p>
 {{ attr_change "mc" "mood" -3 }}
@@ -113,36 +113,36 @@ You tap {{ brother.properties.firstname }} on the shoulder. He pauses the game b
 {{ end }}
 #end
 
-#begin choose_mode
+#begin choosemode
 You sit down next to {{ brother.properties.firstname }} and grab a controller.
 <p>How do you approach this?</p>
-[[Give it everything! <small style="color:#888">(60% win chance)</small>, home_livingroom, play_serious]]
-[[Just for fun <small style="color:#888">(25% win chance)</small>, home_livingroom, play_fun]]
+[[Give it everything! <small style="color:#888">(60% win chance)</small>, home_livingroom, playserious]]
+[[Just for fun <small style="color:#888">(25% win chance)</small>, home_livingroom, playfun]]
 #end
 
-#begin play_serious
+#begin playserious
 {{ attr_change "mc" "energy" -4 }}
 {{ attr_change "mc" "mood" 1 }}
 {{ vars.play_roll = random_int 1 100 }}
 {{ if vars.play_roll > 40 }}
-[[Play!, home_livingroom, outcome_win_serious]]
+[[Play!, home_livingroom, winserious]]
 {{ else }}
-[[Play!, home_livingroom, outcome_lose_serious]]
+[[Play!, home_livingroom, loseserious]]
 {{ end }}
 #end
 
-#begin play_fun
+#begin playfun
 {{ attr_change "mc" "energy" -1 }}
 {{ attr_change "mc" "mood" 3 }}
 {{ vars.play_roll = random_int 1 100 }}
 {{ if vars.play_roll > 75 }}
-[[Play!, home_livingroom, outcome_win_fun]]
+[[Play!, home_livingroom, winfun]]
 {{ else }}
-[[Play!, home_livingroom, outcome_lose_fun]]
+[[Play!, home_livingroom, losefun]]
 {{ end }}
 #end
 
-#begin outcome_win_serious
+#begin winserious
 {{ advance_time 30 }}
 {{ attr_change "mc" "mood" 8 }}
 {{ attr_change "brother" "mood" -8 }}
@@ -150,11 +150,11 @@ You sit down next to {{ brother.properties.firstname }} and grab a controller.
 <p style="color:#4CAF50; font-weight:bold">🏆 You win!</p>
 <p>{{ brother.properties.firstname }} puts the controller down with a snort. "Beginner's luck. Next time it'll be different."</p>
 <p>You lean back grinning. It feels really good.</p>
-[[Again!, home_livingroom, choose_mode]]
+[[Again!, home_livingroom, choosemode]]
 [[That's enough for today, home_livingroom]]
 #end
 
-#begin outcome_lose_serious
+#begin loseserious
 {{ advance_time 30 }}
 {{ attr_change "mc" "mood" -8 }}
 {{ attr_change "brother" "mood" 5 }}
@@ -164,17 +164,17 @@ You sit down next to {{ brother.properties.firstname }} and grab a controller.
 <p style="color:#F44336; font-weight:bold">You lose.</p>
 {{ if vars.bro_wins >= 3 && !vars.bet_offered }}
 <p>{{ brother.properties.firstname }} sets his controller down slowly, a grin spreading across his face. "Okay... you know what? I'm feeling generous." He leans over. "How about we make this interesting. A bet."</p>
-[[What kind of bet?, home_livingroom, bet_offer]]
+[[What kind of bet?, home_livingroom, betoffer]]
 [[I'd rather not, home_livingroom]]
 {{ else }}
 <p>{{ brother.properties.firstname }} grins. "Maybe you should practise more."</p>
 <p>Frustrating. Today just wasn't your day.</p>
-[[Again!, home_livingroom, choose_mode]]
+[[Again!, home_livingroom, choosemode]]
 [[Give up, home_livingroom]]
 {{ end }}
 #end
 
-#begin outcome_win_fun
+#begin winfun
 {{ advance_time 30 }}
 {{ attr_change "mc" "mood" 12 }}
 {{ attr_change "brother" "mood" -3 }}
@@ -182,11 +182,11 @@ You sit down next to {{ brother.properties.firstname }} and grab a controller.
 <p style="color:#4CAF50; font-weight:bold">🏆 You win!</p>
 <p>Even {{ brother.properties.firstname }} has to laugh for a moment. "Wow, lady luck was really on your side."</p>
 <p>A nice, easy win. Sometimes it's enough to just show up.</p>
-[[Again!, home_livingroom, choose_mode]]
+[[Again!, home_livingroom, choosemode]]
 [[That's enough for today, home_livingroom]]
 #end
 
-#begin outcome_lose_fun
+#begin losefun
 {{ advance_time 30 }}
 {{ attr_change "mc" "mood" 3 }}
 {{ attr_change "brother" "mood" 3 }}
@@ -196,29 +196,29 @@ You sit down next to {{ brother.properties.firstname }} and grab a controller.
 <p style="color:#FF9800; font-weight:bold">You lose – but that's okay.</p>
 {{ if vars.bro_wins >= 3 && !vars.bet_offered }}
 <p>{{ brother.properties.firstname }} visibly relaxes – then tilts his head at you. "You know... I've been winning a lot lately." A slow grin. "What do you say we make the next one worth something?"</p>
-[[What did you have in mind?, home_livingroom, bet_offer]]
+[[What did you have in mind?, home_livingroom, betoffer]]
 [[Not tonight, home_livingroom]]
 {{ else }}
 <p>{{ brother.properties.firstname }} visibly relaxes. "Pretty nice, for an evening."</p>
 <p>No drama. It was still fun.</p>
-[[Again!, home_livingroom, choose_mode]]
+[[Again!, home_livingroom, choosemode]]
 [[Good enough, home_livingroom]]
 {{ end }}
 #end
 
-#begin bet_offer
+#begin betoffer
 {{ vars.bet_offered = true }}
 {{ vars.bet_stage = 1 }}
 {{ attr_change "mc" "mood" 5 }}
 {{ brother.properties.firstname }} leans back into the sofa, controller resting on one knee.
 <p>"Simple rules. Winner gets to give the loser one dare. Loser has to do it." He raises an eyebrow. "Nothing crazy. Start small. Deal?"</p>
 <p>There's something in the way he says <em>start small</em> that you notice.</p>
-[[Deal. Let's play., home_livingroom, bet_play]]
-[[I don't know..., home_livingroom, bet_hesitate]]
+[[Deal. Let's play., home_livingroom, betplay]]
+[[I don't know..., home_livingroom, bethesitate]]
 [[Forget it., home_livingroom]]
 #end
 
-#begin bet_hesitate
+#begin bethesitate
 {{ inhibition = get_attr "mc" "inhibition" }}
 {{ if inhibition >= 70 }}
 <p>You shake your head. Something about the way he's grinning makes you uneasy. "Nah. I'm good."</p>
@@ -226,21 +226,21 @@ You sit down next to {{ brother.properties.firstname }} and grab a controller.
 [[Living Room, home_livingroom]]
 {{ else }}
 <p>"Nothing crazy," he repeats, and somehow that makes it worse – or better. You're not sure which.</p>
-[["Fine. One round.", home_livingroom, bet_play]]
+[["Fine. One round.", home_livingroom, betplay]]
 [["Maybe another time.", home_livingroom]]
 {{ end }}
 #end
 
-#begin bet_play
+#begin betplay
 {{ vars.play_roll = random_int 1 100 }}
 {{ if vars.play_roll > 45 }}
-[[Play!, home_livingroom, bet_win]]
+[[Play!, home_livingroom, betwin]]
 {{ else }}
-[[Play!, home_livingroom, bet_lose]]
+[[Play!, home_livingroom, betlose]]
 {{ end }}
 #end
 
-#begin bet_win
+#begin betwin
 {{ advance_time 30 }}
 {{ attr_change "mc" "mood" 12 }}
 {{ attr_change "brother" "mood" -6 }}
@@ -248,27 +248,27 @@ You sit down next to {{ brother.properties.firstname }} and grab a controller.
 <p>{{ brother.properties.firstname }} stares at the screen for a long moment. Then he sets the controller down. "Alright. Fine." He looks at you with an expression you can't quite read. "What's the dare?"</p>
 {{ if vars.bet_stage == 1 }}
 <p><em>Stage 1 – start gentle.</em></p>
-[[Make me a sandwich – and bring it here., home_livingroom, bet_dare_mc_wins_1]]
-[[Tell me something you've never told anyone., home_livingroom, bet_dare_mc_wins_1b]]
+[[Make me a sandwich – and bring it here., home_livingroom, darewin1]]
+[[Tell me something you've never told anyone., home_livingroom, darewin1b]]
 {{ else if vars.bet_stage == 2 }}
-[[Sing one verse of whatever song is in your head right now., home_livingroom, bet_dare_mc_wins_2]]
-[[Let me scroll through your phone for thirty seconds., home_livingroom, bet_dare_mc_wins_2b]]
+[[Sing one verse of whatever song is in your head right now., home_livingroom, darewin2]]
+[[Let me scroll through your phone for thirty seconds., home_livingroom, darewin2b]]
 {{ else if vars.bet_stage == 3 }}
 {{ inhibition = get_attr "mc" "inhibition" }}
 {{ if inhibition >= 50 }}
-[[Give me a shoulder massage – you've been tense lately., home_livingroom, bet_dare_mc_wins_3]]
+[[Give me a shoulder massage – you've been tense lately., home_livingroom, darewin3]]
 {{ end }}
-[[Take your shirt off for ten minutes., home_livingroom, bet_dare_mc_wins_3b]]
+[[Take your shirt off for ten minutes., home_livingroom, darewin3b]]
 {{ else }}
 {{ inhibition = get_attr "mc" "inhibition" }}
 {{ if inhibition >= 30 }}
-[[Give me a real massage., home_livingroom, bet_dare_mc_wins_4]]
+[[Give me a real massage., home_livingroom, darewin4]]
 {{ end }}
-[[Walk to the kitchen and back – nothing on from the waist up., home_livingroom, bet_dare_mc_wins_4b]]
+[[Walk to the kitchen and back – nothing on from the waist up., home_livingroom, darewin4b]]
 {{ end }}
 #end
 
-#begin bet_lose
+#begin betlose
 {{ advance_time 30 }}
 {{ attr_change "mc" "mood" -5 }}
 {{ attr_change "brother" "mood" 8 }}
@@ -276,73 +276,73 @@ You sit down next to {{ brother.properties.firstname }} and grab a controller.
 <p>{{ brother.properties.firstname }} grins – but it's a different kind of grin than usual. Slower. Like he's been thinking about this.</p>
 {{ if vars.bet_stage == 1 }}
 <p>"Dare number one," he says. "You make the snacks. And you have to bring them in without complaining."</p>
-[[Seriously? Fine., home_livingroom, bet_dare_1_mc_loses]]
+[[Seriously? Fine., home_livingroom, darelost1]]
 {{ else if vars.bet_stage == 2 }}
 <p>"Tell me your most embarrassing memory," he says. "And no skipping the good parts."</p>
-[[...Okay., home_livingroom, bet_dare_2_mc_loses]]
+[[...Okay., home_livingroom, darelost2]]
 {{ else if vars.bet_stage == 3 }}
 {{ inhibition = get_attr "mc" "inhibition" }}
 <p>"Next round," he says carefully, watching your face, "you play in just a t-shirt and underwear. For the whole game."</p>
 {{ if inhibition >= 60 }}
-[[No way. Dare's off., home_livingroom, bet_refuse]]
+[[No way. Dare's off., home_livingroom, betrefuse]]
 {{ end }}
 {{ if inhibition < 60 }}
-[["...You're serious.", home_livingroom, bet_dare_3_mc_loses]]
+[["...You're serious.", home_livingroom, darelost3]]
 {{ end }}
 {{ else }}
 {{ inhibition = get_attr "mc" "inhibition" }}
 <p>He leans forward and says it quietly. "Sit here next to me for the next round. No shirt." A pause. "I won't make it weird."</p>
 {{ if inhibition >= 50 }}
-[[Absolutely not., home_livingroom, bet_refuse]]
+[[Absolutely not., home_livingroom, betrefuse]]
 {{ end }}
 {{ if inhibition < 50 }}
-[["...You're really pushing it.", home_livingroom, bet_dare_4_mc_loses]]
+[["...You're really pushing it.", home_livingroom, darelost4]]
 {{ end }}
 {{ end }}
 #end
 
-#begin bet_dare_mc_wins_1
+#begin darewin1
 {{ attr_change "brother" "mood" -3 }}
 {{ advance_time 10 }}
 <p>He blinks. Then gets up without another word and disappears into the kitchen. A few minutes later he comes back with a passable sandwich and drops it in your lap. "There."</p>
 <p>You take a smug bite. "Not bad."</p>
 <p>He drops back onto the sofa. "I hate you." But he's almost smiling.</p>
 {{ vars.bet_stage = vars.bet_stage + 1 }}
-[[Play another round, home_livingroom, bet_play]]
+[[Play another round, home_livingroom, betplay]]
 [[That's enough, home_livingroom]]
 #end
 
-#begin bet_dare_mc_wins_1b
+#begin darewin1b
 {{ attr_change "brother" "mood" 5 }}
 {{ advance_time 10 }}
 <p>{{ brother.properties.firstname }} is quiet for a moment. Then he laughs quietly at the ceiling. "Alright." He tells you something – something small, but real. The kind of thing people don't usually say out loud.</p>
 <p>You don't tease him about it. You just nod. That feels like the right call.</p>
 {{ vars.bet_stage = vars.bet_stage + 1 }}
-[[Play another round, home_livingroom, bet_play]]
+[[Play another round, home_livingroom, betplay]]
 [[That's enough, home_livingroom]]
 #end
 
-#begin bet_dare_mc_wins_2
+#begin darewin2
 {{ attr_change "brother" "mood" -5 }}
 {{ advance_time 5 }}
 <p>He closes his eyes. Then, very quietly, sings exactly one verse. His voice is surprisingly okay. He refuses to make eye contact for the rest of the evening.</p>
 {{ attr_change "mc" "mood" 8 }}
 {{ vars.bet_stage = vars.bet_stage + 1 }}
-[[Play another round, home_livingroom, bet_play]]
+[[Play another round, home_livingroom, betplay]]
 [[That's enough, home_livingroom]]
 #end
 
-#begin bet_dare_mc_wins_2b
+#begin darewin2b
 {{ attr_change "brother" "mood" -8 }}
 {{ advance_time 5 }}
 <p>He hands it over with a pained expression. You scroll. There's nothing truly incriminating – but the look on his face when you hand it back is absolutely worth it.</p>
 {{ attr_change "mc" "mood" 10 }}
 {{ vars.bet_stage = vars.bet_stage + 1 }}
-[[Play another round, home_livingroom, bet_play]]
+[[Play another round, home_livingroom, betplay]]
 [[That's enough, home_livingroom]]
 #end
 
-#begin bet_dare_mc_wins_3
+#begin darewin3
 {{ attr_change "brother" "mood" -3 }}
 {{ attr_change "mc" "mood" 8 }}
 {{ advance_time 15 }}
@@ -351,11 +351,11 @@ You sit down next to {{ brother.properties.firstname }} and grab a controller.
 <p>"Don't read into it."</p>
 <p>You don't say anything. But you don't tell him to stop, either.</p>
 {{ vars.bet_stage = vars.bet_stage + 1 }}
-[[Play another round, home_livingroom, bet_play]]
+[[Play another round, home_livingroom, betplay]]
 [[That's enough for tonight, home_livingroom]]
 #end
 
-#begin bet_dare_mc_wins_3b
+#begin darewin3b
 {{ attr_change "brother" "mood" -10 }}
 {{ attr_change "mc" "mood" 5 }}
 {{ advance_time 10 }}
@@ -363,11 +363,11 @@ You sit down next to {{ brother.properties.firstname }} and grab a controller.
 <p>After about thirty seconds he says, "Happy?"</p>
 <p>"Extremely."</p>
 {{ vars.bet_stage = vars.bet_stage + 1 }}
-[[Play another round, home_livingroom, bet_play]]
+[[Play another round, home_livingroom, betplay]]
 [[That's enough, home_livingroom]]
 #end
 
-#begin bet_dare_mc_wins_4
+#begin darewin4
 {{ attr_change "mc" "mood" 15 }}
 {{ attr_change "mc" "horny" 15 }}
 {{ attr_change "brother" "mood" 8 }}
@@ -378,11 +378,11 @@ You sit down next to {{ brother.properties.firstname }} and grab a controller.
 <p>You stop eventually. He doesn't move right away.</p>
 <p>"...Thanks," he says, quietly. Not like he usually says things.</p>
 {{ vars.bet_stage = vars.bet_stage + 1 }}
-[[Play another round, home_livingroom, bet_play]]
+[[Play another round, home_livingroom, betplay]]
 [[Good night, home_livingroom]]
 #end
 
-#begin bet_dare_mc_wins_4b
+#begin darewin4b
 {{ attr_change "mc" "mood" 8 }}
 {{ attr_change "mc" "horny" 20 }}
 {{ attr_change "brother" "horny" 30 }}
@@ -390,22 +390,22 @@ You sit down next to {{ brother.properties.firstname }} and grab a controller.
 <p>You pull your shirt off and set it on the cushion beside you. You pick up the controller. {{ brother.properties.firstname }} very deliberately looks at the TV screen.</p>
 <p>You play the next round in silence. He loses – badly. You're pretty sure it's not all coincidence.</p>
 {{ vars.bet_stage = vars.bet_stage + 1 }}
-[[Play another round, home_livingroom, bet_play]]
+[[Play another round, home_livingroom, betplay]]
 [[Call it a night, home_livingroom]]
 #end
 
-#begin bet_dare_1_mc_loses
+#begin darelost1
 {{ attr_change "mc" "mood" -3 }}
 {{ advance_time 10 }}
 You get up and make the snacks. When you come back and drop them on the coffee table, {{ brother.properties.firstname }} gives a single satisfied nod.
 <p>"See? Teamwork."</p>
 <p>"That was not teamwork."</p>
 {{ vars.bet_stage = vars.bet_stage + 1 }}
-[[Play another round, home_livingroom, bet_play]]
+[[Play another round, home_livingroom, betplay]]
 [[I'm done, home_livingroom]]
 #end
 
-#begin bet_dare_2_mc_loses
+#begin darelost2
 {{ attr_change "mc" "mood" -3 }}
 {{ attr_change "brother" "mood" 8 }}
 {{ advance_time 10 }}
@@ -414,11 +414,11 @@ You tell him. He listens – actually listens, which is somehow worse than if he
 <p>"Don't make it a thing."</p>
 <p>"I'm not making it a thing." A pause. "...That does explain a lot though."</p>
 {{ vars.bet_stage = vars.bet_stage + 1 }}
-[[Play another round, home_livingroom, bet_play]]
+[[Play another round, home_livingroom, betplay]]
 [[I need a break, home_livingroom]]
 #end
 
-#begin bet_dare_3_mc_loses
+#begin darelost3
 {{ attr_change "mc" "horny" 15 }}
 {{ attr_change "brother" "horny" 20 }}
 {{ advance_time 30 }}
@@ -426,11 +426,11 @@ You look at him for a moment. Then you stand up, pull your jeans off, and sit ba
 <p>{{ brother.properties.firstname }} blinks. To his credit, he recovers quickly – picks up the controller and un-pauses without a word.</p>
 <p>The game goes on. You're both pretending very hard that this is normal. It is, somehow, almost comfortable.</p>
 {{ vars.bet_stage = vars.bet_stage + 1 }}
-[[Play another round, home_livingroom, bet_play]]
+[[Play another round, home_livingroom, betplay]]
 [[That's enough for tonight, home_livingroom]]
 #end
 
-#begin bet_dare_4_mc_loses
+#begin darelost4
 {{ attr_change "mc" "horny" 25 }}
 {{ attr_change "brother" "horny" 30 }}
 {{ attr_change "mc" "mood" 5 }}
@@ -441,11 +441,11 @@ You set the controller down. You pull your shirt off slowly and lay it across yo
 <p>When the round ends, he says: "Another one?"</p>
 <p>"...Yeah," you say. "Another one."</p>
 {{ vars.bet_stage = vars.bet_stage + 1 }}
-[[Keep playing, home_livingroom, bet_play]]
+[[Keep playing, home_livingroom, betplay]]
 [[Not tonight, home_livingroom]]
 #end
 
-#begin bet_refuse
+#begin betrefuse
 {{ attr_change "mc" "mood" -3 }}
 {{ attr_change "brother" "mood" -5 }}
 "That's too far," you say.
@@ -454,11 +454,11 @@ You set the controller down. You pull your shirt off slowly and lay it across yo
 {{ vars.bro_wins = 0 }}
 {{ vars.bet_offered = false }}
 {{ vars.bet_stage = 1 }}
-[[Keep playing, home_livingroom, choose_mode]]
+[[Keep playing, home_livingroom, choosemode]]
 [[I'm calling it, home_livingroom]]
 #end
 
-#begin late_night_start
+#begin latenight
 {{ vars.late_encounter_done_today = true }}
 {{ advance_time 20 }}
 {{ attr_change "mc" "energy" -3 }}
@@ -468,21 +468,21 @@ You curl up on the sofa with the TV on low. The kind of quiet that only happens 
 {{ inhibition = get_attr "mc" "inhibition" }}
 {{ mom_rel = get_attr "mother" "relationship" }}
 {{ if inhibition >= 70 }}
-[["Couldn't sleep either?", home_livingroom, late_friendly]]
-[["I was just heading to bed.", home_livingroom, late_leave]]
+[["Couldn't sleep either?", home_livingroom, latefriendly]]
+[["I was just heading to bed.", home_livingroom, lateleave]]
 {{ else if inhibition >= 40 }}
-[["Couldn't sleep either?", home_livingroom, late_friendly]]
-[["Couldn't sleep. You look... nice.", home_livingroom, late_flirt]]
-[["I was just heading to bed.", home_livingroom, late_leave]]
+[["Couldn't sleep either?", home_livingroom, latefriendly]]
+[["Couldn't sleep. You look... nice.", home_livingroom, lateflirt]]
+[["I was just heading to bed.", home_livingroom, lateleave]]
 {{ else }}
-[["Couldn't sleep either?", home_livingroom, late_friendly]]
-[["Couldn't sleep. You look... nice.", home_livingroom, late_flirt]]
-[["Come sit with me?", home_livingroom, late_invite]]
-[["I was just heading to bed.", home_livingroom, late_leave]]
+[["Couldn't sleep either?", home_livingroom, latefriendly]]
+[["Couldn't sleep. You look... nice.", home_livingroom, lateflirt]]
+[["Come sit with me?", home_livingroom, lateinvite]]
+[["I was just heading to bed.", home_livingroom, lateleave]]
 {{ end }}
 #end
 
-#begin late_leave
+#begin lateleave
 You switch the TV off and say goodnight. She steps aside to let you pass in the narrow hallway.
 <p>For a moment – just a moment – you're very close. You smell something warm. Jasmine, maybe.</p>
 <p>Then you're past her, and the moment closes behind you like water.</p>
@@ -490,7 +490,7 @@ You switch the TV off and say goodnight. She steps aside to let you pass in the 
 [[Bedroom, home_room]]
 #end
 
-#begin late_friendly
+#begin latefriendly
 {{ attr_change "mc" "mood" 5 }}
 {{ attr_change "mother" "mood" 8 }}
 {{ advance_time 30 }}
@@ -502,7 +502,7 @@ She gets herself a glass of water and comes to sit on the other end of the sofa.
 [[Living Room, home_livingroom]]
 #end
 
-#begin late_flirt
+#begin lateflirt
 {{ attr_change "mc" "mood" 8 }}
 {{ attr_change "mc" "horny" 12 }}
 {{ attr_change "mother" "mood" 10 }}
@@ -518,7 +518,7 @@ She gets herself a glass of water and comes to sit on the other end of the sofa.
 [[Goodnight, home_room]]
 #end
 
-#begin late_invite
+#begin lateinvite
 {{ attr_change "mc" "mood" 10 }}
 {{ attr_change "mc" "horny" 20 }}
 {{ attr_change "mother" "mood" 12 }}
