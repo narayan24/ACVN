@@ -190,7 +190,7 @@ namespace ACVN
             {
                 Title = "ACVN – Select Story",
                 Width = 440,
-                Height = 310,
+                Height = 370,
                 WindowStartupLocation = WindowStartupLocation.CenterScreen,
                 ResizeMode = ResizeMode.NoResize,
                 Background = new System.Windows.Media.SolidColorBrush(
