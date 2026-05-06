@@ -65,6 +65,7 @@ namespace ACVN
             public bool VideoAutoplay { get; set; } = true;
             public string Language { get; set; } = "de";
             public bool ShowHiddenAttributes { get; set; } = false;
+            public bool DebugEnabled { get; set; } = false;
             public Dictionary<string, Dictionary<string, string>> OutfitPresets { get; set; } = new();
         }
 
@@ -82,6 +83,7 @@ namespace ACVN
         private static readonly string[] ClothingSubtypes = { "bra", "panties", "clothes", "shoes" };
 
         private Dictionary<string, TextBox> _setupFields = new Dictionary<string, TextBox>();
+        private List<string> _pendingQuestNotifications = new List<string>();
 
         public MainWindow()
         {
@@ -580,7 +582,15 @@ namespace ACVN
                 cssContent = File.ReadAllText(Path.Combine(storyPath, "style.css"), System.Text.Encoding.UTF8);
             }
             string contentClean = "<meta charset=\"utf-8\"><style>" + cssContent + "</style>";
-            contentClean+= Regex.Replace(content, @"#begin.*\n|#end\n*", string.Empty);
+
+            // Prepend any quest notifications that were queued during template rendering
+            if (_pendingQuestNotifications.Count > 0)
+            {
+                contentClean += string.Concat(_pendingQuestNotifications);
+                _pendingQuestNotifications.Clear();
+            }
+
+            contentClean += Regex.Replace(content, @"#begin.*\n|#end\n*", string.Empty);
             contentClean = Regex.Replace(contentClean, @"\[\[.*?\]\]", string.Empty);
             mainContent.NavigateToString(contentClean);
         }
@@ -906,6 +916,10 @@ namespace ACVN
                 videoAutoplayToggle.IsChecked = s.VideoAutoplay;
                 videoAutoplay = s.VideoAutoplay;
                 showHiddenToggle.IsChecked = s.ShowHiddenAttributes;
+                debugToggle.IsChecked = s.DebugEnabled;
+                debugEnabled = s.DebugEnabled;
+                if (debugEnabled)
+                    debugPanel.Visibility = Visibility.Visible;
                 if (!string.IsNullOrEmpty(s.Language))
                     Loc.SetLanguage(s.Language);
             }
@@ -922,6 +936,7 @@ namespace ACVN
                 existing.VideoAutoplay        = videoAutoplay;
                 existing.Language             = Loc.CurrentLanguage;
                 existing.ShowHiddenAttributes = showHiddenToggle.IsChecked == true;
+                existing.DebugEnabled         = debugEnabled;
                 File.WriteAllText(SettingsFilePath, JsonConvert.SerializeObject(existing, Formatting.Indented));
             }
             catch { }
@@ -999,9 +1014,11 @@ namespace ACVN
 
         public void settingsButton_Click(object sender, RoutedEventArgs e)
         {
-            settingsPanel.Visibility = settingsPanel.Visibility == Visibility.Visible
-                ? Visibility.Collapsed
-                : Visibility.Visible;
+            bool show = settingsPanel.Visibility != Visibility.Visible;
+            settingsPanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+            // WebBrowser is HWND-based and always renders above WPF overlays (airspace problem).
+            // Follow the same hide/restore pattern used by other overlays (wardrobe, phone, etc.).
+            mainContent.Visibility = show ? Visibility.Hidden : Visibility.Visible;
         }
 
         public void debugToggle_Changed(object sender, RoutedEventArgs e)
@@ -1009,6 +1026,7 @@ namespace ACVN
             debugEnabled = debugToggle.IsChecked == true;
             if (!debugEnabled)
                 debugPanel.Visibility = Visibility.Collapsed;
+            SaveAppSettings();
         }
 
         public void mediaArea_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -3203,14 +3221,44 @@ namespace ACVN
             {
                 _instance.questProgress[questId] = 0;
                 _instance.UpdateJournalPanel();
+                // Queue a banner notification for the content area
+                var def = _instance.questDefinitions.FirstOrDefault(q => q.Id == questId);
+                if (def != null)
+                {
+                    string html = $"<div style=\"background:#182818;border-left:3px solid #4CAF50;padding:8px 12px;margin:0 0 10px;border-radius:0 4px 4px 0;font-size:0.9em;\">" +
+                                  $"📋 <strong>New Quest: {System.Net.WebUtility.HtmlEncode(def.Name)}</strong>";
+                    if (def.Steps.Count > 0)
+                        html += $"<br><span style=\"color:#9e9e9e\">{System.Net.WebUtility.HtmlEncode(def.Steps[0].Description)}</span>";
+                    html += "</div>";
+                    _instance._pendingQuestNotifications.Add(html);
+                }
                 return string.Empty;
             }
 
             public static string AdvanceQuest(string questId)
             {
-                _instance.questProgress[questId] =
-                    (_instance.questProgress.TryGetValue(questId, out int s) ? s : 0) + 1;
+                int newStep = (_instance.questProgress.TryGetValue(questId, out int s) ? s : 0) + 1;
+                _instance.questProgress[questId] = newStep;
                 _instance.UpdateJournalPanel();
+                // Queue a banner notification for the content area
+                var def = _instance.questDefinitions.FirstOrDefault(q => q.Id == questId);
+                if (def != null)
+                {
+                    string html;
+                    if (newStep >= def.Steps.Count)
+                    {
+                        // Quest complete
+                        html = $"<div style=\"background:#182818;border-left:3px solid #66BB6A;padding:8px 12px;margin:0 0 10px;border-radius:0 4px 4px 0;font-size:0.9em;\">" +
+                               $"✓ <strong>Quest Complete: {System.Net.WebUtility.HtmlEncode(def.Name)}</strong></div>";
+                    }
+                    else
+                    {
+                        string nextObj = def.Steps[newStep].Description;
+                        html = $"<div style=\"background:#201e14;border-left:3px solid #F5A623;padding:8px 12px;margin:0 0 10px;border-radius:0 4px 4px 0;font-size:0.9em;\">" +
+                               $"📋 <strong>New Objective</strong><br><span style=\"color:#9e9e9e\">{System.Net.WebUtility.HtmlEncode(nextObj)}</span></div>";
+                    }
+                    _instance._pendingQuestNotifications.Add(html);
+                }
                 return string.Empty;
             }
 
