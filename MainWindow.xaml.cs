@@ -3541,23 +3541,31 @@ namespace ACVN
 
             // Embeds a random media file from images/<path> as inline HTML.
             // Walks up the folder hierarchy if no files are found (same logic as ShowRandomMedia).
+            // Accepts both forward slashes and backslashes as path separators.
             // Videos are shown as a thumbnail image (IE WebBrowser has no HTML5 video).
             public static string InlineMedia(string relativePath)
             {
-                string search = relativePath.Trim('/').Replace('\\', '/');
+                // Normalise: trim leading/trailing slashes (both / and \), unify separators to /
+                string search = relativePath.Trim('/', '\\').Replace('\\', '/');
+
+                // Search order: mod images first (they can override story images), then story
+                var imageRoots = _instance.ActiveMods
+                    .Select(m => System.IO.Path.Combine(m.Path, "images"))
+                    .Where(Directory.Exists)
+                    .ToList();
+                imageRoots.Add(_instance.imagesPath);
+
                 while (true)
                 {
                     if (!string.IsNullOrEmpty(search))
                     {
-                        string dir = Path.GetFullPath(Path.Combine(_instance.imagesPath, search));
-                        if (Directory.Exists(dir))
+                        foreach (var root in imageRoots)
                         {
+                            string dir = Path.GetFullPath(Path.Combine(root, search));
+                            if (!Directory.Exists(dir)) continue;
                             var files = Directory.GetFiles(dir, "*.*");
                             if (files.Length > 0)
-                            {
-                                string file = files[new Random().Next(files.Length)];
-                                return BuildInlineMediaTag(file);
-                            }
+                                return BuildInlineMediaTag(files[new Random().Next(files.Length)]);
                         }
                     }
                     int lastSlash = search.LastIndexOf('/');

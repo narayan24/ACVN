@@ -59,6 +59,7 @@ You undress and step into the shower.
 {{ inhibition = get_attr "mc" "inhibition" }}
 <p>The warm water feels wonderful. You close your eyes and let your thoughts drift.</p>
 <p>Then – the click of the door latch. The bathroom door swings open.</p>
+{{ inline_media "home/bathroom/shower/brosurprise" }}
 <p>{{ brother.properties.firstname }}'s voice: "Oh – sorry, I didn't know—" He freezes in the doorway, clearly not having heard the shower over his headphones. For a moment neither of you moves.</p>
 {{ if inhibition >= 60 }}
 <p>Your heart jumps into your throat. The shower curtain is only half-drawn.</p>
