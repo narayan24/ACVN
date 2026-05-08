@@ -1,0 +1,27 @@
+#begin start
+{{ if (quest_step "explore") == -1 }}{{ start_quest "explore" }}{{ end }}
+You are in your cosy cottage. Morning light falls through the small window. It is {{ time_str "HH:mm" }}.
+{{ if quest_active "explore" }}
+<p style="color:#F5A623; font-size:0.9em;">📋 Objective: {{ quest_objective "explore" }}</p>
+{{ end }}
+[[Read a book, cottage, read]]
+[[Rest in the armchair, cottage, rest]]
+[[Step outside, meadow]]
+#end
+
+#begin read
+You settle into the worn leather chair and open your book.
+{{ advance_time 30 }}
+{{ attr_change "mc" "mood" 15 }}
+{{ attr_change "mc" "energy" -5 }}
+<p>Half an hour passes. The words carry you somewhere far away. It is now {{ time_str "HH:mm" }}.</p>
+[[Put the book down, cottage]]
+#end
+
+#begin rest
+You close your eyes in the armchair. The cottage is perfectly quiet.
+{{ advance_time 20 }}
+{{ attr_change "mc" "energy" 25 }}
+<p>Twenty minutes later you blink awake, feeling more yourself. It is {{ time_str "HH:mm" }}.</p>
+[[Get up, cottage]]
+#end

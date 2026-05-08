@@ -361,5 +361,12 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-/story/images
-/story/rooms
+# Story package images (user-provided art assets – do not commit)
+story/*/images/*
+!story/*/images/.gitkeep
+
+# Save files and runtime logs
+savegames/*
+!/savegames/.gitkeep
+game.log
+*.acvnsave

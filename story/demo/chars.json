@@ -1,0 +1,15 @@
+{
+	"chars": [
+		{
+			"id": "mc",
+			"firstname": "Alex",
+			"lastname": "Wren",
+			"age": 28,
+			"relation": "mc",
+			"attributes": {
+				"mood":   { "min": 0, "max": 100, "value": 60, "name": "Mood" },
+				"energy": { "min": 0, "max": 100, "value": 80, "name": "Energy" }
+			}
+		}
+	]
+}

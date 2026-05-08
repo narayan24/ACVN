@@ -1,0 +1,80 @@
+{
+  "schedules": [
+    {
+      "char_id": "brother",
+      "entries": [
+        { "days": "weekdays", "from": "22:00", "to": "06:00", "location": "home_brother",    "activity": "sleeping" },
+        { "days": "weekdays", "from": "06:00", "to": "07:00", "location": "home_bathroom",   "activity": "showering and brushing teeth" },
+        { "days": "weekdays", "from": "07:00", "to": "08:00", "location": "home_kitchen",    "activity": "having breakfast" },
+        { "days": "weekdays", "from": "08:00", "to": "12:00", "location": "school",          "activity": "at school" },
+        { "days": "weekdays", "from": "12:00", "to": "13:00", "location": "home_kitchen",    "activity": "having lunch" },
+        { "days": "weekdays", "from": "13:00", "to": "16:00", "location": "home_brother",    "activity": "doing homework" },
+        { "days": "weekdays", "from": "16:00", "to": "18:00", "location": "home_livingroom", "activity": "playing video games" },
+        { "days": "weekdays", "from": "18:00", "to": "18:30", "location": "home_bathroom",   "activity": "showering" },
+        { "days": "weekdays", "from": "18:30", "to": "19:00", "location": "home_kitchen",    "activity": "having dinner" },
+        { "days": "weekdays", "from": "19:00", "to": "20:00", "location": "home_brother",    "activity": "lying in bed on his phone" },
+        { "days": "weekdays", "from": "20:00", "to": "22:00", "location": ["home_livingroom", "home_brother"], "activity": "watching TV or streaming" },
+
+        { "days": "weekends", "from": "22:00", "to": "10:00", "location": "home_brother",    "activity": "sleeping in" },
+        { "days": "weekends", "from": "10:00", "to": "11:00", "location": "home_bathroom",   "activity": "showering and getting ready" },
+        { "days": "weekends", "from": "11:00", "to": "12:00", "location": "home_kitchen",    "activity": "having a late breakfast" },
+        { "days": "weekends", "from": "12:00", "to": "14:00", "location": "home_livingroom", "activity": "playing video games" },
+        { "days": "weekends", "from": "14:00", "to": "15:00", "location": "home_kitchen",    "activity": "having lunch" },
+        { "days": "weekends", "from": "15:00", "to": "19:00", "location": ["home_livingroom", "home_brother"], "activity": "hanging around at home" },
+        { "days": "weekends", "from": "19:00", "to": "20:00", "location": "home_kitchen",    "activity": "having dinner" },
+        { "days": "weekends", "from": "20:00", "to": "22:00", "location": "home_livingroom", "activity": "playing games or streaming" }
+      ]
+    },
+    {
+      "char_id": "mother",
+      "entries": [
+        { "days": "4",        "from": "18:00", "to": "23:30", "location": "restaurant",      "activity": "going out with dad" },
+
+        { "days": "weekdays", "from": "23:00", "to": "07:00", "location": "home_parentroom","activity": "sleeping" },
+        { "days": "weekdays", "from": "07:00", "to": "08:30", "location": "home_kitchen",    "activity": "preparing breakfast" },
+        { "days": "weekdays", "from": "08:30", "to": "10:30", "location": "shopping",        "activity": "out shopping" },
+        { "days": "weekdays", "from": "10:30", "to": "12:00", "location": "home_livingroom", "activity": "doing housework" },
+        { "days": "weekdays", "from": "12:00", "to": "13:00", "location": "home_kitchen",    "activity": "cooking lunch" },
+        { "days": "weekdays", "from": "13:00", "to": "15:30", "location": "friends",         "activity": "meeting friends" },
+        { "days": "weekdays", "from": "15:30", "to": "17:30", "location": "home_livingroom", "activity": "relaxing" },
+        { "days": "weekdays", "from": "17:30", "to": "18:30", "location": "home_kitchen",    "activity": "cooking dinner" },
+        { "days": "weekdays", "from": "18:30", "to": "19:30", "location": "home_kitchen",    "activity": "having dinner" },
+        { "days": "weekdays", "from": "19:30", "to": "21:30", "location": "home_livingroom", "activity": "relaxing" },
+        { "days": "weekdays", "from": "21:30", "to": "23:00", "location": "home_parentroom","activity": "reading and dozing off" },
+
+        { "days": "weekends", "from": "23:00", "to": "08:30", "location": "home_parentroom","activity": "sleeping in" },
+        { "days": "weekends", "from": "08:30", "to": "10:00", "location": "home_kitchen",    "activity": "having a leisurely breakfast" },
+        { "days": "weekends", "from": "10:00", "to": "13:00", "location": "shopping",        "activity": "out and about" },
+        { "days": "weekends", "from": "13:00", "to": "14:00", "location": "home_kitchen",    "activity": "having lunch" },
+        { "days": "weekends", "from": "14:00", "to": "17:00", "location": "home_livingroom", "activity": "spending free time" },
+        { "days": "weekends", "from": "17:00", "to": "18:30", "location": "home_kitchen",    "activity": "cooking dinner" },
+        { "days": "weekends", "from": "18:30", "to": "19:30", "location": "home_kitchen",    "activity": "having dinner" },
+        { "days": "weekends", "from": "19:30", "to": "22:00", "location": "home_livingroom", "activity": "spending the evening" },
+        { "days": "weekends", "from": "22:00", "to": "23:00", "location": "home_parentroom","activity": "sleeping" }
+      ]
+    },
+    {
+      "char_id": "father",
+      "entries": [
+        { "days": "4",        "from": "18:00", "to": "23:30", "location": "restaurant",      "activity": "going out with mom" },
+
+        { "days": "weekdays", "from": "21:30", "to": "06:30", "location": "home_parentroom","activity": "sleeping" },
+        { "days": "weekdays", "from": "06:30", "to": "07:00", "location": "home_bathroom",   "activity": "getting ready" },
+        { "days": "weekdays", "from": "07:00", "to": "07:30", "location": "home_kitchen",    "activity": "having breakfast" },
+        { "days": "weekdays", "from": "07:30", "to": "17:00", "location": "work",            "activity": "at work" },
+        { "days": "weekdays", "from": "17:00", "to": "18:30", "location": "home_livingroom", "activity": "relaxing after work" },
+        { "days": "weekdays", "from": "18:30", "to": "19:30", "location": "home_kitchen",    "activity": "having dinner" },
+        { "days": "weekdays", "from": "19:30", "to": "21:30", "location": "home_livingroom", "activity": "watching TV" },
+
+        { "days": "weekends", "from": "22:00", "to": "08:00", "location": "home_parentroom","activity": "sleeping in" },
+        { "days": "weekends", "from": "08:00", "to": "09:00", "location": "home_kitchen",    "activity": "having a leisurely breakfast" },
+        { "days": "weekends", "from": "09:00", "to": "12:00", "location": "home_livingroom", "activity": "spending free time" },
+        { "days": "weekends", "from": "12:00", "to": "13:00", "location": "home_kitchen",    "activity": "having lunch" },
+        { "days": "weekends", "from": "13:00", "to": "16:00", "location": "errands",         "activity": "running errands" },
+        { "days": "weekends", "from": "16:00", "to": "18:30", "location": "home_livingroom", "activity": "relaxing" },
+        { "days": "weekends", "from": "18:30", "to": "19:30", "location": "home_kitchen",    "activity": "having dinner" },
+        { "days": "weekends", "from": "19:30", "to": "22:00", "location": "home_livingroom", "activity": "spending the evening" }
+      ]
+    }
+  ]
+}

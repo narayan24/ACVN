@@ -51,3 +51,15 @@ public class QuestDefinition
     public string Hint { get; set; }
     public List<QuestStepDef> Steps { get; set; } = new List<QuestStepDef>();
 }
+
+public class ModDefinition
+{
+    public string Path        { get; set; }
+    public string Id          { get; set; }
+    public string Name        { get; set; }
+    public string Version     { get; set; } = "";
+    public string Author      { get; set; } = "";
+    public string Description { get; set; } = "";
+    public int    Priority    { get; set; } = 50;
+    public bool   Enabled     { get; set; } = true;
+}

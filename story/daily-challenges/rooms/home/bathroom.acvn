@@ -1,0 +1,162 @@
+#begin start
+{{- register_daily "shower_count" 0 -}}
+{{- register_daily "brush_count" 0 -}}
+{{ bro_in_bath = char_at "brother" "home_bathroom" }}
+You are standing in the bathroom. It is {{ time_str "HH:mm" }}.
+{{ if (quest_step "tutorial") == 1 }}{{ advance_quest "tutorial" }}{{ end }}
+{{ if bro_in_bath }}
+<p>The door is locked from the inside. You can hear the shower running – {{ brother.properties.firstname }} is in there.</p>
+[[Knock on the door, home_bathroom, knockbrother]]
+[[Wait, home_bathroom, waitbrother]]
+{{ else }}
+{{ if vars.shower_count < 5 }}
+[[Shower, home_bathroom, shower]]
+{{ else }}
+<p>You've already showered {{ vars.shower_count }} times today. That's enough for now.</p>
+{{ end }}
+{{ if vars.brush_count < 3 }}
+[[Brush teeth, home_bathroom, brushteeth]]
+{{ else }}
+<p>You've already brushed your teeth today.</p>
+{{ end }}
+{{ end }}
+[[Hallway, home_hallway]]
+#end
+
+#begin knockbrother
+You knock on the bathroom door.
+{{ roll = random_int 1 100 }}
+{{ if roll > 40 }}
+<p>"Almost done!", {{ brother.properties.firstname }} calls over the sound of the shower. He sounds annoyed, but not angry.</p>
+{{ advance_time 5 }}
+{{ attr_change "mc" "mood" -1 }}
+{{ else }}
+<p>No answer – the water keeps running. Either he didn't hear you, or he's deliberately ignoring you.</p>
+{{ advance_time 2 }}
+{{ end }}
+[[Bathroom, home_bathroom]]
+#end
+
+#begin waitbrother
+You lean against the wall outside and wait. A few minutes later the door opens.
+<p>{{ brother.properties.firstname }} steps out with a towel over his shoulders and looks at you surprised. "Oh. You could have knocked."</p>
+{{ advance_time 10 }}
+{{ attr_change "mc" "mood" 2 }}
+[[Bathroom, home_bathroom]]
+#end
+
+#begin shower
+You undress and step into the shower.
+{{ roll_interrupt = random_int 1 100 }}
+{{ bro_home = (char_at "brother" "home_livingroom") || (char_at "brother" "home_brother") || (char_at "brother" "home_kitchen") }}
+{{ vars.shower_count = vars.shower_count + 1 }}
+{{ attr_change "mc" "hygiene" 20 }}
+{{ attr_change "mc" "energy" 5 }}
+{{ attr_change "mc" "mood" 5 }}
+{{ advance_time 10 }}
+{{ if bro_home && roll_interrupt > 65 && !vars.shower_interrupted_today }}
+{{ vars.shower_interrupted_today = true }}
+{{ inhibition = get_attr "mc" "inhibition" }}
+<p>The warm water feels wonderful. You close your eyes and let your thoughts drift.</p>
+<p>Then – the click of the door latch. The bathroom door swings open.</p>
+<p>{{ brother.properties.firstname }}'s voice: "Oh – sorry, I didn't know—" He freezes in the doorway, clearly not having heard the shower over his headphones. For a moment neither of you moves.</p>
+{{ if inhibition >= 60 }}
+<p>Your heart jumps into your throat. The shower curtain is only half-drawn.</p>
+[[Tell him to get out!, home_bathroom, interruptkick]]
+[[Freeze and say nothing, home_bathroom, interruptfreeze]]
+{{ else if inhibition >= 30 }}
+<p>A flush of heat rises to your face – but it's not entirely from embarrassment.</p>
+[[Tell him to get out!, home_bathroom, interruptkick]]
+[[Freeze and say nothing, home_bathroom, interruptfreeze]]
+[["Close the door behind you – on the outside.", home_bathroom, interrupttease]]
+{{ else }}
+<p>You feel a little rush of something – not quite embarrassment. You could handle this in several ways.</p>
+[[Tell him to get out!, home_bathroom, interruptkick]]
+[[Freeze and say nothing, home_bathroom, interruptfreeze]]
+[["Close the door behind you – on the outside.", home_bathroom, interrupttease]]
+[["You can stay – if you hand me the shampoo.", home_bathroom, interruptinvite]]
+{{ end }}
+{{ else }}
+{{ advance_time 5 }}
+<p>You feel fresh. It's now {{ time_str "HH:mm" }}.</p>
+{{ if (quest_step "tutorial") == 2 }}{{ vars.tut_showered = true }}{{ end }}
+{{ if (quest_step "tutorial") == 2 && vars.tut_showered == true && vars.tut_brushed == true }}{{ advance_quest "tutorial" }}{{ end }}
+[[Dry off, home_bathroom, dryoff]]
+{{ end }}
+#end
+
+#begin interruptkick
+{{ attr_change "mc" "mood" -5 }}
+{{ attr_change "brother" "mood" -5 }}
+{{ advance_time 5 }}
+"Get OUT!" you snap, pulling the curtain shut.
+<p>{{ brother.properties.firstname }} stumbles backward instantly, the door slamming behind him. "Sorry, sorry – I'm gone!"</p>
+<p>You stand there with your pulse pounding, curtain clenched in your fist. It takes a minute before your breathing slows.</p>
+<p>When you finally step out and get dressed, you catch a glimpse of him in the hallway. He doesn't say a word. His ears are red.</p>
+[[Dry off, home_bathroom, dryoff]]
+#end
+
+#begin interruptfreeze
+{{ attr_change "brother" "mood" 5 }}
+{{ advance_time 8 }}
+You don't move. Don't speak. The water keeps running.
+<p>{{ brother.properties.firstname }} stands there for a second that stretches out like taffy. Then he quietly pulls the door closed.</p>
+<p>You exhale slowly. Through the door you hear him mutter something under his breath – you can't make it out. It didn't sound like an apology.</p>
+<p>You finish showering with a strange, warm feeling sitting in your chest that you're not quite ready to name.</p>
+{{ attr_change "mc" "horny" 8 }}
+{{ if (quest_step "tutorial") == 2 }}{{ vars.tut_showered = true }}{{ end }}
+{{ if (quest_step "tutorial") == 2 && vars.tut_showered == true && vars.tut_brushed == true }}{{ advance_quest "tutorial" }}{{ end }}
+[[Dry off, home_bathroom, dryoff]]
+#end
+
+#begin interrupttease
+{{ attr_change "mc" "mood" 5 }}
+{{ attr_change "mc" "horny" 10 }}
+{{ attr_change "brother" "mood" 8 }}
+{{ attr_change "brother" "horny" 15 }}
+{{ advance_time 8 }}
+You keep your voice perfectly level. "Close the door behind you – on the outside."
+<p>There's a pause. You hear him exhale – something caught between a laugh and something else entirely.</p>
+<p>"Right. Yeah." The door clicks shut.</p>
+<p>You smirk at the tiles and turn the water up a little hotter. When you pass him in the hallway ten minutes later, he very deliberately looks at the ceiling.</p>
+{{ if (quest_step "tutorial") == 2 }}{{ vars.tut_showered = true }}{{ end }}
+{{ if (quest_step "tutorial") == 2 && vars.tut_showered == true && vars.tut_brushed == true }}{{ advance_quest "tutorial" }}{{ end }}
+[[Dry off, home_bathroom, dryoff]]
+#end
+
+#begin interruptinvite
+{{ attr_change "mc" "mood" 8 }}
+{{ attr_change "mc" "horny" 20 }}
+{{ attr_change "brother" "mood" 12 }}
+{{ attr_change "brother" "horny" 25 }}
+{{ attr_change "brother" "mood" 10 }}
+{{ advance_time 15 }}
+You lean your head around the curtain just enough. "You can stay – if you hand me the shampoo."
+<p>{{ brother.properties.firstname }} stares at you. His mouth opens, then closes.</p>
+<p>"The... shampoo."</p>
+<p>"Green bottle, second shelf."</p>
+<p>He grabs it. Holds it out at arm's length, gaze fixed somewhere above your head with almost comical precision. You take it from him with a small smile.</p>
+<p>"You can go now," you say.</p>
+<p>"Right." He doesn't move for exactly one second too long. Then he leaves, and the door closes with a soft, careful click.</p>
+<p>You laugh quietly under the water. Your pulse is going faster than it should be.</p>
+{{ if (quest_step "tutorial") == 2 }}{{ vars.tut_showered = true }}{{ end }}
+{{ if (quest_step "tutorial") == 2 && vars.tut_showered == true && vars.tut_brushed == true }}{{ advance_quest "tutorial" }}{{ end }}
+[[Dry off, home_bathroom, dryoff]]
+#end
+
+#begin brushteeth
+You brush your teeth.
+{{ vars.brush_count = vars.brush_count + 1 }}
+{{ attr_change "mc" "hygiene" 5 }}
+{{ advance_time 5 }}
+{{ if (quest_step "tutorial") == 2 }}{{ vars.tut_brushed = true }}{{ end }}
+{{ if (quest_step "tutorial") == 2 && vars.tut_showered == true && vars.tut_brushed == true }}{{ advance_quest "tutorial" }}{{ end }}
+<p>Clean! It's now {{ time_str "HH:mm" }}.</p>
+[[Bathroom, home_bathroom]]
+#end
+
+#begin dryoff
+You dry yourself off.
+{{ advance_time 5 }}
+[[Bathroom, home_bathroom]]
+#end

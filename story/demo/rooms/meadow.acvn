@@ -1,0 +1,32 @@
+#begin start
+{{ if (quest_step "explore") == 0 }}{{ advance_quest "explore" }}{{ end }}
+You step out into the sunlit meadow. The air smells of warm grass and something sweet.
+{{ if quest_active "explore" }}
+<p style="color:#F5A623; font-size:0.9em;">📋 Objective: {{ quest_objective "explore" }}</p>
+{{ end }}
+[[Take a slow walk, meadow, walk]]
+[[Sit in the grass, meadow, sitgrass]]
+[[Back to the cottage, cottage]]
+#end
+
+#begin walk
+You wander the edge of the meadow, watching clouds drift overhead.
+{{ advance_time 20 }}
+{{ attr_change "mc" "mood" 10 }}
+{{ attr_change "mc" "energy" -10 }}
+<p>When you return your legs are pleasantly tired. It is {{ time_str "HH:mm" }}.</p>
+[[Back to the meadow, meadow]]
+#end
+
+#begin sitgrass
+You find a soft patch of grass and lie down, arms folded behind your head.
+{{ advance_time 15 }}
+{{ attr_change "mc" "mood" 20 }}
+{{ attr_change "mc" "energy" 5 }}
+{{ if (quest_step "explore") == 1 }}{{ advance_quest "explore" }}{{ end }}
+<p>The sky is enormous from here. You feel very small and somehow fine about that.</p>
+{{ if quest_done "explore" }}
+<p style="color:#66BB6A; font-size:0.9em;">✓ Quest complete: <em>A Walk Outside</em></p>
+{{ end }}
+[[Back to the meadow, meadow]]
+#end

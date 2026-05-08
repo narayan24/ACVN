@@ -1,0 +1,106 @@
+#begin start
+{{ if (quest_step "tutorial") == -1 }}{{ start_quest "tutorial" }}{{ end }}
+You are standing in your room.
+<p>
+    Your name is {{ mc.properties.firstname }} {{ mc.properties.lastname }},
+    you are {{ mc.properties.age }} years old.
+</p>
+[[Desk, home_room, desk]]
+[[Wardrobe, home_room, wardrobe]]
+{{ state = clothing_state }}
+{{ if state == "naked" }}
+[[Lie down naked, home_room, bednaked]]
+{{ else if state == "underwear" }}
+[[Lie down in underwear, home_room, bedunderwear]]
+{{ else }}
+[[Go to bed, home_room, beddressed]]
+{{ end }}
+{{ if state == "naked" && (get_attr "mc" "inhibition") >= 20 }}
+<p style="color:#FF6B6B; font-size:12px">You are naked. You feel far too self-conscious to step out into the hallway like this.</p>
+{{ else }}
+[[Hallway, home_hallway]]
+{{ end }}
+#end
+
+#begin desk
+You sit down at your desk.
+<p>
+    It's {{ time_str "HH:mm" }}. You sit down and get some work done.
+</p>
+{{ advance_time 15 }}
+<p>
+    A while later it's {{ time_str "HH:mm" }}.
+</p>
+{{ if (item_count "phone") == 0 }}
+[[Pick up phone, home_room, pickupphone]]
+{{ end }}
+[[Get up, home_room]]
+#end
+
+#begin pickupphone
+You pick up the phone from the desk.
+{{ add_item "phone" }}
+{{ if (quest_step "tutorial") == 0 }}{{ advance_quest "tutorial" }}{{ end }}
+<p>The smartphone is now in your inventory.</p>
+[[Desk, home_room, desk]]
+#end
+
+#begin bednaked
+You are lying naked in your bed.
+[[Sleep, home_room, sleep]]
+[[Get up, home_room]]
+#end
+
+#begin bedunderwear
+You are lying in your bed in your underwear.
+[[Sleep, home_room, sleep]]
+[[Get up, home_room]]
+#end
+
+#begin beddressed
+You are lying in your bed fully dressed.
+[[Sleep, home_room, sleep]]
+[[Get up, home_room]]
+#end
+
+#begin sleep
+How long do you want to sleep?
+[[Nap (30 min.), home_room, sleepnap]]
+[[1 hour, home_room, sleep1h]]
+[[3 hours, home_room, sleep3h]]
+[[Until morning (07:00), home_room, sleepnight]]
+#end
+
+#begin sleepnap
+{{ advance_time 30 }}
+You close your eyes for a short while. When you open them again it's {{ time_str "HH:mm" }}.
+<p>You feel a little more rested – not fully, but enough.</p>
+{{ attr_change "mc" "energy" 10 }}
+[[Get up, home_room]]
+#end
+
+#begin sleep1h
+{{ advance_time 60 }}
+You drift off for an hour. When you wake up it's {{ time_str "HH:mm" }}.
+<p>Your head feels clearer.</p>
+{{ attr_change "mc" "energy" 20 }}
+[[Get up, home_room]]
+#end
+
+#begin sleep3h
+{{ advance_time 180 }}
+You fall into a deep sleep. Three hours later you surface slowly – it's {{ time_str "HH:mm" }}.
+<p>Much better.</p>
+{{ attr_change "mc" "energy" 45 }}
+[[Get up, home_room]]
+#end
+
+#begin sleepnight
+{{- reset_daily -}}
+{{ advance_to_hour 7 }}
+You sleep deeply and dreamlessly through the night. When you wake up it's {{ time_str "HH:mm" }}.
+<p>A new day.</p>
+{{ attr_change "mc" "energy" 100 }}
+{{ attr_change "mc" "hunger" -30 }}
+[[Get up, home_room]]
+#end

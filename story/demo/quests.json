@@ -1,0 +1,12 @@
+{
+  "quests": [
+    {
+      "id": "explore",
+      "name": "A Walk Outside",
+      "steps": [
+        { "id": "leavecottage", "description": "Go out to the meadow." },
+        { "id": "sitdown",      "description": "Sit in the grass and look at the sky." }
+      ]
+    }
+  ]
+}

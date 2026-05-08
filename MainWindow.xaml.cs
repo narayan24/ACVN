@@ -19,6 +19,7 @@ namespace ACVN
     /// </summary>
     public partial class MainWindow : Window
     {
+        private string storiesBasePath;
         private string storyPath;
         private string roomsPath;
         private string imagesPath;
@@ -54,6 +55,9 @@ namespace ACVN
         private Dictionary<string, string> wornClothing = new Dictionary<string, string>();
         private MediaPlayer _cameraPlayer;
         private bool _settingsReady = false;
+        private List<ModDefinition> _mods    = new List<ModDefinition>();
+        private string              modsPath;
+        private IEnumerable<ModDefinition> ActiveMods => _mods.Where(m => m.Enabled);
 
         private static string SettingsFilePath => Path.Combine(
             AppDomain.CurrentDomain.BaseDirectory, "appsettings.json");
@@ -63,6 +67,10 @@ namespace ACVN
             public double Volume { get; set; } = 80;
             public bool VideoAutoplay { get; set; } = true;
             public string Language { get; set; } = "de";
+            public bool ShowHiddenAttributes { get; set; } = false;
+            public bool DebugEnabled { get; set; } = false;
+            public Dictionary<string, bool> ModStates { get; set; } = new();
+            public Dictionary<string, Dictionary<string, string>> OutfitPresets { get; set; } = new();
         }
 
         private Dictionary<string, string> _config = new Dictionary<string, string>();
@@ -74,10 +82,12 @@ namespace ACVN
         private string _wardrobeState = "main";
         private string _wardrobeCategorySelected;
         private string _wardrobeItemSelected;
+        private bool   _wardrobeReadOnly = false;
 
         private static readonly string[] ClothingSubtypes = { "bra", "panties", "clothes", "shoes" };
 
         private Dictionary<string, TextBox> _setupFields = new Dictionary<string, TextBox>();
+        private List<string> _pendingQuestNotifications = new List<string>();
 
         public MainWindow()
         {
@@ -87,15 +97,18 @@ namespace ACVN
             string rootPath = AppDomain.CurrentDomain.BaseDirectory;
             Directory.SetCurrentDirectory(rootPath);
 
-            storyPath = Path.Combine(rootPath, "../../../story/");
-            if (!Directory.Exists(storyPath))
+            storiesBasePath = Path.Combine(rootPath, "../../../story/");
+            if (!Directory.Exists(storiesBasePath))
+                storiesBasePath = Path.Combine(rootPath, "story/");
+            if (!Directory.Exists(storiesBasePath))
             {
-                storyPath = Path.Combine(rootPath, "story/");
-                if (!Directory.Exists(storyPath))
-                {
-                    MessageBox.Show("The folder 'story' wasn't found. Not able to start the game!");
-                }
+                MessageBox.Show("The folder 'story' wasn't found. Not able to start the game!");
+                return;
             }
+
+            storyPath = PickStoryPackage(storiesBasePath);
+            if (storyPath == null) return;
+
             roomsPath = Path.Combine(storyPath, "rooms");
             imagesPath = Path.Combine(storyPath, "images");
             saveGamePath = Path.Combine(rootPath, "savegames");
@@ -104,7 +117,6 @@ namespace ACVN
                 Directory.CreateDirectory(saveGamePath);
             }
             logPath = Path.Combine(rootPath, "game.log");
-            CheckFolder(storyPath);
             CheckFolder(roomsPath);
             CheckFolder(imagesPath);
 
@@ -112,6 +124,7 @@ namespace ACVN
             currentAction = "start";
 
             LoadConfig();
+            LoadMods();
             GetCharacters();
             LoadItems();
             LoadClothes();
@@ -146,9 +159,239 @@ namespace ACVN
             {
                 dynamic data = JsonConvert.DeserializeObject<dynamic>(File.ReadAllText(path, System.Text.Encoding.UTF8));
                 foreach (var prop in (Newtonsoft.Json.Linq.JObject)data)
-                    _config[prop.Key.ToLower()] = prop.Value.ToString().ToLower();
+                {
+                    string key = prop.Key.ToLower();
+                    string val = prop.Value.ToString();
+                    // Preserve display fields as-is; lowercase comparison fields
+                    _config[key] = key is "name" or "version" or "language" ? val : val.ToLower();
+                }
             }
             catch { }
+        }
+
+        // ── Mod loading ─────────────────────────────────────────────────────────
+
+        private void LoadMods()
+        {
+            _mods.Clear();
+            modsPath = Path.Combine(storyPath, "mods");
+            if (!Directory.Exists(modsPath)) return;
+
+            var modStates = ReadAppSettings().ModStates ?? new Dictionary<string, bool>();
+
+            foreach (var dir in Directory.GetDirectories(modsPath).OrderBy(d => d))
+            {
+                string modJsonPath = Path.Combine(dir, "mod.json");
+                if (!File.Exists(modJsonPath)) continue;
+                try
+                {
+                    dynamic cfg = JsonConvert.DeserializeObject<dynamic>(
+                        File.ReadAllText(modJsonPath, System.Text.Encoding.UTF8));
+                    string modId = System.IO.Path.GetFileName(dir);
+                    bool defaultEnabled = true;
+                    _mods.Add(new ModDefinition
+                    {
+                        Path        = dir,
+                        Id          = modId,
+                        Name        = cfg?.name?.ToString() ?? modId,
+                        Version     = cfg?.version?.ToString() ?? string.Empty,
+                        Author      = cfg?.author?.ToString() ?? string.Empty,
+                        Description = cfg?.description?.ToString() ?? string.Empty,
+                        Priority    = cfg?.priority != null ? (int)cfg.priority : 50,
+                        Enabled     = modStates.TryGetValue(modId, out bool en) ? en : defaultEnabled
+                    });
+                }
+                catch { }
+            }
+
+            _mods = _mods.OrderBy(m => m.Priority).ThenBy(m => m.Id).ToList();
+        }
+
+        private void BuildModsSettingsUI()
+        {
+            modsSettingsStack.Children.Clear();
+            tbSettingsModsHeader.Text = Loc.T("settings.mods");
+
+            if (_mods.Count == 0)
+            {
+                tbSettingsModsHint.Text       = Loc.T("settings.mods.none");
+                tbSettingsModsHint.Visibility = Visibility.Visible;
+                return;
+            }
+
+            tbSettingsModsHint.Visibility = Visibility.Collapsed;
+
+            foreach (var mod in _mods)
+            {
+                var row = new Grid { Margin = new Thickness(0, 3, 0, 3) };
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+                var info = new StackPanel { Orientation = Orientation.Vertical };
+                info.Children.Add(new TextBlock
+                {
+                    Text       = mod.Name + (string.IsNullOrEmpty(mod.Version) ? string.Empty : $"  v{mod.Version}"),
+                    Foreground = System.Windows.Media.Brushes.White,
+                    FontSize   = 12
+                });
+                if (!string.IsNullOrEmpty(mod.Author))
+                    info.Children.Add(new TextBlock
+                    {
+                        Text       = mod.Author,
+                        Foreground = new System.Windows.Media.SolidColorBrush(
+                                         System.Windows.Media.Color.FromRgb(0x88, 0x88, 0x88)),
+                        FontSize   = 10
+                    });
+                Grid.SetColumn(info, 0);
+
+                var cb = new CheckBox
+                {
+                    IsChecked         = mod.Enabled,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Tag               = mod.Id
+                };
+                Grid.SetColumn(cb, 1);
+                cb.Checked   += ModToggle_Changed;
+                cb.Unchecked += ModToggle_Changed;
+
+                row.Children.Add(info);
+                row.Children.Add(cb);
+                modsSettingsStack.Children.Add(row);
+            }
+
+            modsSettingsStack.Children.Add(new TextBlock
+            {
+                Text            = Loc.T("settings.mods.restart_hint"),
+                FontSize        = 10,
+                Foreground      = new System.Windows.Media.SolidColorBrush(
+                                      System.Windows.Media.Color.FromRgb(0x55, 0x55, 0x55)),
+                Margin          = new Thickness(0, 8, 0, 0),
+                TextWrapping    = TextWrapping.Wrap
+            });
+        }
+
+        private void ModToggle_Changed(object sender, RoutedEventArgs e)
+        {
+            if (sender is CheckBox cb && cb.Tag is string modId)
+            {
+                var mod = _mods.FirstOrDefault(m => m.Id == modId);
+                if (mod != null) mod.Enabled = cb.IsChecked == true;
+                SaveAppSettings();
+            }
+        }
+
+        // ── Story package selection ─────────────────────────────────────────────
+
+        private string PickStoryPackage(string basePath)
+        {
+            var packages = Directory.GetDirectories(basePath)
+                .Where(d => File.Exists(Path.Combine(d, "config.json")))
+                .OrderBy(d => d)
+                .ToList();
+
+            if (packages.Count == 0)
+            {
+                MessageBox.Show("No story packages found in 'story/'.\n" +
+                    "Each story needs its own subfolder containing a config.json.");
+                return null;
+            }
+
+            if (packages.Count == 1)
+                return packages[0];
+
+            return ShowStoryPicker(packages);
+        }
+
+        private string ShowStoryPicker(List<string> packages)
+        {
+            var win = new Window
+            {
+                Title = "ACVN – Select Story",
+                Width = 440,
+                Height = 370,
+                WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                ResizeMode = ResizeMode.NoResize,
+                Background = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(0x1C, 0x1C, 0x1C))
+            };
+
+            var root = new StackPanel { Margin = new Thickness(24) };
+
+            root.Children.Add(new TextBlock
+            {
+                Text = "Choose a Story",
+                Foreground = System.Windows.Media.Brushes.White,
+                FontSize = 18,
+                FontWeight = FontWeights.Bold,
+                Margin = new Thickness(0, 0, 0, 14)
+            });
+
+            var list = new ListBox
+            {
+                Background = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(0x2A, 0x2A, 0x2A)),
+                Foreground = System.Windows.Media.Brushes.White,
+                BorderThickness = new Thickness(0),
+                Padding = new Thickness(4),
+                Height = 160
+            };
+
+            foreach (var pkg in packages)
+            {
+                string label = Path.GetFileName(pkg);
+                try
+                {
+                    dynamic cfg = JsonConvert.DeserializeObject<dynamic>(
+                        File.ReadAllText(Path.Combine(pkg, "config.json"), System.Text.Encoding.UTF8));
+                    string n = cfg?.name?.ToString();
+                    string v = cfg?.version?.ToString();
+                    if (!string.IsNullOrWhiteSpace(n)) label = n;
+                    if (!string.IsNullOrWhiteSpace(v)) label += $"  v{v}";
+                }
+                catch { }
+
+                list.Items.Add(new ListBoxItem
+                {
+                    Content = label,
+                    Tag = pkg,
+                    Padding = new Thickness(8, 6, 8, 6)
+                });
+            }
+
+            list.SelectedIndex = 0;
+            root.Children.Add(list);
+
+            string result = packages[0];
+
+            var btnBorder = new Border
+            {
+                Background = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(0x33, 0x88, 0xFF)),
+                CornerRadius = new CornerRadius(4),
+                Margin = new Thickness(0, 14, 0, 0),
+                Padding = new Thickness(0, 10, 0, 10),
+                Cursor = System.Windows.Input.Cursors.Hand,
+                Child = new TextBlock
+                {
+                    Text = "▶  Play",
+                    Foreground = System.Windows.Media.Brushes.White,
+                    FontSize = 14,
+                    FontWeight = FontWeights.SemiBold,
+                    HorizontalAlignment = HorizontalAlignment.Center
+                }
+            };
+
+            btnBorder.MouseLeftButtonDown += (_, _) =>
+            {
+                if (list.SelectedItem is ListBoxItem li && li.Tag is string p)
+                    result = p;
+                win.DialogResult = true;
+            };
+            root.Children.Add(btnBorder);
+
+            win.Content = root;
+            win.ShowDialog();
+            return result;
         }
 
         private void SetIntroLayout(bool introMode)
@@ -203,66 +446,95 @@ namespace ACVN
 
         private string clearPath(string path)
         {
+            if (string.IsNullOrEmpty(path)) return path ?? string.Empty;
             return Regex.Replace(path, @"_", "/");
         }
 
         /* CONTENT HANDLING */
+
+        /// <summary>
+        /// Parses all #begin…#end blocks from an .acvn file into a dictionary.
+        /// Key = block name (e.g. "start", "walk:after"). Value = raw block content.
+        /// </summary>
+        private static Dictionary<string, string> ParseBlocks(string fileContent)
+        {
+            var blocks = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            string pattern = @"#begin\s+(\S+)\s(.*?)#end";
+            foreach (Match m in Regex.Matches(fileContent, pattern, RegexOptions.Singleline))
+                if (m.Success)
+                    blocks[m.Groups[1].Value.Trim()] = m.Groups[2].Value;
+            return blocks;
+        }
+
         private void InitContent()
         {
             string filePath = Path.Combine(roomsPath, clearPath(currentRoom) + ".acvn");
-            if (File.Exists(filePath) && Path.GetExtension(filePath).Equals(".acvn", StringComparison.OrdinalIgnoreCase))
+            if (!File.Exists(filePath) || !Path.GetExtension(filePath).Equals(".acvn", StringComparison.OrdinalIgnoreCase))
             {
-                try
+                // Check mod rooms before giving up
+                filePath = null;
+                foreach (var mod in ActiveMods)
                 {
-                    string fileContent = File.ReadAllText(filePath, System.Text.Encoding.UTF8);
-
-
-
-                    string pattern = @"#begin\s+(.*?)\s+(.*?)#end";
-                    MatchCollection matches = Regex.Matches(fileContent, pattern, RegexOptions.Singleline);
-
-                    if (matches.Count > 0)
-                    {
-                        foreach (Match match in matches)
-                        {
-                            if (match.Success)
-                            {
-                                string blockName = match.Groups[1].Value;
-                                string blockContent = match.Groups[2].Value;
-
-                                if (blockName == currentAction)
-                                {
-                                    blockContent = RenderTemplate(blockContent);
-                                    ShowRandomMedia(clearPath(currentRoom) + "/" + (currentAction == "start" ? "" : clearPath(currentAction)));
-                                    ParseRooms(blockContent);
-                                    ParseContent(blockContent);
-                                    UpdateStatusBar();
-                                    UpdateInventoryPanel();
-                                    UpdateJournalPanel();
-                                }
-
-                                fileContent = fileContent.Replace(match.Value, string.Empty);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        mainContent.NavigateToString(fileContent);
-                    }
+                    string candidate = System.IO.Path.Combine(mod.Path, "rooms", clearPath(currentRoom) + ".acvn");
+                    if (File.Exists(candidate)) { filePath = candidate; break; }
                 }
-                catch (Exception ex)
+                if (filePath == null)
                 {
-                    LogError("Exception in InitContent", ex.ToString());
-                    ShowDebugInfo("Fehler: " + ex.Message, isError: true);
-                    MessageBox.Show($"Error while reading the file: {ex.Message}");
+                    string msg = $"File not found: '{Path.Combine(roomsPath, clearPath(currentRoom) + ".acvn")}'";
+                    LogError(msg);
+                    ShowDebugInfo(msg, isError: true);
+                    MessageBox.Show(msg);
+                    return;
                 }
             }
-            else
+
+            try
             {
-                string msg = $"File not found: '{filePath}'";
-                LogError(msg);
-                ShowDebugInfo(msg, isError: true);
-                MessageBox.Show(msg);
+                // 1. Load story blocks
+                string fileContent = File.ReadAllText(filePath, System.Text.Encoding.UTF8);
+                var blocks = ParseBlocks(fileContent);
+
+                // 2. Merge mod room blocks (in priority order; later mods override earlier)
+                foreach (var mod in ActiveMods)
+                {
+                    string modRoomFile = System.IO.Path.Combine(mod.Path, "rooms", clearPath(currentRoom) + ".acvn");
+                    if (!File.Exists(modRoomFile)) continue;
+                    try
+                    {
+                        string modContent = File.ReadAllText(modRoomFile, System.Text.Encoding.UTF8);
+                        foreach (var kv in ParseBlocks(modContent))
+                            blocks[kv.Key] = kv.Value;   // override or add
+                    }
+                    catch { }
+                }
+
+                // 3. Locate the active block
+                if (!blocks.TryGetValue(currentAction, out string blockContent))
+                {
+                    mainContent.NavigateToString(fileContent);
+                    return;
+                }
+
+                // 4. Apply :before / :after patches
+                if (blocks.TryGetValue(currentAction + ":before", out string before))
+                    blockContent = before + blockContent;
+                if (blocks.TryGetValue(currentAction + ":after", out string after))
+                    blockContent = blockContent + after;
+
+                // 5. Render
+                blockContent = RenderTemplate(blockContent);
+                ShowRandomMedia(clearPath(currentRoom) + "/" + (currentAction == "start" ? "" : clearPath(currentAction)));
+                ParseRooms(blockContent);
+                ParseContent(blockContent);
+                UpdateStatusBar();
+                UpdateInventoryPanel();
+                UpdateJournalPanel();
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in InitContent", ex.ToString());
+                ShowDebugInfo("Fehler: " + ex.Message, isError: true);
+                MessageBox.Show($"Error while reading the file: {ex.Message}");
             }
         }
 
@@ -448,15 +720,48 @@ namespace ACVN
 
         private void ParseContent(string content)
         {
+            // Story CSS
             string cssContent = string.Empty;
             if (File.Exists(Path.Combine(storyPath, "style.css")))
-            {
                 cssContent = File.ReadAllText(Path.Combine(storyPath, "style.css"), System.Text.Encoding.UTF8);
+
+            // Append mod CSS (in priority order)
+            foreach (var mod in ActiveMods)
+            {
+                string modCss = System.IO.Path.Combine(mod.Path, "style.css");
+                if (File.Exists(modCss))
+                    cssContent += "\n" + File.ReadAllText(modCss, System.Text.Encoding.UTF8);
             }
+
             string contentClean = "<meta charset=\"utf-8\"><style>" + cssContent + "</style>";
-            contentClean+= Regex.Replace(content, @"#begin.*\n|#end\n*", string.Empty);
+
+            // Prepend any quest notifications that were queued during template rendering
+            if (_pendingQuestNotifications.Count > 0)
+            {
+                contentClean += string.Concat(_pendingQuestNotifications);
+                _pendingQuestNotifications.Clear();
+            }
+
+            contentClean += Regex.Replace(content, @"#begin.*\n|#end\n*", string.Empty);
             contentClean = Regex.Replace(contentClean, @"\[\[.*?\]\]", string.Empty);
             mainContent.NavigateToString(contentClean);
+        }
+
+        private static System.Windows.Media.SolidColorBrush BarBrush(int value, int min, int max, bool invert = false)
+        {
+            double t = max == min ? 1.0 : Math.Clamp((double)(value - min) / (max - min), 0.0, 1.0);
+            if (invert) t = 1.0 - t;
+            byte r = (byte)(255 * (1 - t));
+            byte g = (byte)(180 * t);
+            return new System.Windows.Media.SolidColorBrush(
+                System.Windows.Media.Color.FromRgb(r, g, 0x00));
+        }
+
+        private static ProgressBar ColoredBar(int value, int min, int max, Thickness margin, bool invert = false)
+        {
+            var bar = new ProgressBar { Minimum = min, Maximum = max, Value = value, Margin = margin };
+            bar.Foreground = BarBrush(value, min, max, invert);
+            return bar;
         }
 
         private void UpdateStatusBar()
@@ -469,47 +774,63 @@ namespace ACVN
 
                 if (mc.Properties.TryGetValue("attributes", out var attributes) && attributes is JObject attributesObject)
                 {
+                    bool showHidden = showHiddenToggle.IsChecked == true;
+                    bool firstHidden = true;
+
                     foreach (var attribute in attributesObject)
                     {
                         var attributeValues = attribute.Value as JObject;
+                        bool isHidden = attributeValues?.Value<bool?>("hidden") == true;
 
-                        if (attributeValues?.Value<bool?>("hidden") == true)
+                        if (isHidden && !showHidden)
                             continue;
 
-                        int min = attributeValues.Value<int>("min");
-                        int max = attributeValues.Value<int>("max");
+                        int min   = attributeValues.Value<int>("min");
+                        int max   = attributeValues.Value<int>("max");
                         int value = attributeValues.Value<int>("value");
                         string name = attributeValues.Value<string>("name");
 
+                        // Separator before first hidden attribute
+                        if (isHidden && firstHidden)
+                        {
+                            firstHidden = false;
+                            statusStack.Children.Add(new System.Windows.Shapes.Rectangle
+                            {
+                                Height = 1,
+                                Fill   = new System.Windows.Media.SolidColorBrush(
+                                             System.Windows.Media.Color.FromRgb(0x2A, 0x2A, 0x2A)),
+                                Margin = new Thickness(0, 4, 0, 8)
+                            });
+                        }
+
                         var wrapper = new StackPanel { Margin = new Thickness(0, 0, 0, 10) };
 
-                        // Label row: attribute name left, value/max right
+                        var labelFg = isHidden
+                            ? System.Windows.Media.Color.FromRgb(0x66, 0x66, 0x66)
+                            : System.Windows.Media.Color.FromRgb(0xAB, 0xAB, 0xAB);
+                        var valueFg = isHidden
+                            ? System.Windows.Media.Color.FromRgb(0x44, 0x44, 0x44)
+                            : System.Windows.Media.Color.FromRgb(0x66, 0x66, 0x66);
+
                         var labelRow = new Grid();
                         labelRow.Children.Add(new TextBlock
                         {
                             Text = name,
                             HorizontalAlignment = HorizontalAlignment.Left,
-                            Foreground = new System.Windows.Media.SolidColorBrush(
-                                System.Windows.Media.Color.FromRgb(0xAB, 0xAB, 0xAB)),
-                            FontSize = 11
+                            Foreground = new System.Windows.Media.SolidColorBrush(labelFg),
+                            FontSize = isHidden ? 10 : 11
                         });
                         labelRow.Children.Add(new TextBlock
                         {
                             Text = $"{value} / {max}",
                             HorizontalAlignment = HorizontalAlignment.Right,
-                            Foreground = new System.Windows.Media.SolidColorBrush(
-                                System.Windows.Media.Color.FromRgb(0x66, 0x66, 0x66)),
-                            FontSize = 11
+                            Foreground = new System.Windows.Media.SolidColorBrush(valueFg),
+                            FontSize = isHidden ? 10 : 11
                         });
 
                         wrapper.Children.Add(labelRow);
-                        wrapper.Children.Add(new ProgressBar
-                        {
-                            Minimum = min,
-                            Maximum = max,
-                            Value = value,
-                            Margin = new Thickness(0, 4, 0, 0)
-                        });
+                        bool invertBar = attribute.Key.Equals("horny", StringComparison.OrdinalIgnoreCase);
+                        wrapper.Children.Add(ColoredBar(value, min, max, new Thickness(0, 4, 0, 0), invertBar));
 
                         statusStack.Children.Add(wrapper);
                     }
@@ -548,6 +869,7 @@ namespace ACVN
                     {
                         RestoreGameState(new SaveGameManager().LoadGame(dlg.FileName));
                         mainContent.Visibility = Visibility.Visible;
+                        SetIntroLayout(false);
                         InitContent();
                     }
                     return;
@@ -557,6 +879,7 @@ namespace ACVN
                     if (!File.Exists(qpath)) { MessageBox.Show(Loc.T("confirm.noQuicksave")); return; }
                     RestoreGameState(new SaveGameManager().LoadGame(qpath));
                     mainContent.Visibility = Visibility.Visible;
+                    SetIntroLayout(false);
                     InitContent();
                     return;
 
@@ -581,6 +904,7 @@ namespace ACVN
 
             if (action == "wardrobe")
             {
+                _wardrobeReadOnly = false;
                 ShowWardrobe();
                 return;
             }
@@ -610,35 +934,56 @@ namespace ACVN
         /* MEDIA HANDLING */
         private void ShowRandomMedia(string pathToSearch)
         {
-            // Walk up the hierarchy until a folder with media files is found.
-            // e.g. "home/room/bed_naked" → "home/room" → "home"
-            string search = pathToSearch.TrimEnd('/');
+            // Search order: mod images (priority order) → story images.
+            // Walk up the hierarchy at each root until a folder with files is found.
+            string originalSearch = pathToSearch.TrimEnd('/');
+
+            // Build ordered list of image roots: mods first (they can override story images)
+            var imageRoots = ActiveMods
+                .Select(m => System.IO.Path.Combine(m.Path, "images"))
+                .Where(Directory.Exists)
+                .ToList();
+            imageRoots.Add(imagesPath);
+
+            string search = originalSearch;
             while (true)
             {
                 if (!string.IsNullOrEmpty(search))
                 {
-                    string path = Path.GetFullPath(Path.Combine(imagesPath, search));
-                    if (Directory.Exists(path))
+                    foreach (var root in imageRoots)
                     {
-                        var files = Directory.GetFiles(path, "*.*");
-                        if (files.Length > 0)
+                        string dir = Path.GetFullPath(Path.Combine(root, search));
+                        if (!Directory.Exists(dir)) continue;
+                        var files = Directory.GetFiles(dir, "*.*");
+                        if (files.Length == 0) continue;
+
+                        int    idx        = new Random().Next(0, files.Length);
+                        string fileName   = Path.GetFileName(files[idx]);
+                        bool   isFallback = search != originalSearch;
+                        DisplayMedia(files[idx]);
+                        if (isFallback)
                         {
-                            int idx = new Random().Next(0, files.Length);
-                            DisplayMedia(files[idx]);
-                            ShowDebugInfo($"Media [{search}]: {Path.GetFileName(files[idx])}", isError: false);
-                            return;
+                            string msg = $"Media fallback [{originalSearch}] → [{search}]: {fileName}";
+                            ShowDebugInfo(msg, isError: false);
+                            LogError(msg);
                         }
+                        else
+                        {
+                            ShowDebugInfo($"Media [{search}]: {fileName}", isError: false);
+                        }
+                        return;
                     }
                 }
 
                 int lastSlash = search.LastIndexOf('/');
                 if (lastSlash < 0)
                 {
-                    // No media found at any level
-                    mainMedia.Visibility = Visibility.Collapsed;
-                    mainImage.Visibility = Visibility.Collapsed;
+                    mainMedia.Visibility           = Visibility.Collapsed;
+                    mainImage.Visibility           = Visibility.Collapsed;
                     mediaFullscreenHint.Visibility = Visibility.Collapsed;
-                    ShowDebugInfo($"No media found for: {pathToSearch}", isError: true);
+                    string noMediaMsg = $"No media found for: {originalSearch}";
+                    ShowDebugInfo(noMediaMsg, isError: true);
+                    LogError(noMediaMsg);
                     return;
                 }
                 search = search[..lastSlash];
@@ -713,6 +1058,12 @@ namespace ACVN
             SaveAppSettings();
         }
 
+        public void showHiddenToggle_Changed(object sender, RoutedEventArgs e)
+        {
+            SaveAppSettings();
+            UpdateStatusBar();
+        }
+
         private void LoadAppSettings()
         {
             try
@@ -723,6 +1074,11 @@ namespace ACVN
                 volumeSlider.Value = s.Volume;
                 videoAutoplayToggle.IsChecked = s.VideoAutoplay;
                 videoAutoplay = s.VideoAutoplay;
+                showHiddenToggle.IsChecked = s.ShowHiddenAttributes;
+                debugToggle.IsChecked = s.DebugEnabled;
+                debugEnabled = s.DebugEnabled;
+                if (debugEnabled)
+                    debugPanel.Visibility = Visibility.Visible;
                 if (!string.IsNullOrEmpty(s.Language))
                     Loc.SetLanguage(s.Language);
             }
@@ -734,9 +1090,35 @@ namespace ACVN
             if (!_settingsReady) return;
             try
             {
-                var s = new AppSettings { Volume = volumeSlider.Value, VideoAutoplay = videoAutoplay, Language = Loc.CurrentLanguage };
-                File.WriteAllText(SettingsFilePath, JsonConvert.SerializeObject(s, Formatting.Indented));
+                var existing = ReadAppSettings();
+                existing.Volume               = volumeSlider.Value;
+                existing.VideoAutoplay        = videoAutoplay;
+                existing.Language             = Loc.CurrentLanguage;
+                existing.ShowHiddenAttributes = showHiddenToggle.IsChecked == true;
+                existing.DebugEnabled         = debugEnabled;
+                existing.ModStates            = _mods.ToDictionary(m => m.Id, m => m.Enabled);
+                File.WriteAllText(SettingsFilePath, JsonConvert.SerializeObject(existing, Formatting.Indented));
             }
+            catch { }
+        }
+
+        private AppSettings ReadAppSettings()
+        {
+            try
+            {
+                if (File.Exists(SettingsFilePath))
+                {
+                    var s = JsonConvert.DeserializeObject<AppSettings>(File.ReadAllText(SettingsFilePath));
+                    if (s != null) return s;
+                }
+            }
+            catch { }
+            return new AppSettings();
+        }
+
+        private void WriteAppSettings(AppSettings s)
+        {
+            try { File.WriteAllText(SettingsFilePath, JsonConvert.SerializeObject(s, Formatting.Indented)); }
             catch { }
         }
 
@@ -777,24 +1159,33 @@ namespace ACVN
             if (result != MessageBoxResult.Yes) return;
 
             settingsPanel.Visibility = Visibility.Collapsed;
+            mainContent.Visibility   = Visibility.Visible;
             gameTime = DateTime.Now;
             gameVars.Clear();
             navigationHistory.Clear();
+            LoadMods();
+            GetCharacters();
+            LoadItems();
+            LoadClothes();
+            LoadQuests();
+            LoadSchedules();
             InitInventoryFromDefaults();
             questProgress.Clear();
             wornClothing.Clear();
             InitClothingFromDefaults();
             AutoEquipOnStart();
-            GetCharacters();
             UpdateTemplateVariables();
+            BuildModsSettingsUI();
             ShowIntroScreen();
         }
 
         public void settingsButton_Click(object sender, RoutedEventArgs e)
         {
-            settingsPanel.Visibility = settingsPanel.Visibility == Visibility.Visible
-                ? Visibility.Collapsed
-                : Visibility.Visible;
+            bool show = settingsPanel.Visibility != Visibility.Visible;
+            settingsPanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+            // WebBrowser is HWND-based and always renders above WPF overlays (airspace problem).
+            // Follow the same hide/restore pattern used by other overlays (wardrobe, phone, etc.).
+            mainContent.Visibility = show ? Visibility.Hidden : Visibility.Visible;
         }
 
         public void debugToggle_Changed(object sender, RoutedEventArgs e)
@@ -802,6 +1193,7 @@ namespace ACVN
             debugEnabled = debugToggle.IsChecked == true;
             if (!debugEnabled)
                 debugPanel.Visibility = Visibility.Collapsed;
+            SaveAppSettings();
         }
 
         public void mediaArea_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -917,22 +1309,36 @@ namespace ACVN
 
         private void LoadItems()
         {
-            string path = Path.Combine(storyPath, "items.json");
-            if (!File.Exists(path)) return;
-            dynamic data = JsonConvert.DeserializeObject<dynamic>(
-                File.ReadAllText(path, System.Text.Encoding.UTF8));
             itemDefinitions.Clear();
+            string path = Path.Combine(storyPath, "items.json");
+            if (File.Exists(path))
+                MergeItemsFromJson(File.ReadAllText(path, System.Text.Encoding.UTF8));
+
+            foreach (var mod in ActiveMods)
+            {
+                string modPath = System.IO.Path.Combine(mod.Path, "items.json");
+                if (!File.Exists(modPath)) continue;
+                try { MergeItemsFromJson(File.ReadAllText(modPath, System.Text.Encoding.UTF8)); }
+                catch { }
+            }
+        }
+
+        private void MergeItemsFromJson(string json)
+        {
+            dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
             foreach (var item in data.items)
             {
-                string rawId = item.id?.ToString();
+                string rawId     = item.id?.ToString();
                 string fallbackId = item.name?.ToString()?.ToLower()?.Replace(" ", "_");
+                string id        = rawId ?? fallbackId;
+                itemDefinitions.RemoveAll(i => i.Id == id);
                 itemDefinitions.Add(new ItemDefinition
                 {
-                    Id = rawId ?? fallbackId,
-                    Type = item.type?.ToString(),
-                    Subtype = item.subtype?.ToString(),
-                    Name = item.name?.ToString(),
-                    Description = item.description?.ToString(),
+                    Id               = id,
+                    Type             = item.type?.ToString(),
+                    Subtype          = item.subtype?.ToString(),
+                    Name             = item.name?.ToString(),
+                    Description      = item.description?.ToString(),
                     StartingQuantity = item.starting_quantity != null ? (int)item.starting_quantity : 0
                 });
             }
@@ -940,22 +1346,36 @@ namespace ACVN
 
         private void LoadClothes()
         {
-            string path = Path.Combine(storyPath, "clothes.json");
-            if (!File.Exists(path)) return;
-            dynamic data = JsonConvert.DeserializeObject<dynamic>(
-                File.ReadAllText(path, System.Text.Encoding.UTF8));
             clothingDefinitions.Clear();
+            string path = Path.Combine(storyPath, "clothes.json");
+            if (File.Exists(path))
+                MergeClothesFromJson(File.ReadAllText(path, System.Text.Encoding.UTF8));
+
+            foreach (var mod in ActiveMods)
+            {
+                string modPath = System.IO.Path.Combine(mod.Path, "clothes.json");
+                if (!File.Exists(modPath)) continue;
+                try { MergeClothesFromJson(File.ReadAllText(modPath, System.Text.Encoding.UTF8)); }
+                catch { }
+            }
+        }
+
+        private void MergeClothesFromJson(string json)
+        {
+            dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
             foreach (var item in data.clothes)
             {
+                string id = item.id?.ToString();
+                clothingDefinitions.RemoveAll(c => c.Id == id);
                 var def = new ClothingDefinition
                 {
-                    Id          = item.id?.ToString(),
+                    Id          = id,
                     Name        = item.name?.ToString(),
                     Description = item.description?.ToString(),
                     Subtype     = item.subtype?.ToString(),
-                    Durability  = item.durability != null ? (int)item.durability : 100,
-                    Daring      = item.daring    != null ? (int)item.daring     : 0,
-                    Inhibition  = item.inhibition != null ? (int)item.inhibition : 0,
+                    Durability  = item.durability  != null ? (int)item.durability  : 100,
+                    Daring      = item.daring      != null ? (int)item.daring      : 0,
+                    Inhibition  = item.inhibition  != null ? (int)item.inhibition  : 0,
                     Image       = item.image?.ToString()
                 };
                 if (item.tags != null)
@@ -1015,23 +1435,37 @@ namespace ACVN
 
         private void LoadQuests()
         {
-            string path = Path.Combine(storyPath, "quests.json");
-            if (!File.Exists(path)) return;
-            dynamic data = JsonConvert.DeserializeObject<dynamic>(
-                File.ReadAllText(path, System.Text.Encoding.UTF8));
             questDefinitions.Clear();
+            string path = Path.Combine(storyPath, "quests.json");
+            if (File.Exists(path))
+                MergeQuestsFromJson(File.ReadAllText(path, System.Text.Encoding.UTF8));
+
+            foreach (var mod in ActiveMods)
+            {
+                string modPath = System.IO.Path.Combine(mod.Path, "quests.json");
+                if (!File.Exists(modPath)) continue;
+                try { MergeQuestsFromJson(File.ReadAllText(modPath, System.Text.Encoding.UTF8)); }
+                catch { }
+            }
+        }
+
+        private void MergeQuestsFromJson(string json)
+        {
+            dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
             foreach (var quest in data.quests)
             {
+                string id = quest.id.ToString();
+                questDefinitions.RemoveAll(q => q.Id == id);
                 var def = new QuestDefinition
                 {
-                    Id   = quest.id.ToString(),
+                    Id   = id,
                     Name = quest.name.ToString(),
                     Hint = quest.hint?.ToString()
                 };
                 foreach (var step in quest.steps)
                     def.Steps.Add(new QuestStepDef
                     {
-                        Id = step.id.ToString(),
+                        Id          = step.id.ToString(),
                         Description = step.description.ToString()
                     });
                 questDefinitions.Add(def);
@@ -1226,6 +1660,7 @@ namespace ACVN
                     {
                         _wardrobeState        = "item";
                         _wardrobeItemSelected = capturedDefId;
+                        _wardrobeReadOnly     = true;
                         ShowWardrobe(resetState: false);
                     };
                     inventoryStack.Children.Add(btn);
@@ -1463,34 +1898,31 @@ namespace ACVN
 
             string path = Path.Combine(storyPath, "chars.json");
             string json = File.ReadAllText(path);
-            dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
+            MergeCharactersFromJson(json);
 
+            // Merge characters from active mods (mod entry with same ID overrides story entry)
+            foreach (var mod in ActiveMods)
+            {
+                string modPath = System.IO.Path.Combine(mod.Path, "chars.json");
+                if (!File.Exists(modPath)) continue;
+                try { MergeCharactersFromJson(File.ReadAllText(modPath, System.Text.Encoding.UTF8)); }
+                catch { }
+            }
+        }
+
+        private void MergeCharactersFromJson(string json)
+        {
+            dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
             foreach (var charData in data.chars)
             {
-                Character character = new Character
-                {
-                    Id = charData.id
-                };
-
+                string id = charData.id?.ToString();
+                // Remove existing entry with same ID so mod can override
+                characters.RemoveAll(c => c.Id == id);
+                var character = new Character { Id = id };
                 foreach (var property in charData)
-                {
                     if (property.Name != "id")
-                    {
                         character.Properties[property.Name] = property.Value;
-                    }
-                }
-
                 characters.Add(character);
-            }
-
-            // Jetzt hast du eine Liste von Character-Objekten
-            foreach (var character in characters)
-            {
-                Debug.WriteLine($"Id: {character.Id}");
-                foreach (var property in character.Properties)
-                {
-                    Debug.WriteLine($"{property.Key}: {property.Value}");
-                }
             }
         }
 
@@ -1534,6 +1966,7 @@ namespace ACVN
             if (dialog.ShowDialog() == true)
             {
                 RestoreGameState(new SaveGameManager().LoadGame(dialog.FileName));
+                SetIntroLayout(false);
                 InitContent();
             }
         }
@@ -1553,6 +1986,7 @@ namespace ACVN
                 return;
             }
             RestoreGameState(new SaveGameManager().LoadGame(path));
+            SetIntroLayout(false);
             InitContent();
         }
 
@@ -1704,11 +2138,7 @@ namespace ACVN
                             HorizontalAlignment = HorizontalAlignment.Right
                         });
                         inner.Children.Add(row);
-                        inner.Children.Add(new ProgressBar
-                        {
-                            Minimum = min, Maximum = max, Value = val,
-                            Margin = new Thickness(0, 2, 0, 0)
-                        });
+                        inner.Children.Add(ColoredBar(val, min, max, new Thickness(0, 2, 0, 0)));
                     }
                 }
 
@@ -1738,6 +2168,8 @@ namespace ACVN
         private void ShowWardrobe(bool resetState = true)
         {
             if (resetState) _wardrobeState = "main";
+            wardrobeCard.Width  = ActualWidth  * 0.90;
+            wardrobeCard.Height = ActualHeight * 0.88;
             mainContent.Visibility = Visibility.Hidden;
             mainMedia.Visibility   = Visibility.Hidden;
             mainImage.Visibility   = Visibility.Hidden;
@@ -1748,12 +2180,17 @@ namespace ACVN
         private void CloseWardrobe()
         {
             wardrobeOverlay.Visibility = Visibility.Collapsed;
-            mainContent.Visibility = Visibility.Visible;
-            if (currentMediaSource != null)
+            if (!_wardrobeReadOnly)
+                InitContent();
+            else
             {
-                bool isVid = VideoExtensions.Contains(Path.GetExtension(currentMediaSource.LocalPath));
-                mainMedia.Visibility = isVid ? Visibility.Visible : Visibility.Collapsed;
-                mainImage.Visibility = isVid ? Visibility.Collapsed : Visibility.Visible;
+                mainContent.Visibility = Visibility.Visible;
+                if (currentMediaSource != null)
+                {
+                    bool isVid = VideoExtensions.Contains(Path.GetExtension(currentMediaSource.LocalPath));
+                    mainMedia.Visibility = isVid ? Visibility.Visible : Visibility.Collapsed;
+                    mainImage.Visibility = isVid ? Visibility.Collapsed : Visibility.Visible;
+                }
             }
         }
 
@@ -1778,15 +2215,145 @@ namespace ACVN
             grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
 
-            // Column 0 spanning all 3 rows: "clothes" (large display)
             AddWardrobeTile(grid, "clothes", row: 0, col: 0, rowSpan: 3, large: true);
-
-            // Column 1: bra / panties / shoes stacked
             AddWardrobeTile(grid, "bra",     row: 0, col: 1);
             AddWardrobeTile(grid, "panties", row: 1, col: 1);
             AddWardrobeTile(grid, "shoes",   row: 2, col: 1);
 
             wardrobeStack.Children.Add(grid);
+
+            // ── Undress all ──────────────────────────────────────────────
+            var undressBtn = new Button
+            {
+                Content    = Loc.T("wardrobe.undress_all"),
+                Margin     = new Thickness(0, 10, 0, 0),
+                Padding    = new Thickness(14, 6, 14, 6),
+                Background = new SolidColorBrush(Color.FromRgb(0x5A, 0x1A, 0x1A)),
+                Foreground = Brushes.White,
+                BorderThickness = new Thickness(0),
+                Cursor     = System.Windows.Input.Cursors.Hand,
+                HorizontalAlignment = HorizontalAlignment.Left
+            };
+            undressBtn.Click += (_, __) =>
+            {
+                wornClothing.Clear();
+                RebuildWardrobePanel();
+            };
+            wardrobeStack.Children.Add(undressBtn);
+
+            // ── Outfit presets ───────────────────────────────────────────
+            wardrobeStack.Children.Add(new TextBlock
+            {
+                Text       = Loc.T("wardrobe.outfits"),
+                FontSize   = 11,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+                Margin     = new Thickness(0, 14, 0, 4)
+            });
+
+            // Save row: text box + save button
+            var saveRow = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 8) };
+            var nameBox = new TextBox
+            {
+                Width           = 180,
+                Background      = new SolidColorBrush(Color.FromRgb(0x2A, 0x2A, 0x2A)),
+                Foreground      = Brushes.White,
+                BorderBrush     = new SolidColorBrush(Color.FromRgb(0x44, 0x44, 0x44)),
+                BorderThickness = new Thickness(1),
+                Padding         = new Thickness(6, 4, 6, 4),
+                VerticalContentAlignment = VerticalAlignment.Center
+            };
+            var saveBtn = new Button
+            {
+                Content    = Loc.T("wardrobe.save_outfit"),
+                Margin     = new Thickness(6, 0, 0, 0),
+                Padding    = new Thickness(10, 4, 10, 4),
+                Background = new SolidColorBrush(Color.FromRgb(0x1E, 0x50, 0x30)),
+                Foreground = Brushes.White,
+                BorderThickness = new Thickness(0),
+                Cursor     = System.Windows.Input.Cursors.Hand
+            };
+            saveBtn.Click += (_, __) =>
+            {
+                string name = nameBox.Text.Trim();
+                if (string.IsNullOrEmpty(name)) return;
+                var settings = ReadAppSettings();
+                settings.OutfitPresets[name] = new Dictionary<string, string>(wornClothing);
+                WriteAppSettings(settings);
+                RebuildWardrobePanel();
+            };
+            saveRow.Children.Add(nameBox);
+            saveRow.Children.Add(saveBtn);
+            wardrobeStack.Children.Add(saveRow);
+
+            // Saved preset list
+            var settings2 = ReadAppSettings();
+            foreach (var kv in settings2.OutfitPresets)
+            {
+                string presetName = kv.Key;
+                var preset        = kv.Value;
+                var row = new Border
+                {
+                    Background      = new SolidColorBrush(Color.FromRgb(0x22, 0x22, 0x22)),
+                    CornerRadius    = new CornerRadius(4),
+                    Padding         = new Thickness(8, 6, 8, 6),
+                    Margin          = new Thickness(0, 2, 0, 2),
+                    BorderBrush     = new SolidColorBrush(Color.FromRgb(0x38, 0x38, 0x38)),
+                    BorderThickness = new Thickness(1)
+                };
+                var rowPanel = new Grid();
+                rowPanel.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                rowPanel.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                rowPanel.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+                var nameLabel = new TextBlock
+                {
+                    Text              = presetName,
+                    Foreground        = Brushes.White,
+                    FontSize          = 12,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                var loadBtn = new Button
+                {
+                    Content    = Loc.T("wardrobe.load_outfit"),
+                    Margin     = new Thickness(6, 0, 4, 0),
+                    Padding    = new Thickness(8, 3, 8, 3),
+                    Background = new SolidColorBrush(Color.FromRgb(0x1A, 0x3A, 0x5A)),
+                    Foreground = Brushes.White,
+                    BorderThickness = new Thickness(0),
+                    Cursor     = System.Windows.Input.Cursors.Hand
+                };
+                loadBtn.Click += (_, __) =>
+                {
+                    wornClothing.Clear();
+                    foreach (var p in preset) wornClothing[p.Key] = p.Value;
+                    RebuildWardrobePanel();
+                };
+                var deleteBtn = new Button
+                {
+                    Content    = "✕",
+                    Padding    = new Thickness(6, 3, 6, 3),
+                    Background = new SolidColorBrush(Color.FromRgb(0x44, 0x22, 0x22)),
+                    Foreground = Brushes.White,
+                    BorderThickness = new Thickness(0),
+                    Cursor     = System.Windows.Input.Cursors.Hand
+                };
+                deleteBtn.Click += (_, __) =>
+                {
+                    var s = ReadAppSettings();
+                    s.OutfitPresets.Remove(presetName);
+                    WriteAppSettings(s);
+                    RebuildWardrobePanel();
+                };
+
+                Grid.SetColumn(nameLabel,  0);
+                Grid.SetColumn(loadBtn,    1);
+                Grid.SetColumn(deleteBtn,  2);
+                rowPanel.Children.Add(nameLabel);
+                rowPanel.Children.Add(loadBtn);
+                rowPanel.Children.Add(deleteBtn);
+                row.Child = rowPanel;
+                wardrobeStack.Children.Add(row);
+            }
         }
 
         private void AddWardrobeTile(Grid grid, string subtype, int row, int col, int rowSpan = 1, bool large = false)
@@ -1800,7 +2367,7 @@ namespace ACVN
                 Background      = new SolidColorBrush(Color.FromRgb(0x1E, 0x1E, 0x1E)),
                 CornerRadius    = new CornerRadius(6),
                 Margin          = new Thickness(4),
-                MinHeight       = large ? 160 : 70,
+                MinHeight       = large ? 320 : 140,
                 Cursor          = System.Windows.Input.Cursors.Hand,
                 BorderBrush     = new SolidColorBrush(Color.FromRgb(0x3A, 0x3A, 0x3A)),
                 BorderThickness = new Thickness(1)
@@ -1828,7 +2395,7 @@ namespace ACVN
                     inner.Children.Add(new Image
                     {
                         Source  = new System.Windows.Media.Imaging.BitmapImage(new Uri(imgPath)),
-                        Height  = large ? 100 : 44,
+                        Height  = large ? 200 : 88,
                         Stretch = System.Windows.Media.Stretch.Uniform
                     });
                 else
@@ -2018,7 +2585,7 @@ namespace ACVN
                     Margin     = new Thickness(0, 0, 0, 8)
                 });
 
-            if (!canWear && !isWorn)
+            if (!_wardrobeReadOnly && !canWear && !isWorn)
                 wardrobeStack.Children.Add(new TextBlock
                 {
                     Text       = Loc.T("wardrobe.inhib_hint", def.Inhibition),
@@ -2029,40 +2596,43 @@ namespace ACVN
 
             var btnRow = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 0) };
 
-            if (isWorn)
+            if (!_wardrobeReadOnly)
             {
-                var undressBtn = new Button
+                if (isWorn)
                 {
-                    Content = Loc.T("wardrobe.unwear"),
-                    Height  = 32, Padding = new Thickness(12, 0, 12, 0),
-                    Margin  = new Thickness(0, 0, 8, 0)
-                };
-                string capturedSubtype = def.Subtype;
-                undressBtn.Click += (_, __) =>
+                    var undressBtn = new Button
+                    {
+                        Content = Loc.T("wardrobe.unwear"),
+                        Height  = 32, Padding = new Thickness(12, 0, 12, 0),
+                        Margin  = new Thickness(0, 0, 8, 0)
+                    };
+                    string capturedSubtype = def.Subtype;
+                    undressBtn.Click += (_, __) =>
+                    {
+                        wornClothing.Remove(capturedSubtype);
+                        _wardrobeState = "category";
+                        RebuildWardrobePanel();
+                    };
+                    btnRow.Children.Add(undressBtn);
+                }
+                else
                 {
-                    wornClothing.Remove(capturedSubtype);
-                    _wardrobeState = "category";
-                    RebuildWardrobePanel();
-                };
-                btnRow.Children.Add(undressBtn);
-            }
-            else
-            {
-                var dressBtn = new Button
-                {
-                    Content   = Loc.T("wardrobe.wear"),
-                    Height    = 32, Padding = new Thickness(12, 0, 12, 0),
-                    Margin    = new Thickness(0, 0, 8, 0),
-                    IsEnabled = canWear
-                };
-                string capturedId = def.Id, capturedSubtype = def.Subtype;
-                dressBtn.Click += (_, __) =>
-                {
-                    wornClothing[capturedSubtype] = capturedId;
-                    _wardrobeState = "category";
-                    RebuildWardrobePanel();
-                };
-                btnRow.Children.Add(dressBtn);
+                    var dressBtn = new Button
+                    {
+                        Content   = Loc.T("wardrobe.wear"),
+                        Height    = 32, Padding = new Thickness(12, 0, 12, 0),
+                        Margin    = new Thickness(0, 0, 8, 0),
+                        IsEnabled = canWear
+                    };
+                    string capturedId = def.Id, capturedSubtype = def.Subtype;
+                    dressBtn.Click += (_, __) =>
+                    {
+                        wornClothing[capturedSubtype] = capturedId;
+                        _wardrobeState = "category";
+                        RebuildWardrobePanel();
+                    };
+                    btnRow.Children.Add(dressBtn);
+                }
             }
 
             var discardBtn = new Button
@@ -2569,6 +3139,10 @@ namespace ACVN
             tbVolLabel.Text                 = Loc.T("settings.volume");
             tbLangLabel.Text                = Loc.T("settings.language");
             tbSettingsRestart.Text          = Loc.T("settings.restart");
+            // Game settings tab
+            tbSettingsDisplayHeader.Text    = Loc.T("settings.display");
+            tbSettingShowHidden.Text        = Loc.T("settings.show_hidden");
+            tbSettingsModsHeader.Text       = Loc.T("settings.mods");
             tbSettingsBack.Text             = Loc.T("settings.backscene");
 
             // Overlays
@@ -2588,6 +3162,7 @@ namespace ACVN
             // Rebuild dynamic panels so their strings update
             UpdateInventoryPanel();
             UpdateJournalPanel();
+            BuildModsSettingsUI();
             if (setupOverlay.Visibility != Visibility.Visible && wardrobeOverlay.Visibility == Visibility.Visible)
                 RebuildWardrobePanel();
         }
@@ -2754,9 +3329,22 @@ namespace ACVN
             public static string TimeStr(string format)
                 => _instance.gameTime.ToString(format);
 
+            public static int GameHour()
+                => _instance.gameTime.Hour;
+
             public static string AdvanceTime(int minutes)
             {
                 _instance.gameTime = _instance.gameTime.AddMinutes(minutes);
+                return string.Empty;
+            }
+
+            public static string AdvanceToHour(int targetHour)
+            {
+                var t = _instance.gameTime;
+                var target = t.Date.AddHours(targetHour);
+                if (target <= t)
+                    target = target.AddDays(1);
+                _instance.gameTime = target;
                 return string.Empty;
             }
 
@@ -2841,14 +3429,44 @@ namespace ACVN
             {
                 _instance.questProgress[questId] = 0;
                 _instance.UpdateJournalPanel();
+                // Queue a banner notification for the content area
+                var def = _instance.questDefinitions.FirstOrDefault(q => q.Id == questId);
+                if (def != null)
+                {
+                    string html = $"<div style=\"background:#182818;border-left:3px solid #4CAF50;padding:8px 12px;margin:0 0 10px;border-radius:0 4px 4px 0;font-size:0.9em;\">" +
+                                  $"📋 <strong>New Quest: {System.Net.WebUtility.HtmlEncode(def.Name)}</strong>";
+                    if (def.Steps.Count > 0)
+                        html += $"<br><span style=\"color:#9e9e9e\">{System.Net.WebUtility.HtmlEncode(def.Steps[0].Description)}</span>";
+                    html += "</div>";
+                    _instance._pendingQuestNotifications.Add(html);
+                }
                 return string.Empty;
             }
 
             public static string AdvanceQuest(string questId)
             {
-                _instance.questProgress[questId] =
-                    (_instance.questProgress.TryGetValue(questId, out int s) ? s : 0) + 1;
+                int newStep = (_instance.questProgress.TryGetValue(questId, out int s) ? s : 0) + 1;
+                _instance.questProgress[questId] = newStep;
                 _instance.UpdateJournalPanel();
+                // Queue a banner notification for the content area
+                var def = _instance.questDefinitions.FirstOrDefault(q => q.Id == questId);
+                if (def != null)
+                {
+                    string html;
+                    if (newStep >= def.Steps.Count)
+                    {
+                        // Quest complete
+                        html = $"<div style=\"background:#182818;border-left:3px solid #66BB6A;padding:8px 12px;margin:0 0 10px;border-radius:0 4px 4px 0;font-size:0.9em;\">" +
+                               $"✓ <strong>Quest Complete: {System.Net.WebUtility.HtmlEncode(def.Name)}</strong></div>";
+                    }
+                    else
+                    {
+                        string nextObj = def.Steps[newStep].Description;
+                        html = $"<div style=\"background:#201e14;border-left:3px solid #F5A623;padding:8px 12px;margin:0 0 10px;border-radius:0 4px 4px 0;font-size:0.9em;\">" +
+                               $"📋 <strong>New Objective</strong><br><span style=\"color:#9e9e9e\">{System.Net.WebUtility.HtmlEncode(nextObj)}</span></div>";
+                    }
+                    _instance._pendingQuestNotifications.Add(html);
+                }
                 return string.Empty;
             }
 

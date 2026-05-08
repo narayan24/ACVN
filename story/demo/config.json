@@ -1,0 +1,8 @@
+{
+  "name": "Demo – The Meadow",
+  "version": "1.0",
+  "language": "en",
+  "adultgame": "no",
+  "start_room": "cottage",
+  "start_action": "start"
+}
