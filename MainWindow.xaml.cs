@@ -733,7 +733,10 @@ namespace ACVN
                     cssContent += "\n" + File.ReadAllText(modCss, System.Text.Encoding.UTF8);
             }
 
-            string contentClean = "<meta charset=\"utf-8\"><style>" + cssContent + "</style>";
+            // IE=Edge forces the WPF WebBrowser out of IE7 compat mode into IE11,
+            // which is required for HTML5 <video> playback and modern CSS.
+            string contentClean = "<meta http-equiv=\"X-UA-Compatible\" content=\"IE=Edge\">" +
+                                  "<meta charset=\"utf-8\"><style>" + cssContent + "</style>";
 
             // Prepend any quest notifications that were queued during template rendering
             if (_pendingQuestNotifications.Count > 0)
@@ -2771,7 +2774,8 @@ namespace ACVN
         {
             string cssPath = Path.Combine(storyPath, "style.css");
             string css = File.Exists(cssPath) ? File.ReadAllText(cssPath, System.Text.Encoding.UTF8) : "";
-            string html = $"<meta charset=\"utf-8\"><style>body{{background:#111;color:#ddd;font-family:'Segoe UI';}}{css}</style>";
+            string html = $"<meta http-equiv=\"X-UA-Compatible\" content=\"IE=Edge\">" +
+                          $"<meta charset=\"utf-8\"><style>body{{background:#111;color:#ddd;font-family:'Segoe UI';}}{css}</style>";
             html += System.Text.RegularExpressions.Regex.Replace(content, @"#begin.*\n|#end\n*", string.Empty);
             html  = System.Text.RegularExpressions.Regex.Replace(html, @"\[\[.*?\]\]", string.Empty);
             phoneContentBrowser.NavigateToString(html);
@@ -3577,26 +3581,24 @@ namespace ACVN
 
             private static string BuildInlineMediaTag(string file)
             {
-                const string style = "max-width:100%;display:block;margin:8px auto;border-radius:6px;";
-                bool isVideo = VideoExtensions.Contains(Path.GetExtension(file).ToLower());
+                string uri     = FileUri(file);
+                bool   isVideo = VideoExtensions.Contains(Path.GetExtension(file).ToLower());
 
                 if (!isVideo)
-                    return $"<img src=\"{FileUri(file)}\" style=\"{style}\">";
-
-                // For video: extract thumbnail via Shell, save as temp PNG, embed as <img>
-                var thumb = _instance.GetVideoThumbnail(file);
-                if (thumb == null) return string.Empty;
-
-                string tmpFile = Path.Combine(Path.GetTempPath(),
-                    $"acvn_thumb_{Math.Abs(file.GetHashCode())}.png");
-                if (!File.Exists(tmpFile))
                 {
-                    using var fs = File.Create(tmpFile);
-                    var enc = new System.Windows.Media.Imaging.PngBitmapEncoder();
-                    enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(thumb));
-                    enc.Save(fs);
+                    // Images: scale to container width, never upscale beyond natural size
+                    const string imgStyle =
+                        "max-width:100%;width:100%;display:block;margin:8px auto;border-radius:6px;";
+                    return $"<img src=\"{uri}\" style=\"{imgStyle}\">";
                 }
-                return $"<img src=\"{FileUri(tmpFile)}\" style=\"{style}\">";
+
+                // Videos: HTML5 <video> element — requires IE=Edge meta tag (set in ParseContent).
+                // autoplay + loop = scene atmosphere; controls = user can pause/seek.
+                // width:100% fills the content column; background:#000 letterboxes narrow clips.
+                const string vidStyle =
+                    "width:100%;display:block;margin:8px auto;border-radius:6px;background:#000;";
+                return $"<video src=\"{uri}\" autoplay loop controls " +
+                       $"style=\"{vidStyle}\"></video>";
             }
 
             private static string FileUri(string path)
