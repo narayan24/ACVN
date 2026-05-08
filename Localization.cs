@@ -62,6 +62,9 @@ public static class Loc
             ["settings.language"]      = "Sprache",
             ["settings.display"]       = "Anzeige",
             ["settings.show_hidden"]   = "Versteckte Attribute anzeigen",
+            ["settings.mods"]              = "MODS",
+            ["settings.mods.none"]         = "Keine Mods gefunden. Lege Mod-Ordner unter mods/ ab.",
+            ["settings.mods.restart_hint"] = "Änderungen werden beim nächsten Neustart übernommen.",
 
             // Wardrobe
             ["wardrobe.title"]       = "Kleiderschrank",
@@ -172,6 +175,9 @@ public static class Loc
             ["settings.language"]      = "Language",
             ["settings.display"]       = "Display",
             ["settings.show_hidden"]   = "Show hidden attributes",
+            ["settings.mods"]              = "MODS",
+            ["settings.mods.none"]         = "No mods found. Place mod folders inside mods/.",
+            ["settings.mods.restart_hint"] = "Changes take effect on the next restart.",
 
             // Wardrobe
             ["wardrobe.title"]       = "Wardrobe",

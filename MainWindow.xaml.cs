@@ -55,6 +55,9 @@ namespace ACVN
         private Dictionary<string, string> wornClothing = new Dictionary<string, string>();
         private MediaPlayer _cameraPlayer;
         private bool _settingsReady = false;
+        private List<ModDefinition> _mods    = new List<ModDefinition>();
+        private string              modsPath;
+        private IEnumerable<ModDefinition> ActiveMods => _mods.Where(m => m.Enabled);
 
         private static string SettingsFilePath => Path.Combine(
             AppDomain.CurrentDomain.BaseDirectory, "appsettings.json");
@@ -66,6 +69,7 @@ namespace ACVN
             public string Language { get; set; } = "de";
             public bool ShowHiddenAttributes { get; set; } = false;
             public bool DebugEnabled { get; set; } = false;
+            public Dictionary<string, bool> ModStates { get; set; } = new();
             public Dictionary<string, Dictionary<string, string>> OutfitPresets { get; set; } = new();
         }
 
@@ -120,6 +124,7 @@ namespace ACVN
             currentAction = "start";
 
             LoadConfig();
+            LoadMods();
             GetCharacters();
             LoadItems();
             LoadClothes();
@@ -162,6 +167,117 @@ namespace ACVN
                 }
             }
             catch { }
+        }
+
+        // ── Mod loading ─────────────────────────────────────────────────────────
+
+        private void LoadMods()
+        {
+            _mods.Clear();
+            modsPath = Path.Combine(storyPath, "mods");
+            if (!Directory.Exists(modsPath)) return;
+
+            var modStates = ReadAppSettings().ModStates ?? new Dictionary<string, bool>();
+
+            foreach (var dir in Directory.GetDirectories(modsPath).OrderBy(d => d))
+            {
+                string modJsonPath = Path.Combine(dir, "mod.json");
+                if (!File.Exists(modJsonPath)) continue;
+                try
+                {
+                    dynamic cfg = JsonConvert.DeserializeObject<dynamic>(
+                        File.ReadAllText(modJsonPath, System.Text.Encoding.UTF8));
+                    string modId = System.IO.Path.GetFileName(dir);
+                    bool defaultEnabled = true;
+                    _mods.Add(new ModDefinition
+                    {
+                        Path        = dir,
+                        Id          = modId,
+                        Name        = cfg?.name?.ToString() ?? modId,
+                        Version     = cfg?.version?.ToString() ?? string.Empty,
+                        Author      = cfg?.author?.ToString() ?? string.Empty,
+                        Description = cfg?.description?.ToString() ?? string.Empty,
+                        Priority    = cfg?.priority != null ? (int)cfg.priority : 50,
+                        Enabled     = modStates.TryGetValue(modId, out bool en) ? en : defaultEnabled
+                    });
+                }
+                catch { }
+            }
+
+            _mods = _mods.OrderBy(m => m.Priority).ThenBy(m => m.Id).ToList();
+        }
+
+        private void BuildModsSettingsUI()
+        {
+            modsSettingsStack.Children.Clear();
+            tbSettingsModsHeader.Text = Loc.T("settings.mods");
+
+            if (_mods.Count == 0)
+            {
+                tbSettingsModsHint.Text       = Loc.T("settings.mods.none");
+                tbSettingsModsHint.Visibility = Visibility.Visible;
+                return;
+            }
+
+            tbSettingsModsHint.Visibility = Visibility.Collapsed;
+
+            foreach (var mod in _mods)
+            {
+                var row = new Grid { Margin = new Thickness(0, 3, 0, 3) };
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+                var info = new StackPanel { Orientation = Orientation.Vertical };
+                info.Children.Add(new TextBlock
+                {
+                    Text       = mod.Name + (string.IsNullOrEmpty(mod.Version) ? string.Empty : $"  v{mod.Version}"),
+                    Foreground = System.Windows.Media.Brushes.White,
+                    FontSize   = 12
+                });
+                if (!string.IsNullOrEmpty(mod.Author))
+                    info.Children.Add(new TextBlock
+                    {
+                        Text       = mod.Author,
+                        Foreground = new System.Windows.Media.SolidColorBrush(
+                                         System.Windows.Media.Color.FromRgb(0x88, 0x88, 0x88)),
+                        FontSize   = 10
+                    });
+                Grid.SetColumn(info, 0);
+
+                var cb = new CheckBox
+                {
+                    IsChecked         = mod.Enabled,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Tag               = mod.Id
+                };
+                Grid.SetColumn(cb, 1);
+                cb.Checked   += ModToggle_Changed;
+                cb.Unchecked += ModToggle_Changed;
+
+                row.Children.Add(info);
+                row.Children.Add(cb);
+                modsSettingsStack.Children.Add(row);
+            }
+
+            modsSettingsStack.Children.Add(new TextBlock
+            {
+                Text            = Loc.T("settings.mods.restart_hint"),
+                FontSize        = 10,
+                Foreground      = new System.Windows.Media.SolidColorBrush(
+                                      System.Windows.Media.Color.FromRgb(0x55, 0x55, 0x55)),
+                Margin          = new Thickness(0, 8, 0, 0),
+                TextWrapping    = TextWrapping.Wrap
+            });
+        }
+
+        private void ModToggle_Changed(object sender, RoutedEventArgs e)
+        {
+            if (sender is CheckBox cb && cb.Tag is string modId)
+            {
+                var mod = _mods.FirstOrDefault(m => m.Id == modId);
+                if (mod != null) mod.Enabled = cb.IsChecked == true;
+                SaveAppSettings();
+            }
         }
 
         // ── Story package selection ─────────────────────────────────────────────
@@ -335,62 +451,90 @@ namespace ACVN
         }
 
         /* CONTENT HANDLING */
+
+        /// <summary>
+        /// Parses all #begin…#end blocks from an .acvn file into a dictionary.
+        /// Key = block name (e.g. "start", "walk:after"). Value = raw block content.
+        /// </summary>
+        private static Dictionary<string, string> ParseBlocks(string fileContent)
+        {
+            var blocks = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            string pattern = @"#begin\s+(\S+)\s(.*?)#end";
+            foreach (Match m in Regex.Matches(fileContent, pattern, RegexOptions.Singleline))
+                if (m.Success)
+                    blocks[m.Groups[1].Value.Trim()] = m.Groups[2].Value;
+            return blocks;
+        }
+
         private void InitContent()
         {
             string filePath = Path.Combine(roomsPath, clearPath(currentRoom) + ".acvn");
-            if (File.Exists(filePath) && Path.GetExtension(filePath).Equals(".acvn", StringComparison.OrdinalIgnoreCase))
+            if (!File.Exists(filePath) || !Path.GetExtension(filePath).Equals(".acvn", StringComparison.OrdinalIgnoreCase))
             {
-                try
+                // Check mod rooms before giving up
+                filePath = null;
+                foreach (var mod in ActiveMods)
                 {
-                    string fileContent = File.ReadAllText(filePath, System.Text.Encoding.UTF8);
-
-
-
-                    string pattern = @"#begin\s+(.*?)\s+(.*?)#end";
-                    MatchCollection matches = Regex.Matches(fileContent, pattern, RegexOptions.Singleline);
-
-                    if (matches.Count > 0)
-                    {
-                        foreach (Match match in matches)
-                        {
-                            if (match.Success)
-                            {
-                                string blockName = match.Groups[1].Value;
-                                string blockContent = match.Groups[2].Value;
-
-                                if (blockName == currentAction)
-                                {
-                                    blockContent = RenderTemplate(blockContent);
-                                    ShowRandomMedia(clearPath(currentRoom) + "/" + (currentAction == "start" ? "" : clearPath(currentAction)));
-                                    ParseRooms(blockContent);
-                                    ParseContent(blockContent);
-                                    UpdateStatusBar();
-                                    UpdateInventoryPanel();
-                                    UpdateJournalPanel();
-                                }
-
-                                fileContent = fileContent.Replace(match.Value, string.Empty);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        mainContent.NavigateToString(fileContent);
-                    }
+                    string candidate = System.IO.Path.Combine(mod.Path, "rooms", clearPath(currentRoom) + ".acvn");
+                    if (File.Exists(candidate)) { filePath = candidate; break; }
                 }
-                catch (Exception ex)
+                if (filePath == null)
                 {
-                    LogError("Exception in InitContent", ex.ToString());
-                    ShowDebugInfo("Fehler: " + ex.Message, isError: true);
-                    MessageBox.Show($"Error while reading the file: {ex.Message}");
+                    string msg = $"File not found: '{Path.Combine(roomsPath, clearPath(currentRoom) + ".acvn")}'";
+                    LogError(msg);
+                    ShowDebugInfo(msg, isError: true);
+                    MessageBox.Show(msg);
+                    return;
                 }
             }
-            else
+
+            try
             {
-                string msg = $"File not found: '{filePath}'";
-                LogError(msg);
-                ShowDebugInfo(msg, isError: true);
-                MessageBox.Show(msg);
+                // 1. Load story blocks
+                string fileContent = File.ReadAllText(filePath, System.Text.Encoding.UTF8);
+                var blocks = ParseBlocks(fileContent);
+
+                // 2. Merge mod room blocks (in priority order; later mods override earlier)
+                foreach (var mod in ActiveMods)
+                {
+                    string modRoomFile = System.IO.Path.Combine(mod.Path, "rooms", clearPath(currentRoom) + ".acvn");
+                    if (!File.Exists(modRoomFile)) continue;
+                    try
+                    {
+                        string modContent = File.ReadAllText(modRoomFile, System.Text.Encoding.UTF8);
+                        foreach (var kv in ParseBlocks(modContent))
+                            blocks[kv.Key] = kv.Value;   // override or add
+                    }
+                    catch { }
+                }
+
+                // 3. Locate the active block
+                if (!blocks.TryGetValue(currentAction, out string blockContent))
+                {
+                    mainContent.NavigateToString(fileContent);
+                    return;
+                }
+
+                // 4. Apply :before / :after patches
+                if (blocks.TryGetValue(currentAction + ":before", out string before))
+                    blockContent = before + blockContent;
+                if (blocks.TryGetValue(currentAction + ":after", out string after))
+                    blockContent = blockContent + after;
+
+                // 5. Render
+                blockContent = RenderTemplate(blockContent);
+                ShowRandomMedia(clearPath(currentRoom) + "/" + (currentAction == "start" ? "" : clearPath(currentAction)));
+                ParseRooms(blockContent);
+                ParseContent(blockContent);
+                UpdateStatusBar();
+                UpdateInventoryPanel();
+                UpdateJournalPanel();
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in InitContent", ex.ToString());
+                ShowDebugInfo("Fehler: " + ex.Message, isError: true);
+                MessageBox.Show($"Error while reading the file: {ex.Message}");
             }
         }
 
@@ -576,11 +720,19 @@ namespace ACVN
 
         private void ParseContent(string content)
         {
+            // Story CSS
             string cssContent = string.Empty;
             if (File.Exists(Path.Combine(storyPath, "style.css")))
-            {
                 cssContent = File.ReadAllText(Path.Combine(storyPath, "style.css"), System.Text.Encoding.UTF8);
+
+            // Append mod CSS (in priority order)
+            foreach (var mod in ActiveMods)
+            {
+                string modCss = System.IO.Path.Combine(mod.Path, "style.css");
+                if (File.Exists(modCss))
+                    cssContent += "\n" + File.ReadAllText(modCss, System.Text.Encoding.UTF8);
             }
+
             string contentClean = "<meta charset=\"utf-8\"><style>" + cssContent + "</style>";
 
             // Prepend any quest notifications that were queued during template rendering
@@ -782,45 +934,52 @@ namespace ACVN
         /* MEDIA HANDLING */
         private void ShowRandomMedia(string pathToSearch)
         {
-            // Walk up the hierarchy until a folder with media files is found.
-            // e.g. "home/room/bed_naked" → "home/room" → "home"
+            // Search order: mod images (priority order) → story images.
+            // Walk up the hierarchy at each root until a folder with files is found.
             string originalSearch = pathToSearch.TrimEnd('/');
+
+            // Build ordered list of image roots: mods first (they can override story images)
+            var imageRoots = ActiveMods
+                .Select(m => System.IO.Path.Combine(m.Path, "images"))
+                .Where(Directory.Exists)
+                .ToList();
+            imageRoots.Add(imagesPath);
+
             string search = originalSearch;
             while (true)
             {
                 if (!string.IsNullOrEmpty(search))
                 {
-                    string path = Path.GetFullPath(Path.Combine(imagesPath, search));
-                    if (Directory.Exists(path))
+                    foreach (var root in imageRoots)
                     {
-                        var files = Directory.GetFiles(path, "*.*");
-                        if (files.Length > 0)
+                        string dir = Path.GetFullPath(Path.Combine(root, search));
+                        if (!Directory.Exists(dir)) continue;
+                        var files = Directory.GetFiles(dir, "*.*");
+                        if (files.Length == 0) continue;
+
+                        int    idx        = new Random().Next(0, files.Length);
+                        string fileName   = Path.GetFileName(files[idx]);
+                        bool   isFallback = search != originalSearch;
+                        DisplayMedia(files[idx]);
+                        if (isFallback)
                         {
-                            int idx = new Random().Next(0, files.Length);
-                            DisplayMedia(files[idx]);
-                            bool isFallback = search != originalSearch;
-                            string fileName = Path.GetFileName(files[idx]);
-                            if (isFallback)
-                            {
-                                string msg = $"Media fallback [{originalSearch}] → [{search}]: {fileName}";
-                                ShowDebugInfo(msg, isError: false);
-                                LogError(msg);
-                            }
-                            else
-                            {
-                                ShowDebugInfo($"Media [{search}]: {fileName}", isError: false);
-                            }
-                            return;
+                            string msg = $"Media fallback [{originalSearch}] → [{search}]: {fileName}";
+                            ShowDebugInfo(msg, isError: false);
+                            LogError(msg);
                         }
+                        else
+                        {
+                            ShowDebugInfo($"Media [{search}]: {fileName}", isError: false);
+                        }
+                        return;
                     }
                 }
 
                 int lastSlash = search.LastIndexOf('/');
                 if (lastSlash < 0)
                 {
-                    // No media found at any level
-                    mainMedia.Visibility = Visibility.Collapsed;
-                    mainImage.Visibility = Visibility.Collapsed;
+                    mainMedia.Visibility           = Visibility.Collapsed;
+                    mainImage.Visibility           = Visibility.Collapsed;
                     mediaFullscreenHint.Visibility = Visibility.Collapsed;
                     string noMediaMsg = $"No media found for: {originalSearch}";
                     ShowDebugInfo(noMediaMsg, isError: true);
@@ -937,6 +1096,7 @@ namespace ACVN
                 existing.Language             = Loc.CurrentLanguage;
                 existing.ShowHiddenAttributes = showHiddenToggle.IsChecked == true;
                 existing.DebugEnabled         = debugEnabled;
+                existing.ModStates            = _mods.ToDictionary(m => m.Id, m => m.Enabled);
                 File.WriteAllText(SettingsFilePath, JsonConvert.SerializeObject(existing, Formatting.Indented));
             }
             catch { }
@@ -999,16 +1159,23 @@ namespace ACVN
             if (result != MessageBoxResult.Yes) return;
 
             settingsPanel.Visibility = Visibility.Collapsed;
+            mainContent.Visibility   = Visibility.Visible;
             gameTime = DateTime.Now;
             gameVars.Clear();
             navigationHistory.Clear();
+            LoadMods();
+            GetCharacters();
+            LoadItems();
+            LoadClothes();
+            LoadQuests();
+            LoadSchedules();
             InitInventoryFromDefaults();
             questProgress.Clear();
             wornClothing.Clear();
             InitClothingFromDefaults();
             AutoEquipOnStart();
-            GetCharacters();
             UpdateTemplateVariables();
+            BuildModsSettingsUI();
             ShowIntroScreen();
         }
 
@@ -1142,22 +1309,36 @@ namespace ACVN
 
         private void LoadItems()
         {
-            string path = Path.Combine(storyPath, "items.json");
-            if (!File.Exists(path)) return;
-            dynamic data = JsonConvert.DeserializeObject<dynamic>(
-                File.ReadAllText(path, System.Text.Encoding.UTF8));
             itemDefinitions.Clear();
+            string path = Path.Combine(storyPath, "items.json");
+            if (File.Exists(path))
+                MergeItemsFromJson(File.ReadAllText(path, System.Text.Encoding.UTF8));
+
+            foreach (var mod in ActiveMods)
+            {
+                string modPath = System.IO.Path.Combine(mod.Path, "items.json");
+                if (!File.Exists(modPath)) continue;
+                try { MergeItemsFromJson(File.ReadAllText(modPath, System.Text.Encoding.UTF8)); }
+                catch { }
+            }
+        }
+
+        private void MergeItemsFromJson(string json)
+        {
+            dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
             foreach (var item in data.items)
             {
-                string rawId = item.id?.ToString();
+                string rawId     = item.id?.ToString();
                 string fallbackId = item.name?.ToString()?.ToLower()?.Replace(" ", "_");
+                string id        = rawId ?? fallbackId;
+                itemDefinitions.RemoveAll(i => i.Id == id);
                 itemDefinitions.Add(new ItemDefinition
                 {
-                    Id = rawId ?? fallbackId,
-                    Type = item.type?.ToString(),
-                    Subtype = item.subtype?.ToString(),
-                    Name = item.name?.ToString(),
-                    Description = item.description?.ToString(),
+                    Id               = id,
+                    Type             = item.type?.ToString(),
+                    Subtype          = item.subtype?.ToString(),
+                    Name             = item.name?.ToString(),
+                    Description      = item.description?.ToString(),
                     StartingQuantity = item.starting_quantity != null ? (int)item.starting_quantity : 0
                 });
             }
@@ -1165,22 +1346,36 @@ namespace ACVN
 
         private void LoadClothes()
         {
-            string path = Path.Combine(storyPath, "clothes.json");
-            if (!File.Exists(path)) return;
-            dynamic data = JsonConvert.DeserializeObject<dynamic>(
-                File.ReadAllText(path, System.Text.Encoding.UTF8));
             clothingDefinitions.Clear();
+            string path = Path.Combine(storyPath, "clothes.json");
+            if (File.Exists(path))
+                MergeClothesFromJson(File.ReadAllText(path, System.Text.Encoding.UTF8));
+
+            foreach (var mod in ActiveMods)
+            {
+                string modPath = System.IO.Path.Combine(mod.Path, "clothes.json");
+                if (!File.Exists(modPath)) continue;
+                try { MergeClothesFromJson(File.ReadAllText(modPath, System.Text.Encoding.UTF8)); }
+                catch { }
+            }
+        }
+
+        private void MergeClothesFromJson(string json)
+        {
+            dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
             foreach (var item in data.clothes)
             {
+                string id = item.id?.ToString();
+                clothingDefinitions.RemoveAll(c => c.Id == id);
                 var def = new ClothingDefinition
                 {
-                    Id          = item.id?.ToString(),
+                    Id          = id,
                     Name        = item.name?.ToString(),
                     Description = item.description?.ToString(),
                     Subtype     = item.subtype?.ToString(),
-                    Durability  = item.durability != null ? (int)item.durability : 100,
-                    Daring      = item.daring    != null ? (int)item.daring     : 0,
-                    Inhibition  = item.inhibition != null ? (int)item.inhibition : 0,
+                    Durability  = item.durability  != null ? (int)item.durability  : 100,
+                    Daring      = item.daring      != null ? (int)item.daring      : 0,
+                    Inhibition  = item.inhibition  != null ? (int)item.inhibition  : 0,
                     Image       = item.image?.ToString()
                 };
                 if (item.tags != null)
@@ -1240,23 +1435,37 @@ namespace ACVN
 
         private void LoadQuests()
         {
-            string path = Path.Combine(storyPath, "quests.json");
-            if (!File.Exists(path)) return;
-            dynamic data = JsonConvert.DeserializeObject<dynamic>(
-                File.ReadAllText(path, System.Text.Encoding.UTF8));
             questDefinitions.Clear();
+            string path = Path.Combine(storyPath, "quests.json");
+            if (File.Exists(path))
+                MergeQuestsFromJson(File.ReadAllText(path, System.Text.Encoding.UTF8));
+
+            foreach (var mod in ActiveMods)
+            {
+                string modPath = System.IO.Path.Combine(mod.Path, "quests.json");
+                if (!File.Exists(modPath)) continue;
+                try { MergeQuestsFromJson(File.ReadAllText(modPath, System.Text.Encoding.UTF8)); }
+                catch { }
+            }
+        }
+
+        private void MergeQuestsFromJson(string json)
+        {
+            dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
             foreach (var quest in data.quests)
             {
+                string id = quest.id.ToString();
+                questDefinitions.RemoveAll(q => q.Id == id);
                 var def = new QuestDefinition
                 {
-                    Id   = quest.id.ToString(),
+                    Id   = id,
                     Name = quest.name.ToString(),
                     Hint = quest.hint?.ToString()
                 };
                 foreach (var step in quest.steps)
                     def.Steps.Add(new QuestStepDef
                     {
-                        Id = step.id.ToString(),
+                        Id          = step.id.ToString(),
                         Description = step.description.ToString()
                     });
                 questDefinitions.Add(def);
@@ -1689,34 +1898,31 @@ namespace ACVN
 
             string path = Path.Combine(storyPath, "chars.json");
             string json = File.ReadAllText(path);
-            dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
+            MergeCharactersFromJson(json);
 
+            // Merge characters from active mods (mod entry with same ID overrides story entry)
+            foreach (var mod in ActiveMods)
+            {
+                string modPath = System.IO.Path.Combine(mod.Path, "chars.json");
+                if (!File.Exists(modPath)) continue;
+                try { MergeCharactersFromJson(File.ReadAllText(modPath, System.Text.Encoding.UTF8)); }
+                catch { }
+            }
+        }
+
+        private void MergeCharactersFromJson(string json)
+        {
+            dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
             foreach (var charData in data.chars)
             {
-                Character character = new Character
-                {
-                    Id = charData.id
-                };
-
+                string id = charData.id?.ToString();
+                // Remove existing entry with same ID so mod can override
+                characters.RemoveAll(c => c.Id == id);
+                var character = new Character { Id = id };
                 foreach (var property in charData)
-                {
                     if (property.Name != "id")
-                    {
                         character.Properties[property.Name] = property.Value;
-                    }
-                }
-
                 characters.Add(character);
-            }
-
-            // Jetzt hast du eine Liste von Character-Objekten
-            foreach (var character in characters)
-            {
-                Debug.WriteLine($"Id: {character.Id}");
-                foreach (var property in character.Properties)
-                {
-                    Debug.WriteLine($"{property.Key}: {property.Value}");
-                }
             }
         }
 
@@ -2936,6 +3142,7 @@ namespace ACVN
             // Game settings tab
             tbSettingsDisplayHeader.Text    = Loc.T("settings.display");
             tbSettingShowHidden.Text        = Loc.T("settings.show_hidden");
+            tbSettingsModsHeader.Text       = Loc.T("settings.mods");
             tbSettingsBack.Text             = Loc.T("settings.backscene");
 
             // Overlays
@@ -2955,6 +3162,7 @@ namespace ACVN
             // Rebuild dynamic panels so their strings update
             UpdateInventoryPanel();
             UpdateJournalPanel();
+            BuildModsSettingsUI();
             if (setupOverlay.Visibility != Visibility.Visible && wardrobeOverlay.Visibility == Visibility.Visible)
                 RebuildWardrobePanel();
         }
