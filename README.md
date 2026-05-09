@@ -113,33 +113,9 @@ ACVN/
 │   │   ├── chars.json
 │   │   ├── quests.json
 │   │   ├── rooms/
-│   │   └── mods/                           ← mod folder (empty by default)
-│   ├── daily-challenges/                   ← full example story package
-│   │   ├── config.json                     name, version, language, start_room, …
-│   │   ├── chars.json                      Character definitions
-│   │   ├── items.json                      Item catalogue
-│   │   ├── clothes.json                    Clothing catalogue
-│   │   ├── quests.json                     Quest definitions
-│   │   ├── schedules.json                  NPC daily schedules
-│   │   ├── style.css                       CSS for all rendered room content
-│   │   ├── images/                         Art assets — gitignored, add your own
-│   │   │   ├── chars/                      <charId>.png
-│   │   │   ├── items/                      <itemId>.png
-│   │   │   └── clothes/                    <clothingId>.png
-│   │   ├── rooms/
-│   │   │   ├── intro.acvn                  Title / age-check screen
-│   │   │   ├── start.acvn                  Post-setup welcome screen
-│   │   │   └── home/
-│   │   │       ├── room.acvn
-│   │   │       ├── bathroom.acvn
-│   │   │       └── …
-│   │   └── mods/                           ← mod folder (empty by default)
-│   │       └── my-addon/                   ← example installed mod
-│   │           ├── mod.json
-│   │           ├── rooms/
-│   │           └── images/
-│   └── my-other-story/                     ← additional story package
-│       └── …
+│   │   └── mods/
+│   │       └── the-old-well/               ← example mod (included)
+│   └── my-story/                           ← add your own story packages here
 ├── savegames/                              Created at runtime — gitignored
 ├── appsettings.json                        Volume, language, debug state, mod toggles
 ├── MainWindow.xaml(.cs)                    Engine UI and logic
@@ -487,13 +463,28 @@ All media fallbacks, missing-media events, and template errors are also written 
 
 ---
 
+## Example story packages
+
+| Package | Repository | Description |
+|---------|-----------|-------------|
+| `demo` | included | Minimal 2-room demo with one quest and an example mod |
+| Daily Challenges | [narayan24/acvn-daily-challenges](https://github.com/narayan24/acvn-daily-challenges) | Full slice-of-life story (adult content) |
+
+To add an external story, clone it into `story/<name>/`:
+
+```
+git clone https://github.com/narayan24/acvn-daily-challenges.git story/daily-challenges
+```
+
+---
+
 ## Contributing
 
 Pull requests are welcome! Please:
 
 1. Fork the repo and create a feature branch (`git checkout -b feature/my-feature`)
 2. Keep C# code style consistent with the existing file
-3. Test your changes with the included `demo` and `daily-challenges` story packages
+3. Test your changes with the included `demo` story and its example mod
 4. Open a PR with a clear description of what changed and why
 
 For larger changes, open an issue first to discuss the approach.

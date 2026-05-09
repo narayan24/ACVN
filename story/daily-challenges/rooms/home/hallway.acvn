@@ -1,9 +1,0 @@
-#begin start
-You are standing in the hallway of your apartment. It is {{ time_str "HH:mm" }}.
-[[Bedroom, home_room]]
-[[Bathroom, home_bathroom]]
-[[Kitchen, home_kitchen]]
-[[Living Room, home_livingroom]]
-[[{{ brother.properties.firstname }}'s Room, home_brother]]
-[[Parents' Room, home_parentroom]]
-#end
