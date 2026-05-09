@@ -1,0 +1,29 @@
+#begin start
+The old well stands at the meadow's edge, half-swallowed by ivy. The stone rim is cold under your hands.
+{{ if quest_active "wish" }}
+<p style="color:#F5A623; font-size:0.9em;">📋 Objective: {{ quest_objective "wish" }}</p>
+{{ end }}
+{{ if has_item "old_coin" }}
+<p class="well-desc">You feel the old coin in your pocket, warm from the sun.</p>
+[[Toss the coin in and make a wish, well, wish]]
+{{ end }}
+{{ if !(has_item "old_coin") && (quest_step "wish") == -1 }}
+<p class="well-desc">The well is deep and dark. You have nothing to offer it.</p>
+{{ end }}
+{{ if quest_done "wish" }}
+<p class="well-desc">The water far below is perfectly still. Whatever you wished for — it's out there now.</p>
+{{ end }}
+[[Back to the meadow, meadow]]
+#end
+
+#begin wish
+You lean over the rim and hold the coin above the darkness below.
+{{ advance_time 5 }}
+{{ attr_change "mc" "mood" 25 }}
+{{ remove_item "old_coin" }}
+{{ if (quest_step "wish") == 0 }}{{ advance_quest "wish" }}{{ end }}
+<p>You close your eyes. You make a wish — a real one, the kind you mean.</p>
+<p>Then you let go.</p>
+<p class="well-desc">The coin falls for a long time. The splash, when it comes, sounds very small and very far away.</p>
+[[Back to the well, well]]
+#end

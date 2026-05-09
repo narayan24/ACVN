@@ -1,0 +1,10 @@
+{
+  "items": [
+    {
+      "id":               "old_coin",
+      "name":             "Old Coin",
+      "type":             "misc",
+      "starting_quantity": 0
+    }
+  ]
+}
