@@ -1,0 +1,11 @@
+{
+  "quests": [
+    {
+      "id":   "wish",
+      "name": "The Wishing Well",
+      "steps": [
+        { "id": "makewish", "description": "Take the old coin to the well and make a wish." }
+      ]
+    }
+  ]
+}

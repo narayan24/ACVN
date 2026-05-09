@@ -1,0 +1,11 @@
+#begin start:after
+[[Head to the old well, well]]
+#end
+
+#begin walk:after
+{{ if !(has_item "old_coin") && (quest_step "wish") == -1 }}
+{{ start_quest "wish" }}
+{{ add_item "old_coin" }}
+<div class="coin-found">✨ Something glints in the long grass near the tree line. You crouch down — it's an old coin, worn smooth by decades of rain. You pocket it.</div>
+{{ end }}
+#end

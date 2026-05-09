@@ -1,0 +1,19 @@
+/* ── Mod: The Old Well ──────────────────────────────────────────────────── */
+
+/* Discovery highlight — used when the coin is found */
+.coin-found {
+    background: #1c1600;
+    border-left: 3px solid #B8860B;
+    padding: 8px 12px;
+    margin: 10px 0;
+    border-radius: 0 4px 4px 0;
+    color: #E8C84A;
+    font-size: 0.9em;
+}
+
+/* Atmosphere block — used for well descriptions */
+.well-desc {
+    color: #9E9E9E;
+    font-style: italic;
+    margin: 6px 0;
+}

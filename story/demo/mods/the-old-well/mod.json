@@ -1,0 +1,7 @@
+{
+  "name":        "The Old Well",
+  "version":     "1.0",
+  "author":      "ACVN Example Mod",
+  "description": "Adds a mysterious well at the meadow's edge. Walk long enough and you'll find a hidden coin — take it to the well and make a wish.",
+  "priority":    10
+}
