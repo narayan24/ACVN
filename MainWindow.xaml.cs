@@ -77,6 +77,7 @@ namespace ACVN
 
         private Dictionary<string, string> _config = new Dictionary<string, string>();
         private Dictionary<string, bool> _journalExpanded = new Dictionary<string, bool>();
+        private Dictionary<string, bool> _inventoryCollapsed = new Dictionary<string, bool>();
         private Dictionary<string, object> _dailyDefaults = new Dictionary<string, object>();
 
         private List<ClothingDefinition> clothingDefinitions = new List<ClothingDefinition>();
@@ -1588,14 +1589,14 @@ namespace ACVN
         {
             inventoryStack.Children.Clear();
 
-            // — Kleidung —
-            AddInventorySectionHeader(Loc.T("inv.clothing"));
+            // — Clothing section —
+            var clothingContent = new StackPanel { Margin = new Thickness(0, 2, 0, 0) };
             var clothingItems = ownedClothing
                 .Select(id => clothingDefinitions.FirstOrDefault(c => c.Id == id))
                 .Where(d => d != null).ToList();
 
             if (clothingItems.Count == 0)
-                AddInventoryEmptyNote();
+                AddInvEmptyNote(clothingContent);
             else
                 foreach (var def in clothingItems)
                 {
@@ -1682,16 +1683,16 @@ namespace ACVN
                         _wardrobeReadOnly     = true;
                         ShowWardrobe(resetState: false);
                     };
-                    inventoryStack.Children.Add(btn);
+                    clothingContent.Children.Add(btn);
                 }
 
-            inventoryStack.Children.Add(new System.Windows.Shapes.Rectangle { Height = 10 });
+            AddInvCollapsibleSection("clothing", Loc.T("inv.clothing"), clothingContent);
 
-            // — Items —
-            AddInventorySectionHeader(Loc.T("inv.items"));
+            // — Items section —
+            var itemsContent = new StackPanel { Margin = new Thickness(0, 2, 0, 0) };
             var visibleItems = inventory.Where(kv => kv.Value > 0).ToList();
             if (visibleItems.Count == 0)
-                AddInventoryEmptyNote();
+                AddInvEmptyNote(itemsContent);
             else
                 foreach (var kv in visibleItems)
                 {
@@ -1761,24 +1762,64 @@ namespace ACVN
                         Cursor                     = System.Windows.Input.Cursors.Hand
                     };
                     btn.Click += (_, __) => ShowItemInfo(itemId);
-                    inventoryStack.Children.Add(btn);
+                    itemsContent.Children.Add(btn);
                 }
+
+            AddInvCollapsibleSection("items", Loc.T("inv.items"), itemsContent);
         }
 
-        private void AddInventorySectionHeader(string text)
+        /// <summary>Adds a collapsible section header + content block to the inventory panel.</summary>
+        private void AddInvCollapsibleSection(string key, string title, StackPanel content)
         {
-            inventoryStack.Children.Add(new TextBlock
+            bool collapsed = _inventoryCollapsed.TryGetValue(key, out bool c) && c;
+            content.Visibility = collapsed ? Visibility.Collapsed : Visibility.Visible;
+
+            var chevron = new TextBlock
             {
-                Text       = text.ToUpper(),
-                FontSize   = 9, FontWeight = FontWeights.SemiBold,
+                Text                = collapsed ? "▼" : "▲",
+                FontSize            = 9,
+                Foreground          = ThemeBrush("Journal.Chevron"),
+                HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment   = VerticalAlignment.Center
+            };
+
+            var headerGrid = new Grid();
+            headerGrid.Children.Add(new TextBlock
+            {
+                Text       = title.ToUpper(),
+                FontSize   = 9,
+                FontWeight = FontWeights.SemiBold,
                 Foreground = ThemeBrush("Inv.Section"),
-                Margin     = new Thickness(0, 4, 0, 2)
+                VerticalAlignment = VerticalAlignment.Center
             });
+            headerGrid.Children.Add(chevron);
+
+            var header = new Border
+            {
+                Background   = ThemeBrush("Journal.Hdr.Bg"),
+                CornerRadius = new CornerRadius(4),
+                Padding      = new Thickness(6, 5, 6, 5),
+                Margin       = new Thickness(0, 6, 0, 0),
+                Cursor       = System.Windows.Input.Cursors.Hand,
+                Child        = headerGrid
+            };
+
+            string capturedKey = key;
+            header.MouseLeftButtonUp += (_, __) =>
+            {
+                bool vis               = content.Visibility == Visibility.Visible;
+                content.Visibility     = vis ? Visibility.Collapsed : Visibility.Visible;
+                chevron.Text           = vis ? "▼" : "▲";
+                _inventoryCollapsed[capturedKey] = vis; // true = collapsed
+            };
+
+            inventoryStack.Children.Add(header);
+            inventoryStack.Children.Add(content);
         }
 
-        private void AddInventoryEmptyNote()
+        private void AddInvEmptyNote(StackPanel target)
         {
-            inventoryStack.Children.Add(new TextBlock
+            target.Children.Add(new TextBlock
             {
                 Text       = Loc.T("inv.empty"),
                 FontSize   = 11,
