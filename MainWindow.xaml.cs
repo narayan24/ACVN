@@ -1392,7 +1392,8 @@ namespace ACVN
 
         private void InitClothingFromDefaults()
         {
-            ownedClothing = new HashSet<string>(clothingDefinitions.Select(c => c.Id));
+            ownedClothing = new HashSet<string>(
+                clothingDefinitions.Where(c => c.StartingQuantity > 0).Select(c => c.Id));
         }
 
         private void AutoEquipOnStart()
@@ -3455,6 +3456,15 @@ namespace ACVN
                 return string.Empty;
             }
 
+            /// <summary>Add <paramref name="count"/> units of an item at once (e.g. earn currency).</summary>
+            public static string AddItems(string itemId, int count)
+            {
+                var inv = _instance.inventory;
+                inv[itemId] = (inv.ContainsKey(itemId) ? inv[itemId] : 0) + count;
+                _instance.UpdateInventoryPanel();
+                return string.Empty;
+            }
+
             public static string RemoveItem(string itemId)
             {
                 var inv = _instance.inventory;
@@ -3466,6 +3476,18 @@ namespace ACVN
                 }
                 return string.Empty;
             }
+
+            /// <summary>Unlock a clothing item so it appears in the wardrobe (e.g. after buying it in a shop).</summary>
+            public static string UnlockClothing(string clothingId)
+            {
+                _instance.ownedClothing.Add(clothingId);
+                _instance.ShowWardrobe(); // refresh if open — harmless if closed
+                return string.Empty;
+            }
+
+            /// <summary>Returns true if the player owns (has unlocked) a clothing item.</summary>
+            public static bool HasClothing(string clothingId)
+                => _instance.ownedClothing.Contains(clothingId);
 
             /// <summary>Remove <paramref name="count"/> units of an item at once (e.g. spend currency).</summary>
             public static string SpendItem(string itemId, int count)

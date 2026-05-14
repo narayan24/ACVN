@@ -34,6 +34,8 @@ public class ClothingDefinition
     public int Durability { get; set; } = 100;
     public int Daring { get; set; }
     public int Inhibition { get; set; }           // player inhibition must be <= this to wear
+    public int StartingQuantity { get; set; } = 1; // 0 = must be purchased/unlocked first
+    public int Price { get; set; }                 // shop price in Kron (0 = not for sale)
     public List<string> Tags { get; set; } = new List<string>();
     public string Image { get; set; }
 }
