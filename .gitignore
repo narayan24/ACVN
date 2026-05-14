@@ -361,6 +361,9 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# External story packages cloned as standalone repos
+story/daily-challenges/
+
 # Story package images (user-provided art assets – do not commit)
 story/*/images/*
 !story/*/images/.gitkeep
