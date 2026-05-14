@@ -55,6 +55,7 @@ namespace ACVN
         private Dictionary<string, string> wornClothing = new Dictionary<string, string>();
         private MediaPlayer _cameraPlayer;
         private bool _settingsReady = false;
+        private string _currentTheme = "System";
         private List<ModDefinition> _mods    = new List<ModDefinition>();
         private string              modsPath;
         private IEnumerable<ModDefinition> ActiveMods => _mods.Where(m => m.Enabled);
@@ -69,6 +70,7 @@ namespace ACVN
             public string Language { get; set; } = "de";
             public bool ShowHiddenAttributes { get; set; } = false;
             public bool DebugEnabled { get; set; } = false;
+            public string Theme { get; set; } = "System";
             public Dictionary<string, bool> ModStates { get; set; } = new();
             public Dictionary<string, Dictionary<string, string>> OutfitPresets { get; set; } = new();
         }
@@ -88,6 +90,14 @@ namespace ACVN
 
         private Dictionary<string, TextBox> _setupFields = new Dictionary<string, TextBox>();
         private List<string> _pendingQuestNotifications = new List<string>();
+
+        /// <summary>Look up a themed SolidColorBrush from Application.Resources.</summary>
+        private static System.Windows.Media.SolidColorBrush ThemeBrush(string key)
+            => Application.Current.TryFindResource(key) as System.Windows.Media.SolidColorBrush
+               ?? System.Windows.Media.Brushes.Magenta;
+
+        private static System.Windows.Media.Color ThemeColor(string key)
+            => ThemeBrush(key)?.Color ?? System.Windows.Media.Colors.Magenta;
 
         public MainWindow()
         {
@@ -231,15 +241,14 @@ namespace ACVN
                 info.Children.Add(new TextBlock
                 {
                     Text       = mod.Name + (string.IsNullOrEmpty(mod.Version) ? string.Empty : $"  v{mod.Version}"),
-                    Foreground = System.Windows.Media.Brushes.White,
+                    Foreground = ThemeBrush("Text.Primary"),
                     FontSize   = 12
                 });
                 if (!string.IsNullOrEmpty(mod.Author))
                     info.Children.Add(new TextBlock
                     {
                         Text       = mod.Author,
-                        Foreground = new System.Windows.Media.SolidColorBrush(
-                                         System.Windows.Media.Color.FromRgb(0x88, 0x88, 0x88)),
+                        Foreground = ThemeBrush("Mod.Author"),
                         FontSize   = 10
                     });
                 Grid.SetColumn(info, 0);
@@ -263,8 +272,7 @@ namespace ACVN
             {
                 Text            = Loc.T("settings.mods.restart_hint"),
                 FontSize        = 10,
-                Foreground      = new System.Windows.Media.SolidColorBrush(
-                                      System.Windows.Media.Color.FromRgb(0x55, 0x55, 0x55)),
+                Foreground      = ThemeBrush("Mod.Hint"),
                 Margin          = new Thickness(0, 8, 0, 0),
                 TextWrapping    = TextWrapping.Wrap
             });
@@ -311,8 +319,7 @@ namespace ACVN
                 Height = 370,
                 WindowStartupLocation = WindowStartupLocation.CenterScreen,
                 ResizeMode = ResizeMode.NoResize,
-                Background = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(0x1C, 0x1C, 0x1C))
+                Background = ThemeBrush("App.Bg")
             };
 
             var root = new StackPanel { Margin = new Thickness(24) };
@@ -320,7 +327,7 @@ namespace ACVN
             root.Children.Add(new TextBlock
             {
                 Text = "Choose a Story",
-                Foreground = System.Windows.Media.Brushes.White,
+                Foreground = ThemeBrush("Text.Primary"),
                 FontSize = 18,
                 FontWeight = FontWeights.Bold,
                 Margin = new Thickness(0, 0, 0, 14)
@@ -328,9 +335,8 @@ namespace ACVN
 
             var list = new ListBox
             {
-                Background = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(0x2A, 0x2A, 0x2A)),
-                Foreground = System.Windows.Media.Brushes.White,
+                Background = ThemeBrush("Surface.Bg"),
+                Foreground = ThemeBrush("Text.Primary"),
                 BorderThickness = new Thickness(0),
                 Padding = new Thickness(4),
                 Height = 160
@@ -800,34 +806,29 @@ namespace ACVN
                             statusStack.Children.Add(new System.Windows.Shapes.Rectangle
                             {
                                 Height = 1,
-                                Fill   = new System.Windows.Media.SolidColorBrush(
-                                             System.Windows.Media.Color.FromRgb(0x2A, 0x2A, 0x2A)),
+                                Fill   = ThemeBrush("Status.Sep"),
                                 Margin = new Thickness(0, 4, 0, 8)
                             });
                         }
 
                         var wrapper = new StackPanel { Margin = new Thickness(0, 0, 0, 10) };
 
-                        var labelFg = isHidden
-                            ? System.Windows.Media.Color.FromRgb(0x66, 0x66, 0x66)
-                            : System.Windows.Media.Color.FromRgb(0xAB, 0xAB, 0xAB);
-                        var valueFg = isHidden
-                            ? System.Windows.Media.Color.FromRgb(0x44, 0x44, 0x44)
-                            : System.Windows.Media.Color.FromRgb(0x66, 0x66, 0x66);
+                        var labelBrush = isHidden ? ThemeBrush("Status.Lbl.H") : ThemeBrush("Status.Lbl");
+                        var valueBrush = isHidden ? ThemeBrush("Status.Val.H") : ThemeBrush("Status.Val");
 
                         var labelRow = new Grid();
                         labelRow.Children.Add(new TextBlock
                         {
                             Text = name,
                             HorizontalAlignment = HorizontalAlignment.Left,
-                            Foreground = new System.Windows.Media.SolidColorBrush(labelFg),
+                            Foreground = labelBrush,
                             FontSize = isHidden ? 10 : 11
                         });
                         labelRow.Children.Add(new TextBlock
                         {
                             Text = $"{value} / {max}",
                             HorizontalAlignment = HorizontalAlignment.Right,
-                            Foreground = new System.Windows.Media.SolidColorBrush(valueFg),
+                            Foreground = valueBrush,
                             FontSize = isHidden ? 10 : 11
                         });
 
@@ -1084,6 +1085,9 @@ namespace ACVN
                     debugPanel.Visibility = Visibility.Visible;
                 if (!string.IsNullOrEmpty(s.Language))
                     Loc.SetLanguage(s.Language);
+                _currentTheme = s.Theme ?? "System";
+                // Theme is already applied by App.OnStartup; just sync the dropdown
+                PopulateThemeDropdown();
             }
             catch { /* ignore corrupt settings */ }
         }
@@ -1099,6 +1103,7 @@ namespace ACVN
                 existing.Language             = Loc.CurrentLanguage;
                 existing.ShowHiddenAttributes = showHiddenToggle.IsChecked == true;
                 existing.DebugEnabled         = debugEnabled;
+                existing.Theme                = _currentTheme;
                 existing.ModStates            = _mods.ToDictionary(m => m.Id, m => m.Enabled);
                 File.WriteAllText(SettingsFilePath, JsonConvert.SerializeObject(existing, Formatting.Indented));
             }
@@ -1596,7 +1601,7 @@ namespace ACVN
                     {
                         Text              = def.Name,
                         FontSize          = 13,
-                        Foreground        = Brushes.White,
+                        Foreground        = ThemeBrush("Text.Primary"),
                         VerticalAlignment = VerticalAlignment.Center
                     });
                     if (isWorn)
@@ -1615,7 +1620,7 @@ namespace ACVN
                     {
                         Text              = Loc.T("wardrobe." + def.Subtype),
                         FontSize          = 10,
-                        Foreground        = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x55)),
+                        Foreground        = ThemeBrush("Text.Hint"),
                         VerticalAlignment = VerticalAlignment.Center,
                         Margin            = new Thickness(8, 0, 0, 0)
                     };
@@ -1691,7 +1696,7 @@ namespace ACVN
                     var nameBlock = new TextBlock
                     {
                         Text              = displayName,
-                        Foreground        = new SolidColorBrush(Color.FromRgb(0xE0, 0xE0, 0xE0)),
+                        Foreground        = ThemeBrush("Text.Primary"),
                         FontSize          = 13,
                         VerticalAlignment = VerticalAlignment.Center
                     };
@@ -1701,7 +1706,7 @@ namespace ACVN
                     var qtyBlock = new TextBlock
                     {
                         Text              = $"×{kv.Value}",
-                        Foreground        = new SolidColorBrush(Color.FromRgb(0x60, 0x60, 0x60)),
+                        Foreground        = ThemeBrush("Inv.Count"),
                         FontSize          = 12,
                         VerticalAlignment = VerticalAlignment.Center,
                         Margin            = new Thickness(8, 0, 0, 0)
@@ -1755,7 +1760,7 @@ namespace ACVN
             {
                 Text       = text.ToUpper(),
                 FontSize   = 9, FontWeight = FontWeights.SemiBold,
-                Foreground = new SolidColorBrush(Color.FromRgb(0x66, 0x66, 0x66)),
+                Foreground = ThemeBrush("Inv.Section"),
                 Margin     = new Thickness(0, 4, 0, 2)
             });
         }
@@ -1766,7 +1771,7 @@ namespace ACVN
             {
                 Text       = Loc.T("inv.empty"),
                 FontSize   = 11,
-                Foreground = new SolidColorBrush(Color.FromRgb(0x44, 0x44, 0x44)),
+                Foreground = ThemeBrush("Inv.Empty"),
                 Margin     = new Thickness(8, 2, 0, 0)
             });
         }
@@ -1791,8 +1796,7 @@ namespace ACVN
             {
                 Text = expanded ? "▲" : "▼",
                 FontSize = 9,
-                Foreground = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(0x66, 0x66, 0x66)),
+                Foreground = ThemeBrush("Journal.Chevron"),
                 HorizontalAlignment = HorizontalAlignment.Right,
                 VerticalAlignment   = VerticalAlignment.Center
             };
@@ -1802,15 +1806,13 @@ namespace ACVN
                 Text       = title,
                 FontSize   = 11,
                 FontWeight = FontWeights.SemiBold,
-                Foreground = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(0x88, 0x88, 0x88))
+                Foreground = ThemeBrush("Text.SectionHdr")
             });
             headerGrid.Children.Add(chevron);
 
             var header = new Border
             {
-                Background    = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(0x22, 0x22, 0x22)),
+                Background    = ThemeBrush("Journal.Hdr.Bg"),
                 CornerRadius  = new CornerRadius(4),
                 Padding       = new Thickness(8, 6, 8, 6),
                 Margin        = new Thickness(0, 8, 0, 0),
@@ -1843,8 +1845,7 @@ namespace ACVN
                 {
                     Text       = Loc.T("journal.empty"),
                     FontSize   = 11,
-                    Foreground = new System.Windows.Media.SolidColorBrush(
-                        System.Windows.Media.Color.FromRgb(0x44, 0x44, 0x44)),
+                    Foreground = ThemeBrush("Journal.Empty"),
                     Margin     = new Thickness(8, 4, 0, 0)
                 });
                 return;
@@ -1855,18 +1856,18 @@ namespace ACVN
                 questProgress.TryGetValue(def.Id, out int step);
 
                 string icon  = kind == "done" ? "✓ " : kind == "aktiv" ? "◉ " : "○ ";
-                var nameColor = kind == "done"
-                    ? System.Windows.Media.Color.FromRgb(0x55, 0xAA, 0x55)
+                System.Windows.Media.Brush nameBrush = kind == "done"
+                    ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x55, 0xAA, 0x55))
                     : kind == "aktiv"
-                        ? System.Windows.Media.Color.FromRgb(0xE0, 0xE0, 0xE0)
-                        : System.Windows.Media.Color.FromRgb(0x99, 0x99, 0x99);
+                        ? ThemeBrush("Text.Primary")
+                        : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x99, 0x99, 0x99));
 
                 content.Children.Add(new TextBlock
                 {
                     Text       = icon + def.Name,
                     FontSize   = 13,
                     FontWeight = kind == "aktiv" ? FontWeights.SemiBold : FontWeights.Normal,
-                    Foreground = new System.Windows.Media.SolidColorBrush(nameColor),
+                    Foreground = nameBrush,
                     Margin     = new Thickness(8, 6, 0, 2)
                 });
 
@@ -2071,8 +2072,7 @@ namespace ACVN
                 // Card container
                 var card = new Border
                 {
-                    Background = new System.Windows.Media.SolidColorBrush(
-                        System.Windows.Media.Color.FromRgb(0x22, 0x22, 0x22)),
+                    Background = ThemeBrush("Journal.Hdr.Bg"),
                     CornerRadius = new CornerRadius(6),
                     Margin = new Thickness(0, 0, 0, 10),
                     Padding = new Thickness(10)
@@ -2101,15 +2101,14 @@ namespace ACVN
                 {
                     Text = firstName + (string.IsNullOrEmpty(relation) ? "" : $"  ·  {relation}"),
                     FontSize = 13, FontWeight = FontWeights.SemiBold,
-                    Foreground = System.Windows.Media.Brushes.White
+                    Foreground = ThemeBrush("Text.Primary")
                 });
                 if (!string.IsNullOrEmpty(age))
                     inner.Children.Add(new TextBlock
                     {
                         Text = $"{age} {Loc.T("rel.years")}",
                         FontSize = 11,
-                        Foreground = new System.Windows.Media.SolidColorBrush(
-                            System.Windows.Media.Color.FromRgb(0x88, 0x88, 0x88)),
+                        Foreground = ThemeBrush("Mod.Author"),
                         Margin = new Thickness(0, 2, 0, 0)
                     });
 
@@ -2128,16 +2127,14 @@ namespace ACVN
                         {
                             Text = attrName,
                             FontSize = 10,
-                            Foreground = new System.Windows.Media.SolidColorBrush(
-                                System.Windows.Media.Color.FromRgb(0xAA, 0xAA, 0xAA)),
+                            Foreground = ThemeBrush("Status.Lbl"),
                             HorizontalAlignment = HorizontalAlignment.Left
                         });
                         row.Children.Add(new TextBlock
                         {
                             Text = $"{val}/{max}",
                             FontSize = 10,
-                            Foreground = new System.Windows.Media.SolidColorBrush(
-                                System.Windows.Media.Color.FromRgb(0x66, 0x66, 0x66)),
+                            Foreground = ThemeBrush("Status.Val"),
                             HorizontalAlignment = HorizontalAlignment.Right
                         });
                         inner.Children.Add(row);
@@ -2154,8 +2151,7 @@ namespace ACVN
                 {
                     Text = Loc.T("rel.no_contacts"),
                     FontSize = 12,
-                    Foreground = new System.Windows.Media.SolidColorBrush(
-                        System.Windows.Media.Color.FromRgb(0x6A, 0x6A, 0x6A)),
+                    Foreground = ThemeBrush("Text.Muted"),
                     Margin = new Thickness(0, 8, 0, 0)
                 });
         }
@@ -3142,6 +3138,8 @@ namespace ACVN
             videoAutoplayToggle.Content     = Loc.T("settings.autoplay");
             tbVolLabel.Text                 = Loc.T("settings.volume");
             tbLangLabel.Text                = Loc.T("settings.language");
+            if (tbThemeLabel != null) tbThemeLabel.Text = Loc.T("theme.label");
+            PopulateThemeDropdown();
             tbSettingsRestart.Text          = Loc.T("settings.restart");
             // Game settings tab
             tbSettingsDisplayHeader.Text    = Loc.T("settings.display");
@@ -3191,6 +3189,57 @@ namespace ACVN
                 Loc.SetLanguage(lang);
                 SaveAppSettings();
             }
+        }
+
+        private void PopulateThemeDropdown()
+        {
+            if (themeDropdown == null) return;
+            _settingsReady = false;
+            themeDropdown.Items.Clear();
+            var options = new[]
+            {
+                ("System", Loc.T("theme.system")),
+                ("Dark",   Loc.T("theme.dark")),
+                ("Light",  Loc.T("theme.light"))
+            };
+            foreach (var (value, label) in options)
+            {
+                themeDropdown.Items.Add(new System.Windows.Controls.ComboBoxItem
+                {
+                    Content = label,
+                    Tag     = value
+                });
+            }
+            // Select current
+            foreach (System.Windows.Controls.ComboBoxItem item in themeDropdown.Items)
+                if (item.Tag as string == _currentTheme) { themeDropdown.SelectedItem = item; break; }
+            if (themeDropdown.SelectedIndex < 0) themeDropdown.SelectedIndex = 0;
+            _settingsReady = true;
+        }
+
+        public void themeDropdown_Changed(object sender, SelectionChangedEventArgs e)
+        {
+            if (!_settingsReady) return;
+            if (themeDropdown.SelectedItem is System.Windows.Controls.ComboBoxItem item
+                && item.Tag is string theme)
+            {
+                _currentTheme = theme;
+                string resolved = App.ResolveThemeName(theme);
+                App.LoadThemeDict(resolved);
+                RefreshDynamicPanels();
+                SaveAppSettings();
+            }
+        }
+
+        /// <summary>Rebuild all C#-generated panels so they pick up new theme brushes.</summary>
+        private void RefreshDynamicPanels()
+        {
+            UpdateStatusBar();
+            UpdateJournalPanel();
+            UpdateInventoryPanel();
+            BuildModsSettingsUI();
+            // Relationships panel only if it has content:
+            if (relationshipsStack.Children.Count > 0) UpdateRelationshipsPanel();
         }
 
         /* SETUP SCREEN */
