@@ -304,9 +304,6 @@ namespace ACVN
                 return null;
             }
 
-            if (packages.Count == 1)
-                return packages[0];
-
             return ShowStoryPicker(packages);
         }
 
