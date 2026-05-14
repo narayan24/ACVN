@@ -1195,6 +1195,21 @@ namespace ACVN
             mainContent.Visibility = show ? Visibility.Hidden : Visibility.Visible;
         }
 
+        private void mainContent_Navigating(object sender, System.Windows.Navigation.NavigatingCancelEventArgs e)
+        {
+            // Intercept acvn:// links written directly in content HTML.
+            // Format: acvn://room_id/action  (action is optional; defaults to "start")
+            if (e.Uri != null && e.Uri.Scheme == "acvn")
+            {
+                e.Cancel = true;
+                string room   = e.Uri.Host;
+                string action = e.Uri.AbsolutePath.TrimStart('/');
+                ExecuteCommand(string.IsNullOrEmpty(action)
+                    ? new[] { "", room }
+                    : new[] { "", room, action });
+            }
+        }
+
         public void cheatButton_Click(object sender, RoutedEventArgs e)
         {
             settingsPanel.Visibility = Visibility.Collapsed;
