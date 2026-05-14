@@ -1195,6 +1195,180 @@ namespace ACVN
             mainContent.Visibility = show ? Visibility.Hidden : Visibility.Visible;
         }
 
+        public void cheatButton_Click(object sender, RoutedEventArgs e)
+        {
+            settingsPanel.Visibility = Visibility.Collapsed;
+            mainContent.Visibility   = Visibility.Hidden;
+            BuildCheatUI();
+            cheatOverlay.Visibility  = Visibility.Visible;
+        }
+
+        public void cheatCloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            cheatOverlay.Visibility  = Visibility.Collapsed;
+            mainContent.Visibility   = Visibility.Visible;
+        }
+
+        private void BuildCheatUI()
+        {
+            cheatStack.Children.Clear();
+            if (characters == null) return;
+
+            // MC first, then NPCs — only those with attributes
+            var ordered = characters
+                .Where(c => c.Properties.ContainsKey("attributes"))
+                .OrderByDescending(c => c.IsMainCharacter)
+                .ThenBy(c => c.Id);
+
+            foreach (var ch in ordered)
+            {
+                if (!ch.Properties.TryGetValue("attributes", out var attrsToken)) continue;
+                if (attrsToken is not JObject attrsObj) continue;
+
+                // Display name
+                string displayName = ch.IsMainCharacter
+                    ? (ch.Properties.TryGetValue("firstname", out var mcFn) ? $"{mcFn} (MC)" : "Player (MC)")
+                    : ch.Properties.TryGetValue("firstname", out var fn) ? fn.ToString() : ch.Id;
+
+                // ── Card ────────────────────────────────────────────────
+                var cardInner = new StackPanel { Margin = new Thickness(0) };
+
+                // Card header
+                cardInner.Children.Add(new TextBlock
+                {
+                    Text       = displayName,
+                    FontSize   = 13,
+                    FontWeight = FontWeights.SemiBold,
+                    Foreground = ThemeBrush("Text.Primary"),
+                    Margin     = new Thickness(0, 0, 0, 8)
+                });
+                cardInner.Children.Add(new System.Windows.Shapes.Rectangle
+                {
+                    Height = 1,
+                    Fill   = ThemeBrush("Sep.Dark"),
+                    Margin = new Thickness(0, 0, 0, 10)
+                });
+
+                bool firstAttr = true;
+                foreach (var kv in attrsObj)
+                {
+                    if (kv.Value is not JObject ao) continue;
+
+                    string attrKey  = kv.Key;
+                    string attrName = ao.Value<string>("name") ?? kv.Key;
+                    int    min      = ao.Value<int>("min");
+                    int    max      = ao.Value<int>("max");
+                    int    val      = ao.Value<int>("value");
+                    bool   hidden   = ao.Value<bool?>("hidden") == true;
+                    string charId   = ch.Id;
+
+                    if (!firstAttr)
+                        cardInner.Children.Add(new System.Windows.Shapes.Rectangle
+                        {
+                            Height = 1,
+                            Fill   = ThemeBrush("Sep.Dark"),
+                            Margin = new Thickness(0, 6, 0, 6)
+                        });
+                    firstAttr = false;
+
+                    // Label + live value display
+                    var labelBrush = hidden ? ThemeBrush("Status.Lbl.H") : ThemeBrush("Status.Lbl");
+                    var valDisplay = new TextBlock
+                    {
+                        Text                = $"{val}",
+                        FontSize            = 11,
+                        FontWeight          = FontWeights.SemiBold,
+                        Foreground          = ThemeBrush("Status.Val"),
+                        HorizontalAlignment = HorizontalAlignment.Right,
+                        VerticalAlignment   = VerticalAlignment.Center,
+                        MinWidth            = 36
+                    };
+                    var rangeDisplay = new TextBlock
+                    {
+                        Text                = $"/ {max}",
+                        FontSize            = 10,
+                        Foreground          = ThemeBrush("Text.Muted"),
+                        VerticalAlignment   = VerticalAlignment.Center,
+                        Margin              = new Thickness(2, 0, 0, 0)
+                    };
+
+                    var headerRow = new Grid { Margin = new Thickness(0, 0, 0, 4) };
+                    headerRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                    headerRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                    headerRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+                    var nameBlock = new TextBlock
+                    {
+                        Text              = attrName + (hidden ? "  ·" : ""),
+                        FontSize          = 11,
+                        Foreground        = labelBrush,
+                        VerticalAlignment = VerticalAlignment.Center
+                    };
+                    Grid.SetColumn(nameBlock,   0);
+                    Grid.SetColumn(valDisplay,  1);
+                    Grid.SetColumn(rangeDisplay, 2);
+                    headerRow.Children.Add(nameBlock);
+                    headerRow.Children.Add(valDisplay);
+                    headerRow.Children.Add(rangeDisplay);
+
+                    // Slider
+                    var slider = new Slider
+                    {
+                        Minimum             = min,
+                        Maximum             = max,
+                        Value               = val,
+                        TickFrequency       = 1,
+                        IsSnapToTickEnabled = true,
+                        Margin              = new Thickness(0, 2, 0, 0)
+                    };
+
+                    // Capture loop vars for closure
+                    var capturedCh      = ch;
+                    var capturedKey     = attrKey;
+                    var capturedDisplay = valDisplay;
+
+                    slider.ValueChanged += (_, __) =>
+                    {
+                        int newVal = (int)slider.Value;
+                        capturedDisplay.Text = $"{newVal}";
+                        if (capturedCh.Properties.TryGetValue("attributes", out var a)
+                            && a is JObject ao2
+                            && ao2.TryGetValue(capturedKey, out var tok)
+                            && tok is JObject attrObj2)
+                        {
+                            attrObj2["value"] = newVal;
+                        }
+                        UpdateStatusBar();
+                    };
+
+                    cardInner.Children.Add(headerRow);
+                    cardInner.Children.Add(slider);
+                }
+
+                var card = new Border
+                {
+                    Background      = ThemeBrush("Subtle.Bg"),
+                    BorderBrush     = ThemeBrush("Border.Primary"),
+                    BorderThickness = new Thickness(1),
+                    CornerRadius    = new CornerRadius(6),
+                    Padding         = new Thickness(16, 12, 16, 14),
+                    Margin          = new Thickness(0, 0, 0, 12),
+                    Child           = cardInner
+                };
+
+                cheatStack.Children.Add(card);
+            }
+
+            if (cheatStack.Children.Count == 0)
+                cheatStack.Children.Add(new TextBlock
+                {
+                    Text       = "No characters with attributes found.",
+                    FontSize   = 12,
+                    Foreground = ThemeBrush("Text.Muted"),
+                    Margin     = new Thickness(0, 8, 0, 0)
+                });
+        }
+
         public void debugToggle_Changed(object sender, RoutedEventArgs e)
         {
             debugEnabled = debugToggle.IsChecked == true;
