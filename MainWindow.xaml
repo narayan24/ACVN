@@ -659,6 +659,19 @@
 
                 <Rectangle Height="1" Fill="{DynamicResource Sep.Dark}" Margin="0,8,0,6"/>
 
+                <!-- Cheats -->
+                <Button x:Name="cheatBtn" Click="cheatButton_Click"
+                        HorizontalAlignment="Stretch"
+                        Margin="0,2,0,6">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE7FC;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                   Margin="0,0,6,0" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="tbCheatBtn" Text="Cheats" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <Rectangle Height="1" Fill="{DynamicResource Sep.Dark}" Margin="0,2,0,6"/>
+
                 <Button x:Name="restartBtn" Click="restartButton_Click"
                         HorizontalAlignment="Stretch"
                         Foreground="#FF6B6B"
@@ -681,6 +694,68 @@
                 </Button>
             </StackPanel>
         </Border>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             CHEAT OVERLAY
+        ════════════════════════════════════════════════════════════ -->
+        <Grid x:Name="cheatOverlay"
+              Grid.Row="0" Grid.RowSpan="2"
+              Grid.Column="0" Grid.ColumnSpan="3"
+              Panel.ZIndex="5000"
+              Visibility="Collapsed">
+            <Grid.Background>
+                <SolidColorBrush Color="Black" Opacity="0.55"/>
+            </Grid.Background>
+            <Border HorizontalAlignment="Center" VerticalAlignment="Center"
+                    MinWidth="560" MaxWidth="740"
+                    MaxHeight="680"
+                    Background="{DynamicResource Surface.Bg}"
+                    BorderBrush="{DynamicResource Border.Primary}" BorderThickness="1"
+                    CornerRadius="10"
+                    Padding="0">
+                <Border.Effect>
+                    <DropShadowEffect Color="Black" Direction="90"
+                                      ShadowDepth="8" BlurRadius="24" Opacity="0.6"/>
+                </Border.Effect>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="50"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Header -->
+                    <Border Grid.Row="0"
+                            Background="{DynamicResource Subtle.Bg}"
+                            BorderBrush="{DynamicResource Subtle.Border}" BorderThickness="0,0,0,1"
+                            CornerRadius="10,10,0,0"
+                            Padding="20,0,12,0">
+                        <Grid>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="&#xE7FC;" FontFamily="Segoe MDL2 Assets"
+                                           FontSize="14" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource Text.Primary}"
+                                           Margin="0,0,8,0"/>
+                                <TextBlock Text="Cheats" FontSize="14" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource Text.Primary}"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <Button x:Name="cheatCloseBtn" Click="cheatCloseButton_Click"
+                                    Style="{StaticResource IconButtonStyle}"
+                                    HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Scrollable content -->
+                    <ScrollViewer Grid.Row="1"
+                                  VerticalScrollBarVisibility="Auto"
+                                  Padding="20,16,20,16">
+                        <StackPanel x:Name="cheatStack"/>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
 
         <!-- ═══════════════════════════════════════════════════════════
              CHARACTER SETUP OVERLAY
