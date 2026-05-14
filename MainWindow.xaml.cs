@@ -2240,7 +2240,10 @@ namespace ACVN
         {
             wardrobeOverlay.Visibility = Visibility.Collapsed;
             if (!_wardrobeReadOnly)
+            {
+                mainContent.Visibility = Visibility.Visible;
                 InitContent();
+            }
             else
             {
                 mainContent.Visibility = Visibility.Visible;
