@@ -133,8 +133,24 @@ public static class Loc
             ["confirm.quicksave.done"] = "Quicksave gespeichert.",
             ["confirm.noQuicksave"]    = "Kein Quicksave gefunden.",
 
-            // Setup screen
-            ["setup.title"]           = "Spieler einrichten",
+            // Setup screen — MC editor (step 0)
+            ["setup.mc.title"]        = "Dein Charakter",
+            ["setup.mc.subtitle"]     = "Lege das Aussehen deiner Spielfigur fest.",
+            ["setup.mc.general"]      = "Allgemein",
+            ["setup.mc.body"]         = "Körper",
+            ["setup.mc.eyes"]         = "Augen",
+            ["setup.mc.hair"]         = "Haare",
+            ["setup.height"]          = "Größe",
+            ["setup.weight"]          = "Gewicht",
+            ["setup.cup_size"]        = "Körbchengröße",
+            ["setup.eye_color"]       = "Augenfarbe",
+            ["setup.eye_size"]        = "Augengröße",
+            ["setup.hair_color"]      = "Haarfarbe",
+            ["setup.hair_length"]     = "Haarlänge",
+            ["setup.next"]            = "Weiter →",
+
+            // Setup screen — NPC setup (step 1)
+            ["setup.title"]           = "Figuren einrichten",
             ["setup.subtitle"]        = "Lege Namen, Alter und Beziehungen der Figuren fest.",
             ["setup.mc"]              = "Spielfigur",
             ["setup.firstname"]       = "Vorname",
@@ -146,7 +162,8 @@ public static class Loc
             ["setup.father"]          = "Vater / Vermieter",
             ["setup.relation"]        = "Beziehung zur Spielfigur",
             ["setup.relation_reverse"]= "Beziehung der Spielfigur",
-            ["setup.continue"]        = "Weiter",
+            ["setup.continue"]        = "Spielen",
+            ["setup.no_main_chars"]   = "Keine konfigurierbaren Figuren definiert.",
 
             // Theme
             ["theme.label"]  = "Theme",
@@ -252,7 +269,23 @@ public static class Loc
             ["confirm.quicksave.done"] = "Quick save saved.",
             ["confirm.noQuicksave"]    = "No quick save found.",
 
-            // Setup screen
+            // Setup screen — MC editor (step 0)
+            ["setup.mc.title"]        = "Your Character",
+            ["setup.mc.subtitle"]     = "Define the appearance of your player character.",
+            ["setup.mc.general"]      = "General",
+            ["setup.mc.body"]         = "Body",
+            ["setup.mc.eyes"]         = "Eyes",
+            ["setup.mc.hair"]         = "Hair",
+            ["setup.height"]          = "Height",
+            ["setup.weight"]          = "Weight",
+            ["setup.cup_size"]        = "Cup Size",
+            ["setup.eye_color"]       = "Eye Colour",
+            ["setup.eye_size"]        = "Eye Size",
+            ["setup.hair_color"]      = "Hair Colour",
+            ["setup.hair_length"]     = "Hair Length",
+            ["setup.next"]            = "Next →",
+
+            // Setup screen — NPC setup (step 1)
             ["setup.title"]           = "Character Setup",
             ["setup.subtitle"]        = "Configure names, ages and relationships.",
             ["setup.mc"]              = "Player Character",
@@ -265,7 +298,8 @@ public static class Loc
             ["setup.father"]          = "Father / Landlord",
             ["setup.relation"]        = "Relationship to player",
             ["setup.relation_reverse"]= "Player's relationship",
-            ["setup.continue"]        = "Continue",
+            ["setup.continue"]        = "Start Playing",
+            ["setup.no_main_chars"]   = "No configurable characters defined.",
 
             // Theme
             ["theme.label"]  = "Theme",

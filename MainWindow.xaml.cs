@@ -89,7 +89,8 @@ namespace ACVN
 
         private static readonly string[] ClothingSubtypes = { "bra", "panties", "clothes", "shoes" };
 
-        private Dictionary<string, TextBox> _setupFields = new Dictionary<string, TextBox>();
+        private Dictionary<string, Func<string>> _setupFields = new Dictionary<string, Func<string>>();
+        private int _setupStep = 0; // 0 = MC appearance editor, 1 = NPC character setup
         private List<string> _pendingQuestNotifications = new List<string>();
 
         /// <summary>Look up a themed SolidColorBrush from Application.Resources.</summary>
@@ -444,7 +445,7 @@ namespace ACVN
             }
             else
             {
-                ShowSetupScreen();
+                ShowMcEditorScreen();
             }
         }
 
@@ -890,7 +891,7 @@ namespace ACVN
                     return;
 
                 case "__ageyes__":
-                    ShowSetupScreen();
+                    ShowMcEditorScreen();
                     return;
 
                 case "__ageno__":
@@ -1976,8 +1977,15 @@ namespace ACVN
                 characters.RemoveAll(c => c.Id == id);
                 var character = new Character { Id = id };
                 foreach (var property in charData)
-                    if (property.Name != "id")
-                        character.Properties[property.Name] = property.Value;
+                {
+                    if (property.Name == "id") continue;
+                    if (property.Name == "is_main_character")
+                    {
+                        character.IsMainCharacter = (bool)property.Value;
+                        continue;
+                    }
+                    character.Properties[property.Name] = property.Value;
+                }
                 characters.Add(character);
             }
         }
@@ -3294,9 +3302,67 @@ namespace ACVN
             if (relationshipsStack.Children.Count > 0) UpdateRelationshipsPanel();
         }
 
-        /* SETUP SCREEN */
+        /* SETUP SCREENS
+           Step 0: MC appearance editor  (ShowMcEditorScreen)
+           Step 1: NPC character setup   (ShowSetupScreen)
+           Driven by _setupStep; setupContinueBtn_Click advances between them. */
+
+        private void ShowMcEditorScreen()
+        {
+            _setupStep = 0;
+            setupStack.Children.Clear();
+            _setupFields.Clear();
+
+            var mc = GetCharacter("mc");
+            string Prop(string key, string fallback = "") =>
+                mc?.Properties.TryGetValue(key, out var v) == true ? v.ToString() : fallback;
+
+            setupStack.Children.Add(new TextBlock
+            {
+                Text       = Loc.T("setup.mc.title"),
+                FontSize   = 20, FontWeight = FontWeights.SemiBold,
+                Foreground = Brushes.White,
+                Margin     = new Thickness(0, 0, 0, 4)
+            });
+            setupStack.Children.Add(new TextBlock
+            {
+                Text       = Loc.T("setup.mc.subtitle"),
+                FontSize   = 12,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+                Margin     = new Thickness(0, 0, 0, 20)
+            });
+
+            AddSetupSectionHeader(Loc.T("setup.mc.general"));
+            AddSetupField("mc.age", Loc.T("setup.age"), Prop("age", "18"));
+
+            AddSetupSectionHeader(Loc.T("setup.mc.body"));
+            AddSetupSlider("mc.height",   Loc.T("setup.height"),    140, 200, int.TryParse(Prop("height", "165"), out int h) ? h : 165, "cm");
+            AddSetupSlider("mc.weight",   Loc.T("setup.weight"),    40,  100, int.TryParse(Prop("weight", "58"),  out int w) ? w : 58,  "kg");
+            AddSetupCombo ("mc.cup_size", Loc.T("setup.cup_size"),
+                new[] { "A", "B", "C", "D", "DD", "E", "F", "G" }, Prop("cup_size", "B"));
+
+            AddSetupSectionHeader(Loc.T("setup.mc.eyes"));
+            AddSetupCombo("mc.eye_color", Loc.T("setup.eye_color"),
+                new[] { "Blue", "Green", "Brown", "Grey", "Hazel", "Amber", "Black" }, Prop("eye_color", "Brown"));
+            AddSetupCombo("mc.eye_size",  Loc.T("setup.eye_size"),
+                new[] { "Small", "Normal", "Large", "Very Large" }, Prop("eye_size", "Normal"));
+
+            AddSetupSectionHeader(Loc.T("setup.mc.hair"));
+            AddSetupCombo("mc.hair_color",  Loc.T("setup.hair_color"),
+                new[] { "Blonde", "Brunette", "Black", "Red", "Auburn", "Platinum", "Silver" }, Prop("hair_color", "Brunette"));
+            AddSetupCombo("mc.hair_length", Loc.T("setup.hair_length"),
+                new[] { "Pixie Cut", "Short", "Medium", "Long", "Very Long" }, Prop("hair_length", "Medium"));
+
+            setupContinueBtn.Content = Loc.T("setup.next");
+            mainContent.Visibility   = Visibility.Hidden;
+            mainMedia.Visibility     = Visibility.Hidden;
+            mainImage.Visibility     = Visibility.Hidden;
+            setupOverlay.Visibility  = Visibility.Visible;
+        }
+
         private void ShowSetupScreen()
         {
+            _setupStep = 1;
             setupStack.Children.Clear();
             _setupFields.Clear();
 
@@ -3315,38 +3381,40 @@ namespace ACVN
                 Margin     = new Thickness(0, 0, 0, 20)
             });
 
-            // MC
-            AddSetupSectionHeader(Loc.T("setup.mc"));
-            var mc = GetCharacter("mc");
             string Get(Character ch, string key, string fallback = "") =>
                 ch?.Properties.TryGetValue(key, out var v) == true ? v.ToString() : fallback;
 
-            AddSetupField("mc.firstname", Loc.T("setup.firstname"),  Get(mc, "firstname", "Trixie"));
-            AddSetupField("mc.lastname",  Loc.T("setup.lastname"),   Get(mc, "lastname",  "Smith"));
-            AddSetupField("mc.nickname",  Loc.T("setup.nickname"),   Get(mc, "nickname",  ""));
-            AddSetupField("mc.age",       Loc.T("setup.age"),        Get(mc, "age",       "18"));
+            // Only characters explicitly marked as main characters in chars.json
+            var mainChars = characters.Where(c => c.IsMainCharacter).ToList();
 
-            // NPCs
-            var npcKeys = new[]
+            if (mainChars.Count == 0)
             {
-                ("brother", Loc.T("setup.brother")),
-                ("mother",  Loc.T("setup.mother")),
-                ("father",  Loc.T("setup.father"))
-            };
-            foreach (var (npcId, sectionLabel) in npcKeys)
+                setupStack.Children.Add(new TextBlock
+                {
+                    Text       = Loc.T("setup.no_main_chars"),
+                    FontSize   = 12,
+                    Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88))
+                });
+            }
+            else
             {
-                var ch = GetCharacter(npcId);
-                AddSetupSectionHeader(sectionLabel);
-                AddSetupField(npcId + ".firstname",        Loc.T("setup.firstname"),        Get(ch, "firstname"));
-                AddSetupField(npcId + ".age",              Loc.T("setup.age"),              Get(ch, "age"));
-                AddSetupField(npcId + ".relation",         Loc.T("setup.relation"),         Get(ch, "relation"));
-                AddSetupField(npcId + ".relation_reverse", Loc.T("setup.relation_reverse"), Get(ch, "relation_reverse"));
+                foreach (var ch in mainChars)
+                {
+                    // Section header: use existing firstname as label, fall back to id
+                    string headerLabel = Get(ch, "firstname", ch.Id);
+                    AddSetupSectionHeader(headerLabel);
+
+                    string prefix = ch.Id + ".";
+                    AddSetupField(prefix + "firstname",        Loc.T("setup.firstname"),        Get(ch, "firstname"));
+                    AddSetupField(prefix + "lastname",         Loc.T("setup.lastname"),         Get(ch, "lastname"));
+                    AddSetupField(prefix + "nickname",         Loc.T("setup.nickname"),         Get(ch, "nickname"));
+                    AddSetupField(prefix + "age",              Loc.T("setup.age"),              Get(ch, "age"));
+                    AddSetupField(prefix + "relation",         Loc.T("setup.relation"),         Get(ch, "relation"));
+                    AddSetupField(prefix + "relation_reverse", Loc.T("setup.relation_reverse"), Get(ch, "relation_reverse"));
+                }
             }
 
             setupContinueBtn.Content = Loc.T("setup.continue");
-            mainContent.Visibility   = Visibility.Hidden;
-            mainMedia.Visibility     = Visibility.Hidden;
-            mainImage.Visibility     = Visibility.Hidden;
             setupOverlay.Visibility  = Visibility.Visible;
         }
 
@@ -3363,52 +3431,129 @@ namespace ACVN
 
         private void AddSetupField(string key, string label, string defaultValue)
         {
-            setupStack.Children.Add(new TextBlock
+            AddSetupLabel(label);
+            var tb = new TextBox { Text = defaultValue, Margin = new Thickness(0, 0, 0, 10) };
+            _setupFields[key] = () => tb.Text.Trim();
+            setupStack.Children.Add(tb);
+        }
+
+        private void AddSetupCombo(string key, string label, string[] options, string selectedValue)
+        {
+            AddSetupLabel(label);
+            var cb = new ComboBox { Margin = new Thickness(0, 0, 0, 10) };
+            foreach (var opt in options) cb.Items.Add(opt);
+            cb.SelectedItem = options.Contains(selectedValue) ? selectedValue : options[0];
+            _setupFields[key] = () => cb.SelectedItem?.ToString() ?? options[0];
+            setupStack.Children.Add(cb);
+        }
+
+        private void AddSetupSlider(string key, string label, int min, int max, int defaultValue, string unit)
+        {
+            // Label row: "Height   165 cm"
+            var valueLabel = new TextBlock
+            {
+                Text       = $"{defaultValue} {unit}",
+                FontSize   = 11,
+                Foreground = Brushes.White,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment   = VerticalAlignment.Center
+            };
+            var headerRow = new Grid { Margin = new Thickness(0, 0, 0, 3) };
+            headerRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            headerRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            headerRow.Children.Add(new TextBlock
             {
                 Text       = label,
                 FontSize   = 11,
                 Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            Grid.SetColumn(valueLabel, 1);
+            headerRow.Children.Add(valueLabel);
+            setupStack.Children.Add(headerRow);
+
+            var slider = new Slider
+            {
+                Minimum      = min,
+                Maximum      = max,
+                Value        = Math.Clamp(defaultValue, min, max),
+                TickFrequency = 1,
+                IsSnapToTickEnabled = true,
+                Margin       = new Thickness(0, 0, 0, 12)
+            };
+            slider.ValueChanged += (_, args) =>
+                valueLabel.Text = $"{(int)args.NewValue} {unit}";
+
+            _setupFields[key] = () => ((int)slider.Value).ToString();
+            setupStack.Children.Add(slider);
+        }
+
+        private void AddSetupLabel(string text)
+        {
+            setupStack.Children.Add(new TextBlock
+            {
+                Text       = text,
+                FontSize   = 11,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)),
                 Margin     = new Thickness(0, 0, 0, 3)
             });
-            var tb = new TextBox { Text = defaultValue, Margin = new Thickness(0, 0, 0, 10) };
-            _setupFields[key] = tb;
-            setupStack.Children.Add(tb);
         }
 
         public void setupContinueBtn_Click(object sender, RoutedEventArgs e)
         {
             string Field(string key) =>
-                _setupFields.TryGetValue(key, out var tb) ? tb.Text.Trim() : string.Empty;
+                _setupFields.TryGetValue(key, out var getter) ? getter() : string.Empty;
 
-            // MC
-            var mc = GetCharacter("mc");
-            if (mc != null)
+            if (_setupStep == 0)
             {
-                string fn = Field("mc.firstname");
-                if (!string.IsNullOrEmpty(fn)) mc.Properties["firstname"] = fn;
-                mc.Properties["lastname"] = Field("mc.lastname");
-                string nick = Field("mc.nickname");
-                if (string.IsNullOrEmpty(nick))
-                    mc.Properties.Remove("nickname");
+                // ── Step 0: save MC appearance ──
+                var mc = GetCharacter("mc");
+                if (mc != null)
+                {
+                    if (int.TryParse(Field("mc.age"), out int mcAge)) mc.Properties["age"] = mcAge;
+                    if (int.TryParse(Field("mc.height"), out int ht))  mc.Properties["height"] = ht;
+                    if (int.TryParse(Field("mc.weight"), out int wt))  mc.Properties["weight"] = wt;
+                    mc.Properties["cup_size"]    = Field("mc.cup_size");
+                    mc.Properties["eye_color"]   = Field("mc.eye_color");
+                    mc.Properties["eye_size"]    = Field("mc.eye_size");
+                    mc.Properties["hair_color"]  = Field("mc.hair_color");
+                    mc.Properties["hair_length"] = Field("mc.hair_length");
+                }
+
+                // Advance to NPC setup (or skip if none defined)
+                var mainChars = characters.Where(c => c.IsMainCharacter).ToList();
+                if (mainChars.Count > 0)
+                {
+                    ShowSetupScreen();
+                }
                 else
-                    mc.Properties["nickname"] = nick;
-                if (int.TryParse(Field("mc.age"), out int mcAge))
-                    mc.Properties["age"] = mcAge;
+                {
+                    StartGame();
+                }
             }
-
-            // NPCs
-            foreach (string npcId in new[] { "brother", "mother", "father" })
+            else
             {
-                var ch = GetCharacter(npcId);
-                if (ch == null) continue;
-                string fn = Field(npcId + ".firstname");
-                if (!string.IsNullOrEmpty(fn)) ch.Properties["firstname"] = fn;
-                if (int.TryParse(Field(npcId + ".age"), out int age))
-                    ch.Properties["age"] = age;
-                ch.Properties["relation"]         = Field(npcId + ".relation");
-                ch.Properties["relation_reverse"] = Field(npcId + ".relation_reverse");
-            }
+                // ── Step 1: save NPC fields ──
+                foreach (var ch in characters.Where(c => c.IsMainCharacter))
+                {
+                    string prefix = ch.Id + ".";
+                    string fn = Field(prefix + "firstname");
+                    if (!string.IsNullOrEmpty(fn)) ch.Properties["firstname"] = fn;
+                    ch.Properties["lastname"] = Field(prefix + "lastname");
+                    string nick = Field(prefix + "nickname");
+                    if (string.IsNullOrEmpty(nick)) ch.Properties.Remove("nickname");
+                    else ch.Properties["nickname"] = nick;
+                    if (int.TryParse(Field(prefix + "age"), out int age)) ch.Properties["age"] = age;
+                    ch.Properties["relation"]         = Field(prefix + "relation");
+                    ch.Properties["relation_reverse"] = Field(prefix + "relation_reverse");
+                }
 
+                StartGame();
+            }
+        }
+
+        private void StartGame()
+        {
             setupOverlay.Visibility = Visibility.Collapsed;
             mainContent.Visibility  = Visibility.Visible;
             SetIntroLayout(false);
