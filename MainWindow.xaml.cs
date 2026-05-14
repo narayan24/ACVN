@@ -1337,6 +1337,18 @@ namespace ACVN
                 string fallbackId = item.name?.ToString()?.ToLower()?.Replace(" ", "_");
                 string id        = rawId ?? fallbackId;
                 itemDefinitions.RemoveAll(i => i.Id == id);
+                // Parse optional effects dict: { "hunger": 30, "energy": 10, ... }
+                var effects = new Dictionary<string, int>();
+                if (item.effects != null)
+                {
+                    try
+                    {
+                        foreach (var prop in item.effects)
+                            effects[prop.Name] = (int)prop.Value;
+                    }
+                    catch { }
+                }
+
                 itemDefinitions.Add(new ItemDefinition
                 {
                     Id               = id,
@@ -1344,7 +1356,8 @@ namespace ACVN
                     Subtype          = item.subtype?.ToString(),
                     Name             = item.name?.ToString(),
                     Description      = item.description?.ToString(),
-                    StartingQuantity = item.starting_quantity != null ? (int)item.starting_quantity : 0
+                    StartingQuantity = item.starting_quantity != null ? (int)item.starting_quantity : 0,
+                    Effects          = effects
                 });
             }
         }
@@ -3475,6 +3488,56 @@ namespace ACVN
                     _instance.UpdateInventoryPanel();
                 }
                 return string.Empty;
+            }
+
+            /// <summary>
+            /// Consume one unit of a usable item (food / consumable) and apply its effects to mc.
+            /// Returns an HTML summary string of the applied effects, or an error message if
+            /// the item is not owned or has no effects defined.
+            /// Use can_use_item first to guard calls in script.
+            /// </summary>
+            public static string UseItem(string itemId)
+            {
+                var inv  = _instance.inventory;
+                var defs = _instance.itemDefinitions;
+
+                if (!inv.TryGetValue(itemId, out int qty) || qty <= 0)
+                    return $"<p style=\"color:#FF6B6B; font-size:11px\">You don't have any {itemId}.</p>";
+
+                var def = defs.FirstOrDefault(d => d.Id == itemId);
+                if (def == null || def.Effects == null || def.Effects.Count == 0)
+                    return $"<p style=\"color:#888; font-size:11px\">You can't use {itemId} like that.</p>";
+
+                // Consume one unit
+                inv[itemId]--;
+                if (inv[itemId] <= 0) inv.Remove(itemId);
+                _instance.UpdateInventoryPanel();
+
+                // Apply effects to mc using the same JObject pattern as AttrChange
+                foreach (var kv in def.Effects)
+                    AttrChange("mc", kv.Key, kv.Value);
+                _instance.UpdateTemplateVariables();
+                _instance.UpdateStatusBar();
+
+                // Build readable effect summary
+                var parts = def.Effects.Select(kv =>
+                {
+                    string sign  = kv.Value >= 0 ? "+" : "";
+                    string color = kv.Value >= 0 ? "#4CAF50" : "#FF6B6B";
+                    string label = kv.Key.Substring(0, 1).ToUpper() + kv.Key.Substring(1);
+                    return $"<span style=\"color:{color}\">{sign}{kv.Value} {label}</span>";
+                });
+                return $"<p style=\"font-size:11px\">{string.Join(" &nbsp;|&nbsp; ", parts)}</p>";
+            }
+
+            /// <summary>Returns true if the player owns at least one of the item and it has effects defined.</summary>
+            public static bool CanUseItem(string itemId)
+            {
+                var inv  = _instance.inventory;
+                var defs = _instance.itemDefinitions;
+                if (!inv.TryGetValue(itemId, out int qty) || qty <= 0) return false;
+                var def = defs.FirstOrDefault(d => d.Id == itemId);
+                return def?.Effects != null && def.Effects.Count > 0;
             }
 
             /// <summary>Unlock a clothing item so it appears in the wardrobe (e.g. after buying it in a shop).</summary>
