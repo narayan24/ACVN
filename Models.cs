@@ -23,6 +23,14 @@ public class ItemDefinition
     public string Name { get; set; }
     public string Description { get; set; }
     public int StartingQuantity { get; set; }
+
+    /// <summary>
+    /// Attribute changes applied to "mc" when the item is consumed via use_item.
+    /// Keys match attribute ids (e.g. "hunger", "energy", "mood", "health").
+    /// Only meaningful for type: "food" or type: "consumable".
+    /// Example: { "hunger": 30, "energy": 10 }
+    /// </summary>
+    public Dictionary<string, int> Effects { get; set; } = new Dictionary<string, int>();
 }
 
 public class ClothingDefinition
