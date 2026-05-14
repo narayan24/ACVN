@@ -264,7 +264,8 @@
         <WebBrowser x:Name="mainContent"
                     Grid.Row="0" Grid.Column="0"
                     Margin="0,0,0,46"
-                    Panel.ZIndex="200"/>
+                    Panel.ZIndex="200"
+                    Navigating="mainContent_Navigating"/>
 
         <!-- Semi-transparent action-button strip overlaying the content bottom -->
         <Border Grid.Row="0" Grid.Column="0"
