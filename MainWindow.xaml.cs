@@ -2038,7 +2038,6 @@ namespace ACVN
         public void quickSaveButton_Click(object sender, RoutedEventArgs e)
         {
             new SaveGameManager().SaveGame(BuildGameState(), Path.Combine(saveGamePath, "quicksave.acvnsave"));
-            MessageBox.Show(Loc.T("confirm.quicksave.done"));
         }
 
         public void quickLoadButton_Click(object sender, RoutedEventArgs e)
