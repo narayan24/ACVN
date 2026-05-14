@@ -3921,7 +3921,9 @@ namespace ACVN
             public static string UnlockClothing(string clothingId)
             {
                 _instance.ownedClothing.Add(clothingId);
-                _instance.ShowWardrobe(); // refresh if open — harmless if closed
+                // Only refresh wardrobe if it is already visible — don't force-open it.
+                if (_instance.wardrobeOverlay.Visibility == Visibility.Visible)
+                    _instance.ShowWardrobe(resetState: false);
                 return string.Empty;
             }
 
