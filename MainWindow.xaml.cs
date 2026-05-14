@@ -3467,6 +3467,17 @@ namespace ACVN
                 return string.Empty;
             }
 
+            /// <summary>Remove <paramref name="count"/> units of an item at once (e.g. spend currency).</summary>
+            public static string SpendItem(string itemId, int count)
+            {
+                var inv = _instance.inventory;
+                if (!inv.ContainsKey(itemId)) return string.Empty;
+                inv[itemId] = Math.Max(0, inv[itemId] - count);
+                if (inv[itemId] == 0) inv.Remove(itemId);
+                _instance.UpdateInventoryPanel();
+                return string.Empty;
+            }
+
             public static bool HasItem(string itemId)
                 => _instance.inventory.TryGetValue(itemId, out int c) && c > 0;
 
