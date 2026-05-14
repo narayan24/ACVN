@@ -147,6 +147,12 @@ public static class Loc
             ["setup.relation"]        = "Beziehung zur Spielfigur",
             ["setup.relation_reverse"]= "Beziehung der Spielfigur",
             ["setup.continue"]        = "Weiter",
+
+            // Theme
+            ["theme.label"]  = "Theme",
+            ["theme.system"] = "System (automatisch)",
+            ["theme.dark"]   = "Dunkel",
+            ["theme.light"]  = "Hell",
         },
 
         ["en"] = new Dictionary<string, string>
@@ -260,6 +266,12 @@ public static class Loc
             ["setup.relation"]        = "Relationship to player",
             ["setup.relation_reverse"]= "Player's relationship",
             ["setup.continue"]        = "Continue",
+
+            // Theme
+            ["theme.label"]  = "Theme",
+            ["theme.system"] = "System (auto)",
+            ["theme.dark"]   = "Dark",
+            ["theme.light"]  = "Light",
         }
     };
 }

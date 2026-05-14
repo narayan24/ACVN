@@ -6,16 +6,16 @@
         xmlns:local="clr-namespace:ACVN"
         mc:Ignorable="d"
         Title="ACVN" Height="900" Width="1200"
-        Background="#1C1C1C"
+        Background="{DynamicResource App.Bg}"
         FontFamily="Segoe UI">
 
     <Window.Resources>
 
         <!-- Base button: rounded corners, hover/press states -->
         <Style x:Key="ModernButtonStyle" TargetType="Button">
-            <Setter Property="Background"       Value="#2D2D2D"/>
-            <Setter Property="Foreground"       Value="#E8E8E8"/>
-            <Setter Property="BorderBrush"      Value="#454545"/>
+            <Setter Property="Background"       Value="{DynamicResource Btn.Bg}"/>
+            <Setter Property="Foreground"       Value="{DynamicResource Btn.Fg}"/>
+            <Setter Property="BorderBrush"      Value="{DynamicResource Btn.Border}"/>
             <Setter Property="BorderThickness"  Value="1"/>
             <Setter Property="Padding"          Value="10,5,10,5"/>
             <Setter Property="FontFamily"       Value="Segoe UI"/>
@@ -36,14 +36,6 @@
                                               RecognizesAccessKey="True"/>
                         </Border>
                         <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bd" Property="Background"  Value="#3C3C3C"/>
-                                <Setter TargetName="bd" Property="BorderBrush" Value="#606060"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="bd" Property="Background"  Value="#1A1A1A"/>
-                                <Setter TargetName="bd" Property="BorderBrush" Value="#404040"/>
-                            </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="bd" Property="Opacity" Value="0.4"/>
                             </Trigger>
@@ -51,19 +43,33 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+            <!-- Hover/pressed in Style.Triggers so DynamicResource works -->
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background"  Value="{DynamicResource Btn.Hover.Bg}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource Btn.Hover.Border}"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background"  Value="{DynamicResource Btn.Press.Bg}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource Btn.Press.Border}"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.4"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
-        <!-- Default style for all Buttons (story navigation + action buttons) -->
+        <!-- Default style for all Buttons -->
         <Style TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}"/>
 
-        <!-- Toolbar control buttons (Load / Save / etc.) -->
+        <!-- Toolbar control buttons -->
         <Style x:Key="ControlButtonStyle" TargetType="Button"
                BasedOn="{StaticResource ModernButtonStyle}">
             <Setter Property="Height"   Value="36"/>
             <Setter Property="Padding"  Value="12,0,12,0"/>
         </Style>
 
-        <!-- Icon-only button (Settings gear) -->
+        <!-- Icon-only button -->
         <Style x:Key="IconButtonStyle" TargetType="Button"
                BasedOn="{StaticResource ModernButtonStyle}">
             <Setter Property="Background"      Value="Transparent"/>
@@ -75,40 +81,39 @@
 
         <!-- Attribute progress bars -->
         <Style TargetType="ProgressBar">
-            <Setter Property="Background"     Value="#3A3A3A"/>
-            <Setter Property="Foreground"     Value="#0078D4"/>
-            <Setter Property="BorderBrush"    Value="Transparent"/>
+            <Setter Property="Background"      Value="{DynamicResource PB.Bg}"/>
+            <Setter Property="Foreground"      Value="#0078D4"/>
+            <Setter Property="BorderBrush"     Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Height"         Value="6"/>
+            <Setter Property="Height"          Value="6"/>
         </Style>
 
-        <!-- CheckBox for dark theme -->
+        <!-- CheckBox -->
         <Style TargetType="CheckBox">
-            <Setter Property="Foreground"  Value="#E0E0E0"/>
+            <Setter Property="Foreground"  Value="{DynamicResource Text.Primary}"/>
             <Setter Property="FontFamily"  Value="Segoe UI"/>
             <Setter Property="FontSize"    Value="13"/>
             <Setter Property="Cursor"      Value="Hand"/>
             <Setter Property="Margin"      Value="0,4,0,4"/>
         </Style>
 
-        <!-- TextBox for dark theme -->
+        <!-- TextBox -->
         <Style TargetType="TextBox">
-            <Setter Property="Background"   Value="#1E1E1E"/>
-            <Setter Property="Foreground"   Value="#E0E0E0"/>
-            <Setter Property="BorderBrush"  Value="#454545"/>
+            <Setter Property="Background"      Value="{DynamicResource Input.Bg}"/>
+            <Setter Property="Foreground"      Value="{DynamicResource Text.Primary}"/>
+            <Setter Property="BorderBrush"     Value="{DynamicResource Border.Primary}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding"      Value="6,4,6,4"/>
-            <Setter Property="FontFamily"   Value="Segoe UI"/>
-            <Setter Property="FontSize"     Value="13"/>
-            <Setter Property="CaretBrush"   Value="#E0E0E0"/>
+            <Setter Property="Padding"         Value="6,4,6,4"/>
+            <Setter Property="FontFamily"      Value="Segoe UI"/>
+            <Setter Property="FontSize"        Value="13"/>
+            <Setter Property="CaretBrush"      Value="{DynamicResource Text.Primary}"/>
         </Style>
 
-        <!-- ComboBox for dark theme — full ControlTemplate required so the system
-             theme cannot override the selection-box text/background colours.      -->
+        <!-- ComboBox — full ControlTemplate so system theme cannot override colours -->
         <Style TargetType="ComboBox">
-            <Setter Property="Background"            Value="#1E1E1E"/>
-            <Setter Property="Foreground"            Value="#E0E0E0"/>
-            <Setter Property="BorderBrush"           Value="#454545"/>
+            <Setter Property="Background"            Value="{DynamicResource Input.Bg}"/>
+            <Setter Property="Foreground"            Value="{DynamicResource Text.Primary}"/>
+            <Setter Property="BorderBrush"           Value="{DynamicResource Border.Primary}"/>
             <Setter Property="BorderThickness"       Value="1"/>
             <Setter Property="FontFamily"            Value="Segoe UI"/>
             <Setter Property="FontSize"              Value="13"/>
@@ -119,7 +124,6 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ComboBox">
                         <Grid>
-                            <!-- Header border -->
                             <Border x:Name="border"
                                     Background="{TemplateBinding Background}"
                                     BorderBrush="{TemplateBinding BorderBrush}"
@@ -130,7 +134,6 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="22"/>
                                     </Grid.ColumnDefinitions>
-                                    <!-- Selected-item text -->
                                     <ContentPresenter Grid.Column="0"
                                                       Margin="{TemplateBinding Padding}"
                                                       HorizontalAlignment="Left"
@@ -140,16 +143,14 @@
                                                       ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
                                                       ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}"
                                                       TextElement.Foreground="{TemplateBinding Foreground}"/>
-                                    <!-- Dropdown chevron -->
                                     <TextBlock Grid.Column="1"
                                                Text="&#x25BE;"
-                                               Foreground="#888888"
+                                               Foreground="{DynamicResource CB.Chevron}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                IsHitTestVisible="False"/>
                                 </Grid>
                             </Border>
-                            <!-- Transparent toggle captures click over the whole header -->
                             <ToggleButton Focusable="False"
                                           IsChecked="{Binding IsDropDownOpen, Mode=TwoWay,
                                               RelativeSource={RelativeSource TemplatedParent}}">
@@ -159,15 +160,14 @@
                                     </ControlTemplate>
                                 </ToggleButton.Template>
                             </ToggleButton>
-                            <!-- Dropdown popup -->
                             <Popup x:Name="PART_Popup"
                                    AllowsTransparency="True"
                                    IsOpen="{Binding IsDropDownOpen,
                                        RelativeSource={RelativeSource TemplatedParent}}"
                                    Placement="Bottom"
                                    PopupAnimation="None">
-                                <Border Background="#1E1E1E"
-                                        BorderBrush="#454545"
+                                <Border Background="{DynamicResource CB.Popup.Bg}"
+                                        BorderBrush="{DynamicResource Border.Primary}"
                                         BorderThickness="1"
                                         MaxHeight="300">
                                     <ScrollViewer VerticalScrollBarVisibility="Auto"
@@ -179,7 +179,7 @@
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="BorderBrush" Value="#606060"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource Btn.Hover.Border}"/>
                             </Trigger>
                             <Trigger Property="IsDropDownOpen" Value="True">
                                 <Setter TargetName="border" Property="BorderBrush" Value="#0078D4"/>
@@ -193,17 +193,17 @@
             </Setter>
         </Style>
         <Style TargetType="ComboBoxItem">
-            <Setter Property="Background"  Value="#1E1E1E"/>
-            <Setter Property="Foreground"  Value="#E0E0E0"/>
+            <Setter Property="Background"  Value="{DynamicResource Input.Bg}"/>
+            <Setter Property="Foreground"  Value="{DynamicResource Text.Primary}"/>
             <Setter Property="FontFamily"  Value="Segoe UI"/>
             <Setter Property="FontSize"    Value="13"/>
             <Setter Property="Padding"     Value="6,4"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#333333"/>
+                    <Setter Property="Background" Value="{DynamicResource CB.Item.Hover}"/>
                 </Trigger>
                 <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="#2A2A2A"/>
+                    <Setter Property="Background" Value="{DynamicResource CB.Item.Sel}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -211,7 +211,7 @@
         <!-- Tab bar buttons -->
         <Style x:Key="TabButtonStyle" TargetType="Button">
             <Setter Property="Background"      Value="Transparent"/>
-            <Setter Property="Foreground"      Value="#6A6A6A"/>
+            <Setter Property="Foreground"      Value="{DynamicResource Text.Muted}"/>
             <Setter Property="BorderBrush"     Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0,0,0,2"/>
             <Setter Property="FontFamily"      Value="Segoe UI"/>
@@ -228,16 +228,21 @@
                                               VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#252525"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#1C1C1C"/>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.4"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource Tab.Hover.Bg}"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource Tab.Press.Bg}"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
     </Window.Resources>
@@ -265,8 +270,8 @@
         <Border Grid.Row="0" Grid.Column="0"
                 VerticalAlignment="Bottom"
                 Height="46"
-                Background="#CC1C1C1C"
-                BorderBrush="#2E2E2E" BorderThickness="0,1,0,0"
+                Background="{DynamicResource ActionStrip.Bg}"
+                BorderBrush="{DynamicResource Border.Secondary}" BorderThickness="0,1,0,0"
                 Panel.ZIndex="1000">
             <StackPanel x:Name="actionStack"
                         Orientation="Horizontal"
@@ -277,13 +282,14 @@
         <!-- Draggable column splitter -->
         <GridSplitter x:Name="colSplitter" Grid.Column="1" Grid.Row="0"
                       Width="5" HorizontalAlignment="Stretch"
-                      Background="#2A2A2A" Cursor="SizeWE"
+                      Background="{DynamicResource Splitter.Bg}" Cursor="SizeWE"
                       Panel.ZIndex="500"/>
 
         <!-- ═══════════════════════════════════════════════════════════
              RIGHT COLUMN  –  Media · Player info · Tabs · Debug
         ════════════════════════════════════════════════════════════ -->
-        <Grid x:Name="rightPanel" Grid.Column="2" Grid.Row="0" Background="#191919">
+        <Grid x:Name="rightPanel" Grid.Column="2" Grid.Row="0"
+              Background="{DynamicResource Panel.Bg}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>  <!-- media -->
                 <RowDefinition Height="Auto"/>  <!-- player info -->
@@ -306,12 +312,10 @@
                               MediaOpened="mainMedia_MediaOpened"
                               MediaEnded="mainMedia_MediaEnded"
                               Visibility="Collapsed"/>
-                <!-- Invisible overlay: captures click for fullscreen -->
                 <Border Background="Transparent"
                         MaxHeight="280" VerticalAlignment="Top"
                         Cursor="Hand" Panel.ZIndex="50"
                         MouseLeftButtonUp="mediaArea_Click"/>
-                <!-- Fullscreen hint button (top-right corner) -->
                 <Button x:Name="mediaFullscreenHint"
                         HorizontalAlignment="Right" VerticalAlignment="Top"
                         Margin="0,6,6,0" Panel.ZIndex="60"
@@ -327,23 +331,24 @@
 
             <!-- Player info bar -->
             <Border Grid.Row="1"
-                    Background="#202020"
-                    BorderBrush="#2E2E2E" BorderThickness="0,1,0,1"
+                    Background="{DynamicResource Info.Bg}"
+                    BorderBrush="{DynamicResource Border.Secondary}" BorderThickness="0,1,0,1"
                     Padding="10,7,10,7">
                 <Grid>
                     <TextBlock x:Name="playerNameText" Text="Name"
                                HorizontalAlignment="Left" VerticalAlignment="Center"
-                               Foreground="#E8E8E8" FontSize="13" FontWeight="SemiBold"/>
+                               Foreground="{DynamicResource Text.Primary}"
+                               FontSize="13" FontWeight="SemiBold"/>
                     <TextBlock x:Name="gameTimeText" Text="00:00"
                                HorizontalAlignment="Right" VerticalAlignment="Center"
-                               Foreground="#8A8A8A" FontSize="12"/>
+                               Foreground="{DynamicResource Text.Secondary}" FontSize="12"/>
                 </Grid>
             </Border>
 
             <!-- Tab button bar -->
             <Border Grid.Row="2"
-                    Background="#1C1C1C"
-                    BorderBrush="#2E2E2E" BorderThickness="0,0,0,1">
+                    Background="{DynamicResource TabBar.Bg}"
+                    BorderBrush="{DynamicResource Border.Secondary}" BorderThickness="0,0,0,1">
                 <UniformGrid Columns="6">
                     <Button x:Name="tabBtnStatus"    Style="{StaticResource TabButtonStyle}" Click="tabBtnStatus_Click">
                         <StackPanel Margin="0,6,0,6">
@@ -462,8 +467,8 @@
                         <!-- Section: Display -->
                         <TextBlock x:Name="tbSettingsDisplayHeader"
                                    FontSize="10" FontWeight="SemiBold"
-                                   Foreground="#888888" Margin="0,0,0,6"
-                                   />
+                                   Foreground="{DynamicResource Text.SectionHdr}"
+                                   Margin="0,0,0,6"/>
 
                         <Grid Margin="0,0,0,4">
                             <Grid.ColumnDefinitions>
@@ -472,7 +477,8 @@
                             </Grid.ColumnDefinitions>
                             <TextBlock x:Name="tbSettingShowHidden"
                                        Grid.Column="0"
-                                       Foreground="White" FontSize="12"
+                                       Foreground="{DynamicResource Text.Primary}"
+                                       FontSize="12"
                                        VerticalAlignment="Center"/>
                             <CheckBox x:Name="showHiddenToggle"
                                       Grid.Column="1"
@@ -481,14 +487,15 @@
                                       Unchecked="showHiddenToggle_Changed"/>
                         </Grid>
 
-                        <Rectangle Height="1" Fill="#2A2A2A" Margin="0,12,0,12"/>
+                        <Rectangle Height="1" Fill="{DynamicResource Sep.Light}" Margin="0,12,0,12"/>
 
                         <!-- Section: Mods -->
                         <TextBlock x:Name="tbSettingsModsHeader"
                                    FontSize="10" FontWeight="SemiBold"
-                                   Foreground="#888888" Margin="0,0,0,8"/>
+                                   Foreground="{DynamicResource Text.SectionHdr}"
+                                   Margin="0,0,0,8"/>
                         <TextBlock x:Name="tbSettingsModsHint"
-                                   FontSize="11" Foreground="#666666"
+                                   FontSize="11" Foreground="{DynamicResource Text.Muted}"
                                    TextWrapping="Wrap" Margin="0,0,0,4"
                                    Visibility="Collapsed"/>
                         <StackPanel x:Name="modsSettingsStack"/>
@@ -500,8 +507,8 @@
 
             <!-- Debug panel (visible only when debug is on) -->
             <Border x:Name="debugPanel" Grid.Row="4"
-                    Background="#0D1117"
-                    BorderBrush="#30363D" BorderThickness="0,1,0,0"
+                    Background="{DynamicResource Debug.Bg}"
+                    BorderBrush="{DynamicResource Debug.Border}" BorderThickness="0,1,0,0"
                     Padding="8,5,8,5" Visibility="Collapsed">
                 <TextBlock x:Name="debugText"
                            FontSize="10" FontFamily="Consolas"
@@ -513,21 +520,19 @@
              BOTTOM TOOLBAR  –  Room nav  |  Controls
         ════════════════════════════════════════════════════════════ -->
         <Border Grid.Row="1" Grid.ColumnSpan="3"
-                Background="#1E1E1E"
-                BorderBrush="#2E2E2E" BorderThickness="0,1,0,0">
+                Background="{DynamicResource Toolbar.Bg}"
+                BorderBrush="{DynamicResource Border.Secondary}" BorderThickness="0,1,0,0">
             <Grid Margin="8,0,8,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Room navigation (dynamic) -->
                 <StackPanel x:Name="roomStack"
                             Grid.Column="0"
                             Orientation="Horizontal"
                             VerticalAlignment="Center"/>
 
-                <!-- Control buttons -->
                 <StackPanel Grid.Column="1"
                             Orientation="Horizontal"
                             VerticalAlignment="Center">
@@ -552,7 +557,7 @@
                         </StackPanel>
                     </Button>
 
-                    <Rectangle Width="1" Height="20" Fill="#3A3A3A" Margin="4,0,4,0"/>
+                    <Rectangle Width="1" Height="20" Fill="{DynamicResource Sep.Dark}" Margin="4,0,4,0"/>
 
                     <Button x:Name="saveButton" Click="saveButton_Click"
                             Style="{StaticResource ControlButtonStyle}"
@@ -574,7 +579,7 @@
                         </StackPanel>
                     </Button>
 
-                    <Rectangle Width="1" Height="20" Fill="#3A3A3A" Margin="4,0,4,0"/>
+                    <Rectangle Width="1" Height="20" Fill="{DynamicResource Sep.Dark}" Margin="4,0,4,0"/>
 
                     <Button x:Name="backButton" Click="backButton_Click"
                             Style="{StaticResource IconButtonStyle}"
@@ -593,7 +598,7 @@
         </Border>
 
         <!-- ═══════════════════════════════════════════════════════════
-             SETTINGS FLYOUT  –  floats above toolbar (RowSpan covers toolbar)
+             SETTINGS FLYOUT  –  floats above toolbar
         ════════════════════════════════════════════════════════════ -->
         <Border x:Name="settingsPanel"
                 Grid.Row="0" Grid.RowSpan="2"
@@ -601,8 +606,8 @@
                 VerticalAlignment="Bottom" HorizontalAlignment="Right"
                 Margin="0,0,8,60"
                 MinWidth="250"
-                Background="#272727"
-                BorderBrush="#454545" BorderThickness="1"
+                Background="{DynamicResource Surface.Bg}"
+                BorderBrush="{DynamicResource Border.Primary}" BorderThickness="1"
                 CornerRadius="8"
                 Padding="16,14,16,14"
                 Panel.ZIndex="3000"
@@ -614,7 +619,7 @@
             <StackPanel>
                 <TextBlock x:Name="tbSettingsTitle"
                            FontWeight="SemiBold" FontSize="14"
-                           Foreground="White" Margin="0,0,0,12"/>
+                           Foreground="{DynamicResource Text.Primary}" Margin="0,0,0,12"/>
                 <CheckBox x:Name="debugToggle"
                           Checked="debugToggle_Changed"
                           Unchecked="debugToggle_Changed"/>
@@ -623,26 +628,36 @@
                           Checked="videoAutoplay_Changed"
                           Unchecked="videoAutoplay_Changed"/>
 
-                <Rectangle Height="1" Fill="#3A3A3A" Margin="0,12,0,6"/>
+                <Rectangle Height="1" Fill="{DynamicResource Sep.Dark}" Margin="0,12,0,6"/>
 
                 <!-- Volume -->
                 <Grid Margin="0,0,0,4">
-                    <TextBlock x:Name="tbVolLabel" Foreground="#AAAAAA" FontSize="12"
-                               HorizontalAlignment="Left" VerticalAlignment="Center"/>
-                    <TextBlock x:Name="volumeLabel" Text="80%" Foreground="#666666" FontSize="11"
+                    <TextBlock x:Name="tbVolLabel" Foreground="{DynamicResource Text.Label}"
+                               FontSize="12" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="volumeLabel" Text="80%"
+                               Foreground="{DynamicResource Text.Muted}" FontSize="11"
                                HorizontalAlignment="Right" VerticalAlignment="Center"/>
                 </Grid>
                 <Slider x:Name="volumeSlider" Minimum="0" Maximum="100" Value="80"
                         ValueChanged="volumeSlider_Changed" Margin="0,0,0,4"/>
 
-                <Rectangle Height="1" Fill="#3A3A3A" Margin="0,8,0,6"/>
+                <Rectangle Height="1" Fill="{DynamicResource Sep.Dark}" Margin="0,8,0,6"/>
 
                 <!-- Language -->
-                <TextBlock x:Name="tbLangLabel" Foreground="#AAAAAA" FontSize="12" Margin="0,0,0,4"/>
+                <TextBlock x:Name="tbLangLabel"
+                           Foreground="{DynamicResource Text.Label}" FontSize="12" Margin="0,0,0,4"/>
                 <ComboBox x:Name="langDropdown" SelectionChanged="langDropdown_Changed"
                           Margin="0,0,0,4"/>
 
-                <Rectangle Height="1" Fill="#3A3A3A" Margin="0,8,0,6"/>
+                <Rectangle Height="1" Fill="{DynamicResource Sep.Dark}" Margin="0,8,0,6"/>
+
+                <!-- Theme -->
+                <TextBlock x:Name="tbThemeLabel"
+                           Foreground="{DynamicResource Text.Label}" FontSize="12" Margin="0,0,0,4"/>
+                <ComboBox x:Name="themeDropdown" SelectionChanged="themeDropdown_Changed"
+                          Margin="0,0,0,4"/>
+
+                <Rectangle Height="1" Fill="{DynamicResource Sep.Dark}" Margin="0,8,0,6"/>
 
                 <Button x:Name="restartBtn" Click="restartButton_Click"
                         HorizontalAlignment="Stretch"
@@ -654,7 +669,7 @@
                         <TextBlock x:Name="tbSettingsRestart" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
-                <Rectangle Height="1" Fill="#3A3A3A" Margin="0,0,0,8"/>
+                <Rectangle Height="1" Fill="{DynamicResource Sep.Dark}" Margin="0,0,0,8"/>
                 <Button x:Name="settingsBackButton" Click="backButton_Click"
                         IsEnabled="False"
                         HorizontalAlignment="Stretch">
@@ -668,12 +683,12 @@
         </Border>
 
         <!-- ═══════════════════════════════════════════════════════════
-             CHARACTER SETUP OVERLAY  –  shown on new game / restart
+             CHARACTER SETUP OVERLAY
         ════════════════════════════════════════════════════════════ -->
         <Grid x:Name="setupOverlay"
               Grid.Row="0" Grid.RowSpan="2"
               Grid.Column="0" Grid.ColumnSpan="3"
-              Background="#F0111111"
+              Background="{DynamicResource Setup.Bg}"
               Panel.ZIndex="11000"
               Visibility="Collapsed">
             <Grid.RowDefinitions>
@@ -688,8 +703,8 @@
             </ScrollViewer>
 
             <Border Grid.Row="1"
-                    Background="#0A0A0A"
-                    BorderBrush="#222222" BorderThickness="0,1,0,0"
+                    Background="{DynamicResource Subtle.Bg}"
+                    BorderBrush="{DynamicResource Subtle.Border}" BorderThickness="0,1,0,0"
                     Padding="20,12,20,12">
                 <Button x:Name="setupContinueBtn" Click="setupContinueBtn_Click"
                         HorizontalAlignment="Right"
@@ -700,12 +715,12 @@
         </Grid>
 
         <!-- ═══════════════════════════════════════════════════════════
-             PHONE APP OVERLAY  –  fullscreen within game window
+             PHONE APP OVERLAY
         ════════════════════════════════════════════════════════════ -->
         <Grid x:Name="phoneAppOverlay"
               Grid.Row="0" Grid.RowSpan="2"
               Grid.Column="0" Grid.ColumnSpan="3"
-              Background="#111111"
+              Background="{DynamicResource Phone.Bg}"
               Panel.ZIndex="7000"
               Visibility="Collapsed">
             <Grid.RowDefinitions>
@@ -715,8 +730,8 @@
             </Grid.RowDefinitions>
 
             <!-- Header bar -->
-            <Border Grid.Row="0" Background="#0A0A0A"
-                    BorderBrush="#222222" BorderThickness="0,0,0,1">
+            <Border Grid.Row="0" Background="{DynamicResource Subtle.Bg}"
+                    BorderBrush="{DynamicResource Subtle.Border}" BorderThickness="0,0,0,1">
                 <Grid Margin="8,0,8,0">
                     <Button x:Name="phoneAppBackBtn" Click="phoneAppBackBtn_Click"
                             Style="{StaticResource IconButtonStyle}"
@@ -725,16 +740,16 @@
                     </Button>
                     <TextBlock x:Name="phoneAppTitle"
                                HorizontalAlignment="Center" VerticalAlignment="Center"
-                               Foreground="#E0E0E0" FontSize="14" FontWeight="SemiBold"/>
+                               Foreground="{DynamicResource Text.Primary}"
+                               FontSize="14" FontWeight="SemiBold"/>
                 </Grid>
             </Border>
 
-            <!-- ACVN content browser (Telefon / Nachrichten contact list) -->
             <WebBrowser x:Name="phoneContentBrowser" Grid.Row="1" Visibility="Collapsed"/>
 
             <!-- Calling / SMS state panel -->
             <Grid x:Name="phoneStatusPanel" Grid.Row="1" Visibility="Collapsed"
-                  Background="#111111">
+                  Background="{DynamicResource Phone.Bg}">
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                     <Image x:Name="phoneCallerImage" Width="80" Height="80"
                            Margin="0,0,0,16"
@@ -744,15 +759,16 @@
                         </Image.Clip>
                     </Image>
                     <TextBlock x:Name="phoneStatusName"
-                               Foreground="#E0E0E0" FontSize="20" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Text.Primary}"
+                               FontSize="20" FontWeight="SemiBold"
                                HorizontalAlignment="Center" Margin="0,0,0,8"/>
                     <TextBlock x:Name="phoneStatusText"
-                               Foreground="#888888" FontSize="14"
+                               Foreground="{DynamicResource Text.Secondary}" FontSize="14"
                                HorizontalAlignment="Center"/>
                 </StackPanel>
             </Grid>
 
-            <!-- Camera view -->
+            <!-- Camera view (always dark) -->
             <Grid x:Name="phoneCameraPanel" Grid.Row="1" Visibility="Collapsed"
                   Background="#000000">
                 <Image x:Name="phoneCameraPreview"
@@ -797,20 +813,20 @@
 
             <!-- Media gallery -->
             <ScrollViewer x:Name="phoneMediaGalleryScroll" Grid.Row="1" Visibility="Collapsed"
-                          Background="#0A0A0A" VerticalScrollBarVisibility="Auto">
+                          Background="{DynamicResource Subtle.Bg}" VerticalScrollBarVisibility="Auto">
                 <WrapPanel x:Name="phoneMediaGallery" Margin="8"/>
             </ScrollViewer>
 
             <!-- Instagram placeholder -->
             <Border x:Name="phoneInstagramPanel" Grid.Row="1" Visibility="Collapsed"
-                    Background="#111111">
-                <TextBlock Text="Instagram" Foreground="#555555" FontSize="24"
+                    Background="{DynamicResource Phone.Bg}">
+                <TextBlock Text="Instagram" Foreground="{DynamicResource Text.Muted}" FontSize="24"
                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Border>
 
-            <!-- ACVN action strip -->
-            <Border Grid.Row="2" Background="#0A0A0A"
-                    BorderBrush="#222222" BorderThickness="0,1,0,0"
+            <!-- Action strip -->
+            <Border Grid.Row="2" Background="{DynamicResource Subtle.Bg}"
+                    BorderBrush="{DynamicResource Subtle.Border}" BorderThickness="0,1,0,0"
                     Padding="8,4,8,4">
                 <StackPanel x:Name="phoneActionStack" Orientation="Horizontal"
                             VerticalAlignment="Center"/>
@@ -818,7 +834,7 @@
         </Grid>
 
         <!-- ═══════════════════════════════════════════════════════════
-             MEDIA MODAL OVERLAY  –  in-app fullscreen (fensterfüllend)
+             MEDIA MODAL OVERLAY  –  always black regardless of theme
         ════════════════════════════════════════════════════════════ -->
         <Grid x:Name="mediaModalOverlay"
               Grid.Row="0" Grid.RowSpan="2"
@@ -846,7 +862,7 @@
         </Grid>
 
         <!-- ═══════════════════════════════════════════════════════════
-             WARDROBE OVERLAY  –  shown when visiting the wardrobe
+             WARDROBE OVERLAY
         ════════════════════════════════════════════════════════════ -->
         <Border x:Name="wardrobeOverlay"
                 Grid.Row="0" Grid.RowSpan="2"
@@ -855,8 +871,8 @@
                 Visibility="Collapsed"
                 MouseLeftButtonDown="wardrobeOverlay_Click">
             <Border x:Name="wardrobeCard"
-                    Background="#272727"
-                    BorderBrush="#454545" BorderThickness="1"
+                    Background="{DynamicResource Surface.Bg}"
+                    BorderBrush="{DynamicResource Border.Primary}" BorderThickness="1"
                     CornerRadius="10" Padding="20"
                     HorizontalAlignment="Center" VerticalAlignment="Center"
                     MouseLeftButtonDown="wardrobeCard_StopPropagation">
@@ -873,11 +889,11 @@
                     <Grid Grid.Row="0" Margin="0,0,0,12">
                         <TextBlock x:Name="tbWardrobeTitle"
                                    FontSize="15" FontWeight="SemiBold"
-                                   Foreground="White"
+                                   Foreground="{DynamicResource Text.Primary}"
                                    HorizontalAlignment="Left" VerticalAlignment="Center"/>
-                        <Button Content="✕" Click="wardrobeClose_Click"
+                        <Button Content="&#x2715;" Click="wardrobeClose_Click"
                                 HorizontalAlignment="Right" VerticalAlignment="Center"
-                                Background="Transparent" Foreground="#888888"
+                                Background="Transparent" Foreground="{DynamicResource Text.Secondary}"
                                 BorderBrush="Transparent" FontSize="14"
                                 Cursor="Hand" Padding="4,0,4,0"/>
                     </Grid>
@@ -887,14 +903,14 @@
                     <TextBlock x:Name="wardrobeStateLabel"
                                Grid.Row="2"
                                Margin="0,12,0,0"
-                               FontSize="11" Foreground="#666666"
+                               FontSize="11" Foreground="{DynamicResource Text.Muted}"
                                HorizontalAlignment="Center"/>
                 </Grid>
             </Border>
         </Border>
 
         <!-- ═══════════════════════════════════════════════════════════
-             ITEM INFO OVERLAY  –  shown when clicking an inventory item
+             ITEM INFO OVERLAY
         ════════════════════════════════════════════════════════════ -->
         <Border x:Name="itemInfoOverlay"
                 Grid.Row="0" Grid.RowSpan="2"
@@ -903,8 +919,8 @@
                 Visibility="Collapsed"
                 MouseLeftButtonDown="itemInfoOverlay_Click">
             <Border x:Name="itemInfoCard"
-                    Background="#272727"
-                    BorderBrush="#454545" BorderThickness="1"
+                    Background="{DynamicResource Surface.Bg}"
+                    BorderBrush="{DynamicResource Border.Primary}" BorderThickness="1"
                     CornerRadius="10" Padding="20"
                     MaxWidth="340" MaxHeight="460"
                     HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -917,11 +933,11 @@
                     <Grid Margin="0,0,0,12">
                         <TextBlock x:Name="itemInfoName"
                                    FontSize="15" FontWeight="SemiBold"
-                                   Foreground="White"
+                                   Foreground="{DynamicResource Text.Primary}"
                                    HorizontalAlignment="Left" VerticalAlignment="Center"/>
-                        <Button Content="✕" Click="itemInfoClose_Click"
+                        <Button Content="&#x2715;" Click="itemInfoClose_Click"
                                 HorizontalAlignment="Right" VerticalAlignment="Center"
-                                Background="Transparent" Foreground="#888888"
+                                Background="Transparent" Foreground="{DynamicResource Text.Secondary}"
                                 BorderBrush="Transparent" FontSize="14"
                                 Cursor="Hand" Padding="4,0,4,0"/>
                     </Grid>
@@ -929,7 +945,7 @@
                            MaxHeight="200" Margin="0,0,0,12"
                            Stretch="Uniform" Visibility="Collapsed"/>
                     <TextBlock x:Name="itemInfoDesc"
-                               Foreground="#AAAAAA" FontSize="12"
+                               Foreground="{DynamicResource Text.Label}" FontSize="12"
                                TextWrapping="Wrap" LineHeight="18"/>
                 </StackPanel>
             </Border>
