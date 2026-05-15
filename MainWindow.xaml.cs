@@ -4026,7 +4026,7 @@ namespace ACVN
             // — Randomness —
 
             public static int RandomInt(int min, int max)
-                => new Random().Next(min, max + 1);
+                => Random.Shared.Next(min, max + 1);
 
             // — Clothing —
 
