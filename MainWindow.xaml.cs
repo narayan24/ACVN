@@ -4028,6 +4028,20 @@ namespace ACVN
             public static int RandomInt(int min, int max)
                 => Random.Shared.Next(min, max + 1);
 
+            // — Debug —
+
+            // Renders an inline debug block inside the content area when debug mode is on.
+            // Usage: {{ debug_log "label" value1 value2 ... }}
+            // Values are concatenated with spaces. Returns empty string when debug is off.
+            public static string DebugLog(params object[] args)
+            {
+                if (!_instance.debugEnabled) return string.Empty;
+                string msg = string.Join(" ", args.Select(a => a?.ToString() ?? "null"));
+                return $"<div style=\"background:#1a1a2e;border-left:3px solid #7c4dff;color:#b388ff;" +
+                       $"font-family:monospace;font-size:11px;margin:4px 0;padding:3px 8px;" +
+                       $"border-radius:2px\">🐛 {System.Net.WebUtility.HtmlEncode(msg)}</div>";
+            }
+
             // — Clothing —
 
             public static string ClothingState()
