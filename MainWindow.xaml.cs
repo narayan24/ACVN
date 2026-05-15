@@ -1229,6 +1229,96 @@ namespace ACVN
             cheatStack.Children.Clear();
             if (characters == null) return;
 
+            // ── Daily Flags card ────────────────────────────────────────────
+            if (_dailyDefaults.Count > 0)
+            {
+                var flagsInner = new StackPanel();
+
+                flagsInner.Children.Add(new TextBlock
+                {
+                    Text       = "Daily Flags",
+                    FontSize   = 13,
+                    FontWeight = FontWeights.SemiBold,
+                    Foreground = ThemeBrush("Text.Primary"),
+                    Margin     = new Thickness(0, 0, 0, 8)
+                });
+                flagsInner.Children.Add(new System.Windows.Shapes.Rectangle
+                {
+                    Height = 1,
+                    Fill   = ThemeBrush("Sep.Dark"),
+                    Margin = new Thickness(0, 0, 0, 10)
+                });
+
+                // List each registered daily var
+                var flagRows = new StackPanel { Margin = new Thickness(0, 0, 0, 10) };
+                void RefreshFlagRows()
+                {
+                    flagRows.Children.Clear();
+                    foreach (var kv in _dailyDefaults.OrderBy(k => k.Key))
+                    {
+                        object cur = gameVars[kv.Key];
+                        string curStr = cur?.ToString() ?? "null";
+                        string defStr = kv.Value?.ToString() ?? "null";
+                        bool isDefault = curStr == defStr;
+
+                        var row = new Grid { Margin = new Thickness(0, 2, 0, 2) };
+                        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                        row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+                        var keyText = new TextBlock
+                        {
+                            Text              = kv.Key,
+                            FontSize          = 11,
+                            FontFamily        = new System.Windows.Media.FontFamily("Consolas, Courier New"),
+                            Foreground        = isDefault ? ThemeBrush("Text.Muted") : ThemeBrush("Status.Val"),
+                            VerticalAlignment = VerticalAlignment.Center
+                        };
+                        var valText = new TextBlock
+                        {
+                            Text                = curStr,
+                            FontSize            = 11,
+                            FontFamily          = new System.Windows.Media.FontFamily("Consolas, Courier New"),
+                            Foreground          = isDefault ? ThemeBrush("Text.Muted") : System.Windows.Media.Brushes.OrangeRed,
+                            HorizontalAlignment = HorizontalAlignment.Right,
+                            VerticalAlignment   = VerticalAlignment.Center
+                        };
+                        Grid.SetColumn(keyText, 0);
+                        Grid.SetColumn(valText, 1);
+                        row.Children.Add(keyText);
+                        row.Children.Add(valText);
+                        flagRows.Children.Add(row);
+                    }
+                }
+                RefreshFlagRows();
+                flagsInner.Children.Add(flagRows);
+
+                // Reset button
+                var resetBtn = new Button
+                {
+                    Content             = "Reset all daily flags to default",
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    Padding             = new Thickness(0, 6, 0, 6),
+                    FontSize            = 11
+                };
+                resetBtn.Click += (_, __) =>
+                {
+                    GameFunctions.ResetDaily();
+                    RefreshFlagRows();
+                };
+                flagsInner.Children.Add(resetBtn);
+
+                cheatStack.Children.Add(new Border
+                {
+                    Background      = ThemeBrush("Subtle.Bg"),
+                    BorderBrush     = ThemeBrush("Border.Primary"),
+                    BorderThickness = new Thickness(1),
+                    CornerRadius    = new CornerRadius(6),
+                    Padding         = new Thickness(16, 12, 16, 14),
+                    Margin          = new Thickness(0, 0, 0, 12),
+                    Child           = flagsInner
+                });
+            }
+
             // MC first, then NPCs — only those with attributes
             var ordered = characters
                 .Where(c => c.Properties.ContainsKey("attributes"))
